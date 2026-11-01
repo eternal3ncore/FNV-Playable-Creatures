@@ -1,0 +1,2014 @@
+{
+"2hrreloadystart.kf": {
+"seq": "ReloadYstart",
+"len": 0.6667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Sound: WPNHuntingSGReloadStart"
+],
+[
+0.3667,
+"Blend:1"
+],
+[
+0.6667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpreloadxstart.kf": {
+"seq": "ReloadXStart",
+"len": 1.0667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+"Sound: WPN357RevolverReloadStart"
+],
+[
+0.65,
+"Sound: WPN357RevolverReloadClick"
+],
+[
+1.0667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpjama.kf": {
+"seq": "JamA",
+"len": 1.4,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.4667,
+"Sound: WPNPistol10mmJamA"
+],
+[
+1.4,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpjamb.kf": {
+"seq": "JamB",
+"len": 1.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNDartGunJam"
+],
+[
+1.3333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpjamc.kf": {
+"seq": "JamC",
+"len": 1.0,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNPistolChineseJam"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpjamd.kf": {
+"seq": "JamD",
+"len": 1.1667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+"Sound: WPNShotgunSawedJam"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+1.1667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpjame.kf": {
+"seq": "JamE",
+"len": 1.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.1,
+"Blend:3"
+],
+[
+0.1,
+"Sound: WPNPistol44MagnumJam"
+],
+[
+1.3333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpjamf.kf": {
+"seq": "JamF",
+"len": 1.6667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNPistolLaserJam"
+],
+[
+1.6667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpjamg.kf": {
+"seq": "JamG",
+"len": 2.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNRifleSMGJam"
+],
+[
+2.3333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpjamh.kf": {
+"seq": "JamH",
+"len": 1.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNPistolPlasmaJam"
+],
+[
+1.3333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpjami.kf": {
+"seq": "JamI",
+"len": 2.0,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNMesmetronJam"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpjamj.kf": {
+"seq": "JamJ",
+"len": 1.8333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNAlienBlasterJam"
+],
+[
+1.8333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpjamk.kf": {
+"seq": "JamK",
+"len": 1.5,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNPistol32Jam"
+],
+[
+1.5,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpjaml.kf": {
+"seq": "JamL",
+"len": 1.4,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.5,
+"Sound: WPNPistol9mmJam"
+],
+[
+1.4,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpjamn.kf": {
+"seq": "JamN",
+"len": 2.1667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNRifleSMGJam"
+],
+[
+2.1667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpjamo.kf": {
+"seq": "JamO",
+"len": 2.1667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNRifleSMGJam"
+],
+[
+2.1667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpjamp.kf": {
+"seq": "JamP",
+"len": 1.2667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNPistol44MagnumJam"
+],
+[
+1.2667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpjamq.kf": {
+"seq": "JamQ",
+"len": 1.8333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+"Sound: NPCThatGunJam"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+1.8333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjama.kf": {
+"seq": "JamA",
+"len": 1.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNRifleHuntingJam"
+],
+[
+1.3333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjamb.kf": {
+"seq": "JamB",
+"len": 1.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNRifleLaserJam"
+],
+[
+1.3333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjamc.kf": {
+"seq": "JamC",
+"len": 1.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNRifleLincolnsJam"
+],
+[
+1.3333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjamd.kf": {
+"seq": "JamD",
+"len": 1.6667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNShotgunCombatJam"
+],
+[
+1.6667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjame.kf": {
+"seq": "JamE",
+"len": 1.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNBBGunJam"
+],
+[
+1.3333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjamf.kf": {
+"seq": "JamF",
+"len": 2.0,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNRifleRailwayJam"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjamg.kf": {
+"seq": "JamG",
+"len": 2.0,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNShotgunDoubleBarrelJam"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjamh.kf": {
+"seq": "JamH",
+"len": 1.5,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNDLC05AlienRifleJam"
+],
+[
+1.5,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjami.kf": {
+"seq": "JamI",
+"len": 2.0,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0667,
+"Sound: WPNShotgunCaravanJam"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjamj.kf": {
+"seq": "JamJ",
+"len": 2.0,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0667,
+"Sound: WPNShotgunCaravanJam"
+],
+[
+0.8,
+"Sound: WPNGrndLnchPush"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjamk.kf": {
+"seq": "JamK",
+"len": 2.6,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.2,
+"Sound: WPNShotgunHuntingJam"
+],
+[
+2.6,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjaml.kf": {
+"seq": "JamL",
+"len": 2.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.5,
+"Sound: WPNRifleCowboyRepeaterJam"
+],
+[
+2.3333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjamm.kf": {
+"seq": "JamM",
+"len": 1.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNRifleHuntingJam"
+],
+[
+1.3333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjamn.kf": {
+"seq": "JamN",
+"len": 1.6667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+1.6667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjamo.kf": {
+"seq": "JamO",
+"len": 1.6667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNRifleHuntingJam"
+],
+[
+1.6667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjamp.kf": {
+"seq": "JamP",
+"len": 1.9,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.2667,
+"Sound: WPNThisMachineJam"
+],
+[
+1.9,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjamx.kf": {
+"seq": "JamX",
+"len": 1.6667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.1333,
+"Sound: WPNLeverActShotgunJam"
+],
+[
+1.6667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjamy.kf": {
+"seq": "JamY",
+"len": 2.6,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.2,
+"Sound: WPNShotgunHuntingJam"
+],
+[
+2.6,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrjamz.kf": {
+"seq": "JamZ",
+"len": 2.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.5,
+"Sound: WPNRifleCowboyRepeaterJam"
+],
+[
+2.3333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloadzstart.kf": {
+"seq": "ReloadZStart",
+"len": 0.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNCowboyReloadStart"
+],
+[
+0.3333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpreloada.kf": {
+"seq": "ReloadA",
+"len": 1.3,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:2"
+],
+[
+0.0667,
+"Sound: WPNPistol10mmReloadOut"
+],
+[
+0.4333,
+"Sound: WPNPistol10mmReloadN"
+],
+[
+0.7,
+"Sound: WPNPistol10mmReloadChamber"
+],
+[
+1.3,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpreloadb.kf": {
+"seq": "ReloadB",
+"len": 2.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.4999,
+"Sound: WPNDartgunPull"
+],
+[
+1.6666,
+"Sound: WPNDartgunInsert"
+],
+[
+2.3333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpreloadc.kf": {
+"seq": "ReloadC",
+"len": 2.5,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.3333,
+"Sound: WPNPistolChineseOpen"
+],
+[
+1.5666,
+"Sound: WPNPistolChineseInsert"
+],
+[
+2.5,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpreloadd.kf": {
+"seq": "ReloadD",
+"len": 2.5,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.3667,
+"Sound: WPNShotgunSawedReloadPt1"
+],
+[
+0.6333,
+"Sound: WPNShotgunSawedReloadPt0"
+],
+[
+1.5,
+"Sound: WPNShotgunSawedReloadPt2"
+],
+[
+2.1667,
+"Sound: WPNShotgunSawedReloadPt3"
+],
+[
+2.5,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpreloade.kf": {
+"seq": "ReloadE",
+"len": 3.0,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.3667,
+"Sound: WPNPistol44MagReloadPt1"
+],
+[
+1.9333,
+"Sound: WPNPistol44MagReloadPt2"
+],
+[
+2.5667,
+"Sound: WPNPistol44MagReloadPt3"
+],
+[
+3.0,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpreloadf.kf": {
+"seq": "ReloadF",
+"len": 3.0,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.4,
+"Sound: WPNPistolLaserReloadPt1"
+],
+[
+0.8667,
+"Sound: WPNPistolLaserReloadPt2"
+],
+[
+2.0,
+"Sound: WPNPistolLaserReloadPt3"
+],
+[
+2.5667,
+"Sound: WPNPistolLaserReloadPt4"
+],
+[
+2.5667,
+"Sound: WPNPistolLaserCharge"
+],
+[
+3.0,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpreloadg.kf": {
+"seq": "ReloadG",
+"len": 2.6667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.3667,
+"Sound: WPNRifleSMGReloadPt1"
+],
+[
+1.5333,
+"Sound: WPNRifleSMGReloadPt2"
+],
+[
+1.8667,
+"Sound: WPNRifleSMGReloadPt3"
+],
+[
+2.6667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpreloadh.kf": {
+"seq": "ReloadH",
+"len": 2.0,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.4667,
+"Sound: WPNPistolPlasmaReloadPt1"
+],
+[
+1.3,
+"Sound: WPNPistolPlasmaReloadPt2"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpreloadi.kf": {
+"seq": "ReloadI",
+"len": 3.0,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Sound: WPNMesmetronReloadPt1"
+],
+[
+1.15,
+"Sound: WPNMesmetronReloadPt2"
+],
+[
+2.26,
+"Sound: WPNMesmetronReloadPt3"
+],
+[
+3.0,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpreloadj.kf": {
+"seq": "ReloadJ",
+"len": 2.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.3333,
+"Sound: WPNAlienBlasterReloadPt1"
+],
+[
+1.3333,
+"Sound: WPNAlienBlasterReloadPt2"
+],
+[
+2.3333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpreloadk.kf": {
+"seq": "ReloadK",
+"len": 2.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.5333,
+"Sound: WPNPistolHowdahOpen"
+],
+[
+1.4333,
+"Sound: WPNPistolHowdahInsert"
+],
+[
+1.9999,
+"Sound: WPNPistolHowdahSnap"
+],
+[
+2.3333,
+"end"
+]
+],
+"src": "TTW/TaleOfTwoWastelands - Main.bsa"
+},
+"1hpreloadl.kf": {
+"seq": "ReloadL",
+"len": 1.6667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:2"
+],
+[
+0.2,
+"Sound: WPNPistol9mmRReload1"
+],
+[
+0.8333,
+"Sound: WPNPistol9mmRReload2"
+],
+[
+1.3667,
+"Sound: WPNPistol9mmRReload3"
+],
+[
+1.6667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpreloadm.kf": {
+"seq": "ReloadM",
+"len": 3.0,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.5667,
+"Sound: WPN357RevolverReload"
+],
+[
+3.0,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpreloadn.kf": {
+"seq": "ReloadN",
+"len": 2.6667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.4,
+"Sound: WPNRifleSMGReloadPt1"
+],
+[
+1.5333,
+"Sound: WPNRifleSMGReloadPt2"
+],
+[
+1.9667,
+"Sound: WPNRifleSMGReloadPt3"
+],
+[
+2.6667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpreloado.kf": {
+"seq": "ReloadO",
+"len": 2.6667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.4333,
+"Sound: WPNRifleSMGReloadPt1"
+],
+[
+1.5667,
+"Sound: WPNRifleSMGReloadPt2"
+],
+[
+2.0333,
+"Sound: WPNRifleSMGReloadPt3"
+],
+[
+2.6667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpreloadp.kf": {
+"seq": "ReloadP",
+"len": 3.0,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.3667,
+"Sound: WPNPistol44MagReloadPt1"
+],
+[
+1.9,
+"Sound: WPNPistol44MagReloadPt2"
+],
+[
+2.5,
+"Sound: WPNPistol44MagReloadPt3"
+],
+[
+3.0,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpreloadq.kf": {
+"seq": "ReloadQ",
+"len": 2.5,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.4,
+"Sound: NPCThatGunReloadPt1"
+],
+[
+0.9333,
+"Sound: NPCThatGunReloadPt2"
+],
+[
+1.5333,
+"Sound: NPCThatGunReloadPt3"
+],
+[
+2.3,
+"Sound: NPCThatGunReloadPt4"
+],
+[
+2.5,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpreloadx.kf": {
+"seq": "ReloadX",
+"len": 1.7667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+"Sound: WPN357RevolverReloadLoop"
+],
+[
+0.6333,
+"Hit"
+],
+[
+0.9167,
+"Sound: WPN357RevolverReloadClick"
+],
+[
+1.1333,
+"Sound: WPN357RevolverCock"
+],
+[
+1.7667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloada.kf": {
+"seq": "ReloadA",
+"len": 1.9667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.2,
+"Sound: WPNRifleHuntingReloadPt1"
+],
+[
+0.5667,
+"Sound: WPNRifleHuntingReloadPt2"
+],
+[
+1.2667,
+"Sound: WPNRifleHuntingReloadPt3"
+],
+[
+1.6,
+"Sound: WPNRifleHuntingReloadPt4"
+],
+[
+1.9667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloadb.kf": {
+"seq": "ReloadB",
+"len": 2.5,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNRifleLaserReloadPt0"
+],
+[
+0.7,
+"Sound: WPNRifleLaserReloadPt1"
+],
+[
+1.6667,
+"Sound: WPNRifleLaserReloadPt2"
+],
+[
+1.9667,
+"Sound: WPNRifleLaserReloadPt3"
+],
+[
+2.5,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloadc.kf": {
+"seq": "ReloadC",
+"len": 3.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.3,
+"Sound: WPNRifleLaLonguePt1"
+],
+[
+1.5,
+"Sound: WPNRifleLaLonguePt2"
+],
+[
+1.9667,
+"Sound: WPNRifleLaLonguePt3"
+],
+[
+2.6333,
+"Sound: WPNRifleLaLonguePt4"
+],
+[
+3.3333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloadd.kf": {
+"seq": "ReloadD",
+"len": 3.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.4333,
+"Sound: WPNCombatShotgunDrumOut"
+],
+[
+1.5333,
+"Sound: WPNCombatShotgunDrumIn"
+],
+[
+2.0666,
+"Sound: WPNCombatShotgunCock"
+],
+[
+3.3333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloade.kf": {
+"seq": "ReloadE",
+"len": 3.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.3333,
+"Sound: WPNBBGunReloadPt1"
+],
+[
+1.5,
+"Sound: WPNBBGunReloadPt2"
+],
+[
+2.7,
+"Sound: WPNBBGunReloadPt3"
+],
+[
+3.3333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloadf.kf": {
+"seq": "ReloadF",
+"len": 2.6667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.3996,
+"Sound: WPNRifleRailwayOpen"
+],
+[
+1.3999,
+"Sound: WPNRifleRailwayInsert"
+],
+[
+1.8999,
+"Sound: WPNRifleRailwayClose"
+],
+[
+2.6667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloadg.kf": {
+"seq": "ReloadG",
+"len": 2.0,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNShotgunDoubleBarrelReloadPt1"
+],
+[
+0.8,
+"Sound: WPNShotgunDoubleBarrelReloadPt2"
+],
+[
+1.3333,
+"Sound: WPNShotgunDoubleBarrelReloadPt3"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloadh.kf": {
+"seq": "ReloadH",
+"len": 1.5,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNDLC05AlienRifleReloadPt1"
+],
+[
+0.5633,
+"Sound: WPNDLC05AlienRifleReloadPt2"
+],
+[
+1.5,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloadi.kf": {
+"seq": "ReloadI",
+"len": 1.5,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.1333,
+"Sound: WPNShotgunCaravanReloadPt1"
+],
+[
+0.7667,
+"Sound: WPNShotgunCaravanReloadPt2"
+],
+[
+1.1,
+"Sound: WPNShotgunCaravanReloadPt3"
+],
+[
+1.5,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloadj.kf": {
+"seq": "ReloadJ",
+"len": 2.0,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.1667,
+"Sound: WPNShotgunSingleReloadPt1"
+],
+[
+0.4333,
+"Sound: WPNShotgunSingleReloadPt2"
+],
+[
+1.0667,
+"Sound: WPNShotgunSingleReloadPt3"
+],
+[
+1.6667,
+"Sound: WPNShotgunSingleReloadPt4"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloadm.kf": {
+"seq": "ReloadM",
+"len": 1.9667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.2667,
+"Sound: WPNRifleHuntingReloadPt1"
+],
+[
+0.5667,
+"Sound: WPNRifleHuntingReloadPt2"
+],
+[
+1.3,
+"Sound: WPNRifleHuntingReloadPt3"
+],
+[
+1.6333,
+"Sound: WPNRifleHuntingReloadPt4"
+],
+[
+1.9667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloadn.kf": {
+"seq": "ReloadN",
+"len": 3.8333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+"Sound: WPNLeverActShotgunReload"
+],
+[
+3.8333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloado.kf": {
+"seq": "ReloadO",
+"len": 2.5,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.3333,
+"Sound: WPNRifleHuntingReloadPt1"
+],
+[
+0.9667,
+"Sound: WPNRifleHuntingReloadPt2"
+],
+[
+1.6667,
+"Sound: WPNRifleHuntingReloadPt3"
+],
+[
+2.0667,
+"Sound: WPNRifleHuntingReloadPt4"
+],
+[
+2.0667,
+""
+],
+[
+2.5,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloadp.kf": {
+"seq": "ReloadP",
+"len": 1.9,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNThisMachineReloadPt1"
+],
+[
+0.9,
+"Sound: WPNThisMachineReloadPt2"
+],
+[
+1.4667,
+"Sound: WPNThisMachineReloadPt3"
+],
+[
+1.9,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloadx.kf": {
+"seq": "ReloadX",
+"len": 1.9,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Sound: WPNLeverActShotgunReload"
+],
+[
+0.5,
+"Hit"
+],
+[
+0.5333,
+"Sound: WPNLeverActShotgunReloadEnd"
+],
+[
+1.9,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloady.kf": {
+"seq": "ReloadY",
+"len": 1.5333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Sound: WPNHuntingSGReload"
+],
+[
+0.4667,
+"Hit"
+],
+[
+0.5,
+"Sound: WPNHuntingSGReloadEnd"
+],
+[
+1.5333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloadz.kf": {
+"seq": "ReloadZ",
+"len": 1.6667,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.1,
+"Sound: WPNCowboyReload"
+],
+[
+0.5,
+"Hit"
+],
+[
+0.6,
+"Sound: WPNCowboyReloadEnd"
+],
+[
+1.6667,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"2hrreloadxstart.kf": {
+"seq": "ReloadXStart",
+"len": 0.9333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Sound: WPNLeverActShotgunReloadStart"
+],
+[
+0.9333,
+"end"
+]
+],
+"src": "TTW/Fallout - Meshes.bsa"
+},
+"1hpjamr.kf": {
+"seq": "JamR",
+"len": 1.5,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNPistol32Jam"
+],
+[
+1.5,
+"end"
+]
+],
+"src": "TTW/TaleOfTwoWastelands - Main.bsa"
+},
+"1hpreloadr.kf": {
+"seq": "ReloadR",
+"len": 2.3333,
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNPistol32ReloadPt1"
+],
+[
+1.3333,
+"Sound: WPNPistol32ReloadPt2"
+],
+[
+2.0,
+"Sound: WPNPistol32ReloadPt3"
+],
+[
+2.3333,
+"end"
+]
+],
+"src": "TTW/TaleOfTwoWastelands - Main.bsa"
+}
+}

@@ -1,0 +1,8529 @@
+{
+"loco/2hhfastleft.kf": {
+"seq": "FastLeft",
+"len": 0.7333,
+"cyc": 0,
+"prio": [
+0,
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend: 6"
+],
+[
+0.2667,
+"Enum: Left"
+],
+[
+0.2667,
+"Enum: ArmorRun\r\n"
+],
+[
+0.3333,
+"m:1"
+],
+[
+0.4,
+"Enum: FoleyRun"
+],
+[
+0.6333,
+"Enum: Right"
+],
+[
+0.6333,
+"Enum: ArmorRun\r\n"
+],
+[
+0.7,
+"m:2"
+],
+[
+0.7,
+"Enum: FoleyRun"
+],
+[
+0.7333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hlfastbackward.kf": {
+"seq": "FastBackward",
+"len": 0.8,
+"cyc": 0,
+"prio": [
+0,
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend: 6"
+],
+[
+0.3,
+"Enum: Left"
+],
+[
+0.3667,
+"m:1"
+],
+[
+0.7,
+"Enum: Right"
+],
+[
+0.7667,
+"m:2"
+],
+[
+0.8,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/1lmturnleft.kf": {
+"seq": "TurnLeft",
+"len": 1.0,
+"cyc": 0,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.5,
+"Enum: Left"
+],
+[
+0.9667,
+"Enum: Right"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hlbackward.kf": {
+"seq": "Backward",
+"len": 1.1333,
+"cyc": 0,
+"prio": [
+0,
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend: 6"
+],
+[
+0.0333,
+"Enum: FoleyWalk"
+],
+[
+0.2333,
+"Enum: Left"
+],
+[
+0.2333,
+"Enum: ArmorWalk"
+],
+[
+0.3333,
+"m:1"
+],
+[
+0.4667,
+"Enum: FoleyWalk"
+],
+[
+0.8,
+"Enum: Right"
+],
+[
+0.8,
+"Enum: ArmorWalk"
+],
+[
+0.9,
+"m:2"
+],
+[
+1.1333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hafastleft.kf": {
+"seq": "FastLeft",
+"len": 0.8,
+"cyc": 0,
+"prio": [
+0,
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+" -GlobalRatio 48 -GlobalCompressFloats true -GlobalDontCompress false"
+],
+[
+0.0027,
+"Enum: Left"
+],
+[
+0.0027,
+"Enum: ArmorRun\r\n"
+],
+[
+0.0694,
+"m:1"
+],
+[
+0.136,
+"Enum: FoleyRun"
+],
+[
+0.3983,
+"Enum: Right"
+],
+[
+0.3983,
+"Enum: ArmorRun\r\n"
+],
+[
+0.465,
+"m:2"
+],
+[
+0.465,
+"Enum: FoleyRun"
+],
+[
+0.8,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hafastright.kf": {
+"seq": "FastRight",
+"len": 0.8,
+"cyc": 0,
+"prio": [
+0,
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+"Blend: 6"
+],
+[
+0.2333,
+"Enum: Left"
+],
+[
+0.2333,
+"Enum: ArmorRun"
+],
+[
+0.3,
+"m:1"
+],
+[
+0.3,
+"Enum: FoleyRun"
+],
+[
+0.6,
+"Enum: Right"
+],
+[
+0.6,
+"Enum: ArmorRun"
+],
+[
+0.6667,
+"m:2"
+],
+[
+0.6667,
+"Enum: FoleyRun"
+],
+[
+0.8,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hhleft.kf": {
+"seq": "Left",
+"len": 1.2,
+"cyc": 0,
+"prio": [
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"m:R"
+],
+[
+0.2333,
+"Enum: Right"
+],
+[
+0.6333,
+"m:L"
+],
+[
+0.8,
+"Enum: Left"
+],
+[
+1.2,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hlfastright.kf": {
+"seq": "FastRight",
+"len": 0.7333,
+"cyc": 0,
+"prio": [
+0,
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend: 6"
+],
+[
+0.2667,
+"Enum: Left"
+],
+[
+0.3333,
+"m:1"
+],
+[
+0.6333,
+"Enum: Right"
+],
+[
+0.7,
+"m:2"
+],
+[
+0.7333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hlfastforward.kf": {
+"seq": "FastForward",
+"len": 0.8,
+"cyc": 0,
+"prio": [
+30,
+31,
+35,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+" -GlobalRatio 100 -GlobalCompressFloats true -GlobalDontCompress false"
+],
+[
+0.0333,
+"Blend:3\r\n\r\n"
+],
+[
+0.1,
+"Enum: FoleyRun"
+],
+[
+0.1667,
+"Enum: Left\r\n"
+],
+[
+0.3333,
+"Enum: ArmorRun\r\n"
+],
+[
+0.3833,
+"m:R"
+],
+[
+0.4333,
+"Enum: FoleyRun"
+],
+[
+0.4333,
+"Enum: FoleyRun"
+],
+[
+0.5833,
+"Enum: Right\r\n"
+],
+[
+0.7333,
+"Enum: ArmorRun\r\n"
+],
+[
+0.7667,
+"m:L"
+],
+[
+0.8,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hlleft.kf": {
+"seq": "Left",
+"len": 1.2,
+"cyc": 0,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+" -GlobalRatio 51 -GlobalCompressFloats true -GlobalDontCompress false"
+],
+[
+0.0333,
+"Blend:6\r\n"
+],
+[
+0.3323,
+"Enum: ArmorWalk\r\n"
+],
+[
+0.3323,
+"Enum: Left\r\n"
+],
+[
+0.4,
+"m:R"
+],
+[
+0.599,
+"Enum: FoleyWalk\r\n"
+],
+[
+0.9585,
+"Enum: ArmorWalk\r\n"
+],
+[
+0.9586,
+"Enum: Right\r\n"
+],
+[
+1.0333,
+"m:L"
+],
+[
+1.1919,
+"Enum: FoleyWalk\r\n"
+],
+[
+1.2,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/1mdturnleft.kf": {
+"seq": "TurnLeft",
+"len": 1.0,
+"cyc": 0,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.5,
+"Enum: Left"
+],
+[
+0.9667,
+"Enum: Right"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/1lmturnright.kf": {
+"seq": "TurnRight",
+"len": 1.0,
+"cyc": 0,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.5,
+"Enum: Right"
+],
+[
+0.9667,
+"Enum: Left"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hmfastleft.kf": {
+"seq": "FastLeft",
+"len": 0.8,
+"cyc": 0,
+"prio": [
+30,
+45
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+" -GlobalRatio 51 -GlobalCompressFloats true -GlobalDontCompress true"
+],
+[
+0.0333,
+"Blend:6\r\n"
+],
+[
+0.3,
+"Enum: Right\r\n"
+],
+[
+0.3,
+"Enum: ArmorRun\r\n"
+],
+[
+0.4,
+"Enum: FoleyRun"
+],
+[
+0.6667,
+"Enum: FoleyRun\r\n"
+],
+[
+0.7333,
+"Enum: Left\r\n"
+],
+[
+0.7333,
+"Enum: ArmorRun\r\n"
+],
+[
+0.8,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/1gtfastbackward.kf": {
+"seq": "FastBackward",
+"len": 0.8,
+"cyc": 0,
+"prio": [
+0,
+30,
+36,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend: 6"
+],
+[
+0.3,
+"Enum: Left"
+],
+[
+0.3667,
+"m:1"
+],
+[
+0.7,
+"Enum: Right"
+],
+[
+0.7667,
+"m:2"
+],
+[
+0.8,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/1mdturnright.kf": {
+"seq": "TurnRight",
+"len": 1.0,
+"cyc": 0,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.5,
+"Enum: Right"
+],
+[
+0.9667,
+"Enum: Left"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/1gtfastforward.kf": {
+"seq": "FastForward",
+"len": 0.8,
+"cyc": 0,
+"prio": [
+30,
+31
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+" -GlobalRatio 100 -GlobalCompressFloats true -GlobalDontCompress false"
+],
+[
+0.0333,
+"Blend:9\r\n\r\n"
+],
+[
+0.1,
+"Enum: FoleyRun"
+],
+[
+0.3333,
+"Enum: ArmorRun\r\n"
+],
+[
+0.3333,
+"Enum: Left\r\n"
+],
+[
+0.3667,
+"m:R"
+],
+[
+0.4333,
+"Enum: FoleyRun"
+],
+[
+0.4333,
+"Enum: FoleyRun"
+],
+[
+0.7,
+"m:L"
+],
+[
+0.7333,
+"Enum: ArmorRun\r\n"
+],
+[
+0.7333,
+"Enum: Right\r\n"
+],
+[
+0.8,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hhturnleft.kf": {
+"seq": "TurnLeft",
+"len": 1.0,
+"cyc": 0,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.4333,
+"Enum: Left"
+],
+[
+0.9333,
+"Enum: Right"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hlfastleft.kf": {
+"seq": "FastLeft",
+"len": 0.8,
+"cyc": 0,
+"prio": [
+30,
+35,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+" -GlobalRatio 51 -GlobalCompressFloats true -GlobalDontCompress true"
+],
+[
+0.0333,
+"Blend:9\r\n\r\n"
+],
+[
+0.1,
+"Enum: FoleyRun"
+],
+[
+0.3333,
+"Enum: ArmorRun\r\n"
+],
+[
+0.3333,
+"Enum: Left\r\n"
+],
+[
+0.4333,
+"Enum: FoleyRun"
+],
+[
+0.4333,
+"Enum: FoleyRun"
+],
+[
+0.7333,
+"Enum: ArmorRun\r\n"
+],
+[
+0.7333,
+"Enum: Right\r\n"
+],
+[
+0.8,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hhfastforward.kf": {
+"seq": "FastForward",
+"len": 0.8,
+"cyc": 0,
+"prio": [
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+" -GlobalRatio 100 -GlobalCompressFloats true -GlobalDontCompress false"
+],
+[
+0.0333,
+"Blend:9\r\n\r\n"
+],
+[
+0.1,
+"Enum: FoleyRun"
+],
+[
+0.2833,
+"m:R"
+],
+[
+0.3333,
+"Enum: ArmorRun\r\n"
+],
+[
+0.3333,
+"Enum: Left\r\n"
+],
+[
+0.4333,
+"Enum: FoleyRun"
+],
+[
+0.4333,
+"Enum: FoleyRun"
+],
+[
+0.7333,
+"Enum: ArmorRun\r\n"
+],
+[
+0.7333,
+"Enum: Right\r\n"
+],
+[
+0.7667,
+"m:L"
+],
+[
+0.8,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/1gtfastleft.kf": {
+"seq": "FastLeft",
+"len": 0.8,
+"cyc": 0,
+"prio": [
+26,
+30,
+31,
+36,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+" -GlobalRatio 51 -GlobalCompressFloats true -GlobalDontCompress true"
+],
+[
+0.0333,
+"Blend:9\r\n\r\n"
+],
+[
+0.1,
+"Enum: FoleyRun"
+],
+[
+0.3333,
+"Enum: ArmorRun\r\n"
+],
+[
+0.3333,
+"Enum: Left\r\n"
+],
+[
+0.4333,
+"Enum: FoleyRun"
+],
+[
+0.4333,
+"Enum: FoleyRun"
+],
+[
+0.7333,
+"Enum: ArmorRun\r\n"
+],
+[
+0.7333,
+"Enum: Right\r\n"
+],
+[
+0.8,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hhfastbackward.kf": {
+"seq": "FastBackward",
+"len": 0.8,
+"cyc": 0,
+"prio": [
+0,
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend: 6"
+],
+[
+0.3,
+"Enum: Left"
+],
+[
+0.3667,
+"m:1"
+],
+[
+0.7,
+"Enum: Right"
+],
+[
+0.7667,
+"m:2"
+],
+[
+0.8,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/1gtfastright.kf": {
+"seq": "FastRight",
+"len": 0.8,
+"cyc": 0,
+"prio": [
+0,
+26,
+30,
+31,
+36,
+45
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+" -GlobalRatio 51 -GlobalCompressFloats true -GlobalDontCompress true"
+],
+[
+0.0333,
+"Blend:9\r\n\r\n"
+],
+[
+0.1,
+"Enum: FoleyRun"
+],
+[
+0.3333,
+"Enum: ArmorRun\r\n"
+],
+[
+0.3333,
+"Enum: Left\r\n"
+],
+[
+0.4333,
+"Enum: FoleyRun"
+],
+[
+0.4333,
+"Enum: FoleyRun"
+],
+[
+0.7333,
+"Enum: ArmorRun\r\n"
+],
+[
+0.7333,
+"Enum: Right\r\n"
+],
+[
+0.8,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hmfastbackward.kf": {
+"seq": "Fastbackward",
+"len": 0.8,
+"cyc": 0,
+"prio": [
+30,
+45
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+" -GlobalRatio 51 -GlobalCompressFloats true -GlobalDontCompress true"
+],
+[
+0.0333,
+"Blend:6\r\n"
+],
+[
+0.3,
+"Enum: Right\r\n"
+],
+[
+0.3,
+"Enum: ArmorRun\r\n"
+],
+[
+0.4,
+"Enum: FoleyRun"
+],
+[
+0.6667,
+"Enum: FoleyRun\r\n"
+],
+[
+0.7333,
+"Enum: Left\r\n"
+],
+[
+0.7333,
+"Enum: ArmorRun\r\n"
+],
+[
+0.8,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hlright.kf": {
+"seq": "Right",
+"len": 1.2,
+"cyc": 0,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+" -GlobalRatio 51 -GlobalCompressFloats true -GlobalDontCompress false"
+],
+[
+0.0333,
+"Blend:6\r\n"
+],
+[
+0.3323,
+"Enum: ArmorWalk\r\n"
+],
+[
+0.3333,
+"Enum: Right\r\n"
+],
+[
+0.4,
+"m:R"
+],
+[
+0.599,
+"Enum: FoleyWalk\r\n"
+],
+[
+0.9585,
+"Enum: ArmorWalk\r\n"
+],
+[
+0.9667,
+"Enum: Left\r\n"
+],
+[
+1.0333,
+"m:L"
+],
+[
+1.1919,
+"Enum: FoleyWalk\r\n"
+],
+[
+1.2,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/1gtturnright.kf": {
+"seq": "TurnRight",
+"len": 1.0,
+"cyc": 0,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.5,
+"Enum: Right"
+],
+[
+0.9667,
+"Enum: Left"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hhforward.kf": {
+"seq": "Forward",
+"len": 1.2,
+"cyc": 0,
+"prio": [
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"m:L"
+],
+[
+0.0333,
+"Blend:6"
+],
+[
+0.2333,
+"Enum: Right"
+],
+[
+0.5667,
+"m:R"
+],
+[
+0.8,
+"Enum: Left"
+],
+[
+1.2,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hafastforward.kf": {
+"seq": "FastForward",
+"len": 0.8,
+"cyc": 0,
+"prio": [
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+" -GlobalRatio 51 -GlobalCompressFloats true -GlobalDontCompress true"
+],
+[
+0.0333,
+"Blend:6\r\n"
+],
+[
+0.3,
+"Enum: Right\r\n"
+],
+[
+0.3,
+"Enum: ArmorRun\r\n"
+],
+[
+0.4,
+"Enum: FoleyRun\r\n"
+],
+[
+0.7,
+"Enum: FoleyRun"
+],
+[
+0.7333,
+"Enum: Left\r\n\r\n"
+],
+[
+0.7333,
+"Enum: ArmorRun"
+],
+[
+0.8,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hhfastright.kf": {
+"seq": "FastRight",
+"len": 0.7333,
+"cyc": 0,
+"prio": [
+0,
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend: 6"
+],
+[
+0.2667,
+"Enum: Left"
+],
+[
+0.3333,
+"m:1"
+],
+[
+0.6333,
+"Enum: Right"
+],
+[
+0.7,
+"m:2"
+],
+[
+0.7333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hafastbackward.kf": {
+"seq": "FastBackward",
+"len": 0.8,
+"cyc": 0,
+"prio": [
+0,
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend: 6"
+],
+[
+0.3,
+"Enum: Left"
+],
+[
+0.3667,
+"m:1"
+],
+[
+0.7,
+"Enum: Right"
+],
+[
+0.7667,
+"m:2"
+],
+[
+0.8,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hhturnright.kf": {
+"seq": "TurnRight",
+"len": 1.0,
+"cyc": 0,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.4333,
+"Enum: Right"
+],
+[
+0.9333,
+"Enum: Left"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/1gtturnleft.kf": {
+"seq": "TurnLeft",
+"len": 1.0,
+"cyc": 0,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.5,
+"Enum: Left"
+],
+[
+0.9667,
+"Enum: Right"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hhbackward.kf": {
+"seq": "backward",
+"len": 1.2,
+"cyc": 0,
+"prio": [
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"m:L"
+],
+[
+0.0333,
+"Blend:6"
+],
+[
+0.2333,
+"Enum: Right"
+],
+[
+0.5667,
+"m:R"
+],
+[
+0.8,
+"Enum: Left"
+],
+[
+1.2,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hhright.kf": {
+"seq": "Right",
+"len": 1.2,
+"cyc": 0,
+"prio": [
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"m:R"
+],
+[
+0.2333,
+"Enum: Right"
+],
+[
+0.6333,
+"m:L"
+],
+[
+0.8,
+"Enum: Left"
+],
+[
+1.2,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hmfastright.kf": {
+"seq": "FastRight",
+"len": 0.8,
+"cyc": 0,
+"prio": [
+30,
+45
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+" -GlobalRatio 51 -GlobalCompressFloats true -GlobalDontCompress true"
+],
+[
+0.0333,
+"Blend:6\r\n"
+],
+[
+0.3,
+"Enum: Right\r\n"
+],
+[
+0.3,
+"Enum: ArmorRun\r\n"
+],
+[
+0.4,
+"Enum: FoleyRun"
+],
+[
+0.6667,
+"Enum: FoleyRun\r\n"
+],
+[
+0.7333,
+"Enum: Left\r\n"
+],
+[
+0.7333,
+"Enum: ArmorRun\r\n"
+],
+[
+0.8,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hmfastforward.kf": {
+"seq": "FastForward",
+"len": 0.8,
+"cyc": 0,
+"prio": [
+30,
+45,
+46
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+" -GlobalRatio 100 -GlobalCompressFloats true -GlobalDontCompress false"
+],
+[
+0.0333,
+"Blend:6\r\n"
+],
+[
+0.3,
+"Enum: Right\r\n"
+],
+[
+0.3,
+"Enum: ArmorRun\r\n"
+],
+[
+0.3833,
+"m:R"
+],
+[
+0.4,
+"Enum: FoleyRun"
+],
+[
+0.6667,
+"Enum: FoleyRun\r\n"
+],
+[
+0.7333,
+"Enum: Left\r\n"
+],
+[
+0.7333,
+"Enum: ArmorRun\r\n"
+],
+[
+0.7667,
+"m:R"
+],
+[
+0.8,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2hlforward.kf": {
+"seq": "Forward",
+"len": 1.2667,
+"cyc": 0,
+"prio": [
+30,
+31,
+35
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+" -GlobalRatio 51 -GlobalCompressFloats true -GlobalDontCompress true"
+],
+[
+0.0333,
+"Blend:6\r\n"
+],
+[
+0.3667,
+"Enum: ArmorWalk\r\n"
+],
+[
+0.3667,
+"Enum: Left\r\n"
+],
+[
+0.6333,
+"Enum: FoleyWalk\r\n"
+],
+[
+1.0333,
+"Enum: ArmorWalk\r\n"
+],
+[
+1.0333,
+"Enum: Right\r\n"
+],
+[
+1.2667,
+"Enum: FoleyWalk\r\n"
+],
+[
+1.2667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"loco/2haforward.kf": {
+"seq": "Forward",
+"len": 1.2,
+"cyc": 0,
+"prio": [
+30,
+31,
+35
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+" -GlobalRatio 51 -GlobalCompressFloats true -GlobalDontCompress true"
+],
+[
+0.0333,
+"Blend:6\r\n"
+],
+[
+0.3667,
+"Enum: Left\r\n\r\n"
+],
+[
+0.3667,
+"Enum: ArmorWalk\r\n"
+],
+[
+0.6333,
+"Enum: FoleyWalk"
+],
+[
+1.0333,
+"Enum: Right\r\n"
+],
+[
+1.0333,
+"Enum: ArmorWalk"
+],
+[
+1.0333,
+"Enum: FoleyWalk"
+],
+[
+1.2,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hlattackrightup.kf": {
+"seq": "AttackRightUp",
+"len": 0.6667,
+"cyc": 2,
+"prio": [
+25,
+55,
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0667,
+"Hit"
+],
+[
+0.6,
+"BlendIn:1"
+],
+[
+0.6333,
+"a:R"
+],
+[
+0.6667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hlattackleft.kf": {
+"seq": "AttackLeft",
+"len": 0.6667,
+"cyc": 2,
+"prio": [
+26,
+55,
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:1"
+],
+[
+0.0667,
+"Hit"
+],
+[
+0.6333,
+"a:L"
+],
+[
+0.6667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackleftdown_a.kf": {
+"seq": "AttackLeftDown_A",
+"len": 0.9667,
+"cyc": 2,
+"prio": [
+16,
+30,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.3,
+"Hit"
+],
+[
+0.5,
+"a:R"
+],
+[
+0.9667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackleftdown_b.kf": {
+"seq": "AttackLeftDown_B",
+"len": 0.9667,
+"cyc": 2,
+"prio": [
+16,
+30,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.3,
+"Hit"
+],
+[
+0.5,
+"a:R"
+],
+[
+0.9667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattack4isdown.kf": {
+"seq": "Attack4ISDown",
+"len": 0.5,
+"cyc": 2,
+"prio": [
+26,
+45,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.4,
+"a:4"
+],
+[
+0.4667,
+"Blendin:1"
+],
+[
+0.5,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hajumploopforward.kf": {
+"seq": "JumpLoopForward",
+"len": 2.1,
+"cyc": 0,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+2.1,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattackrightisdown.kf": {
+"seq": "AttackRightISDown",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+27,
+55,
+95
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.4667,
+"a:R"
+],
+[
+0.9667,
+"BlendIn:1"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmblockhit.kf": {
+"seq": "BlockHit",
+"len": 0.7,
+"cyc": 2,
+"prio": [
+26,
+66
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.1333,
+"Blend: 1"
+],
+[
+0.7,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackleftpower.kf": {
+"seq": "AttackLeftPower",
+"len": 1.5667,
+"cyc": 2,
+"prio": [
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.5667,
+"Enum: Left"
+],
+[
+0.5667,
+"Sound: FXSwing2hm"
+],
+[
+0.7333,
+"Hit"
+],
+[
+0.7333,
+"Decal: 0"
+],
+[
+1.2333,
+"Enum: Right"
+],
+[
+1.5,
+"Enum: Left"
+],
+[
+1.5667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackspindown.kf": {
+"seq": "AttackSpinDown",
+"len": 1.5333,
+"cyc": 2,
+"prio": [
+26,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.2667,
+"Fire"
+],
+[
+0.2667,
+"Decal: 0"
+],
+[
+1.0,
+"Loop"
+],
+[
+1.1667,
+"BlendOut:20"
+],
+[
+1.5333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhattackspindown.kf": {
+"seq": "AttackSpinDown",
+"len": 2.5,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.9667,
+"Fire"
+],
+[
+1.6333,
+"Loop"
+],
+[
+2.5,
+"end"
+]
+],
+"src": "TaleOfTwoWastelands - Main.bsa"
+},
+"2hlattackrightdown.kf": {
+"seq": "AttackRightDown",
+"len": 0.6667,
+"cyc": 2,
+"prio": [
+25,
+55,
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0667,
+"Hit"
+],
+[
+0.6,
+"BlendIn:1"
+],
+[
+0.6333,
+"a:R"
+],
+[
+0.6667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackright_a.kf": {
+"seq": "AttackRight_A",
+"len": 1.5333,
+"cyc": 2,
+"prio": [
+17,
+30,
+55,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.4,
+"Sound: FXSwing2hm"
+],
+[
+0.5667,
+"Hit"
+],
+[
+0.5667,
+"Decal: 0"
+],
+[
+0.6333,
+"a:L"
+],
+[
+1.5333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackright_b.kf": {
+"seq": "AttackRight_B",
+"len": 1.5333,
+"cyc": 2,
+"prio": [
+17,
+30,
+55,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.3667,
+"Sound: FXSwing2hm"
+],
+[
+0.5667,
+"Hit"
+],
+[
+0.5667,
+"Decal: 0"
+],
+[
+0.6667,
+"a:L"
+],
+[
+1.5333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hahandgrip1_plasmarifle.kf": {
+"seq": "HandGrip1_PlasmaRifle",
+"len": 0.1333,
+"cyc": 0,
+"prio": [
+6,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:1"
+],
+[
+0.1333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhattackspinup.kf": {
+"seq": "AttackSpinUp",
+"len": 2.5,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.9667,
+"Fire"
+],
+[
+1.6333,
+"Loop"
+],
+[
+2.5,
+"end"
+]
+],
+"src": "TaleOfTwoWastelands - Main.bsa"
+},
+"2hmattackspinup.kf": {
+"seq": "AttackSpinUp",
+"len": 1.5333,
+"cyc": 2,
+"prio": [
+26,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.2667,
+"Fire"
+],
+[
+0.2667,
+"Decal: 0"
+],
+[
+1.0,
+"Loop"
+],
+[
+1.1667,
+"BlendOut:20"
+],
+[
+1.5333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhattackspin2.kf": {
+"seq": "AttackSpin2",
+"len": 1.3333,
+"cyc": 2,
+"prio": [
+26,
+55,
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.1667,
+"Fire"
+],
+[
+1.0,
+"Loop"
+],
+[
+1.3333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhholster.kf": {
+"seq": "Holster",
+"len": 0.1333,
+"cyc": 2,
+"prio": [
+0,
+5,
+20
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:1"
+],
+[
+0.1,
+"prn: Bip01 R Hand"
+],
+[
+0.1333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattack3down.kf": {
+"seq": "Attack3Down",
+"len": 0.5667,
+"cyc": 2,
+"prio": [
+0,
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.1667,
+"a:3"
+],
+[
+0.2333,
+"BlendIn:1"
+],
+[
+0.5667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattack3isup.kf": {
+"seq": "Attack3ISUp",
+"len": 0.5667,
+"cyc": 2,
+"prio": [
+0,
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.1667,
+"a:3"
+],
+[
+0.2333,
+"BlendIn:1"
+],
+[
+0.5667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattack4down.kf": {
+"seq": "Attack4Down",
+"len": 0.5,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.4,
+"a:4"
+],
+[
+0.4667,
+"BlendIn:1"
+],
+[
+0.5,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattack4isup.kf": {
+"seq": "Attack4ISUp",
+"len": 0.5,
+"cyc": 2,
+"prio": [
+26,
+45,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.4,
+"a:4"
+],
+[
+0.4667,
+"Blendin:1"
+],
+[
+0.5,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haaimisdown.kf": {
+"seq": "AimISDown",
+"len": 3.0,
+"cyc": 0,
+"prio": [
+26,
+45,
+50
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+3.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1lmunequip.kf": {
+"seq": "Unequip",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+0,
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:6"
+],
+[
+0.0333,
+"Enum: Unequip"
+],
+[
+0.4,
+"Enum: Right"
+],
+[
+0.5333,
+"Detach"
+],
+[
+0.9,
+"Enum: Left"
+],
+[
+0.9667,
+"prn: Bip01 Pelvis"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "OldWorldBlues - Main.bsa"
+},
+"2haattackrightdown.kf": {
+"seq": "AttackRightDown",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.5,
+"a:R"
+],
+[
+0.9667,
+"Blend:1"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattackrightisup.kf": {
+"seq": "AttackRightISUp",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+27,
+55,
+95
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.4667,
+"a:R"
+],
+[
+0.9667,
+"BlendIn:1"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhaimdown.kf": {
+"seq": "AimDown",
+"len": 13.3333,
+"cyc": 0,
+"prio": [
+25,
+30,
+35,
+45
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+13.3333,
+"end"
+]
+],
+"src": "OldWorldBlues - Main.bsa"
+},
+"2haattackleftisdown.kf": {
+"seq": "AttackLeftISDown",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.9333,
+"a:L"
+],
+[
+0.9667,
+"BlendIn:1"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhjumploopforward.kf": {
+"seq": "JumpLoopForward",
+"len": 2.1,
+"cyc": 0,
+"prio": [
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+2.1,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1mdunequip.kf": {
+"seq": "Unequip",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Enum: Unequip"
+],
+[
+0.6667,
+"Detach"
+],
+[
+0.9667,
+"prn: Bip01 Pelvis"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "LonesomeRoad - Main.bsa"
+},
+"2hajama.kf": {
+"seq": "JamA",
+"len": 1.3333,
+"cyc": 2,
+"prio": [
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNRifleAssaultG3Jam"
+],
+[
+1.3333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hajamb.kf": {
+"seq": "JamB",
+"len": 1.6667,
+"cyc": 2,
+"prio": [
+27,
+55,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNRiflePlasmaJam"
+],
+[
+1.6667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hajamc.kf": {
+"seq": "JamC",
+"len": 1.8333,
+"cyc": 2,
+"prio": [
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNRifleSniperJam"
+],
+[
+1.8333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hajamd.kf": {
+"seq": "JamD",
+"len": 1.5,
+"cyc": 2,
+"prio": [
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.0333,
+"Sound: WPNRifleGaussJam"
+],
+[
+1.5,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hajame.kf": {
+"seq": "JamE",
+"len": 0.7333,
+"cyc": 2,
+"prio": [
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.3333,
+"Sound: WPNRifleAssaultJam"
+],
+[
+0.7333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hajamf.kf": {
+"seq": "JamF",
+"len": 2.0,
+"cyc": 2,
+"prio": [
+0,
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNMarksCarbJam"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hajamg.kf": {
+"seq": "JamG",
+"len": 1.8333,
+"cyc": 2,
+"prio": [
+0,
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.0333,
+"Sound: WPNSilenced22SMGJam"
+],
+[
+1.8333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hajamh.kf": {
+"seq": "JamH",
+"len": 2.0,
+"cyc": 2,
+"prio": [
+0,
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.3333,
+"Sound: WPN127mmJam"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hajami.kf": {
+"seq": "JamI",
+"len": 1.3333,
+"cyc": 2,
+"prio": [
+0,
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+"Sound: WPNLightMGJam"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+1.3333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hajamj.kf": {
+"seq": "JamJ",
+"len": 2.3,
+"cyc": 2,
+"prio": [
+0,
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.3333,
+"Sound: WPNLaserRCWJam"
+],
+[
+2.3,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hlattackleftdown.kf": {
+"seq": "AttackLeftDown",
+"len": 0.6667,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:1"
+],
+[
+0.0667,
+"Hit"
+],
+[
+0.6333,
+"a:L"
+],
+[
+0.6667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhjamb.kf": {
+"seq": "JamB",
+"len": 2.6667,
+"cyc": 2,
+"prio": [
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:6"
+],
+[
+0.0333,
+"Sound: WPNFlamerJam"
+],
+[
+2.6667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhjamc.kf": {
+"seq": "JamC",
+"len": 2.3333,
+"cyc": 2,
+"prio": [
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:6"
+],
+[
+0.0333,
+"Sound: WPNGatlingLaserJam"
+],
+[
+2.3333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhjamd.kf": {
+"seq": "JamD",
+"len": 2.0,
+"cyc": 2,
+"prio": [
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:6"
+],
+[
+0.0333,
+"Sound: WPNIncineratorJam"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhjame.kf": {
+"seq": "JamE",
+"len": 3.5,
+"cyc": 2,
+"prio": [
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:6"
+],
+[
+0.0333,
+"Sound: WPNMinigunJam"
+],
+[
+3.5,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhjamf.kf": {
+"seq": "JamF",
+"len": 2.3333,
+"cyc": 2,
+"prio": [
+0,
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:6"
+],
+[
+2.3333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhjamg.kf": {
+"seq": "JamG",
+"len": 2.3333,
+"cyc": 2,
+"prio": [
+0,
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNGrndMGunJam"
+],
+[
+2.3333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhattackspin2down.kf": {
+"seq": "AttackSpin2Down",
+"len": 1.3333,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.1667,
+"Fire"
+],
+[
+1.0,
+"Loop"
+],
+[
+1.3333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hljama.kf": {
+"seq": "JamA",
+"len": 3.0,
+"cyc": 2,
+"prio": [
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:1"
+],
+[
+0.0333,
+"Sound: WPNFatManJam"
+],
+[
+3.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hljamb.kf": {
+"seq": "JamB",
+"len": 1.6667,
+"cyc": 2,
+"prio": [
+27,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:6"
+],
+[
+0.0333,
+"Sound: WPNTeslaCannonJam"
+],
+[
+1.6667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hljame.kf": {
+"seq": "JamE",
+"len": 1.6667,
+"cyc": 2,
+"prio": [
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:6"
+],
+[
+0.0333,
+"Sound: WPNMissileLauncherJam"
+],
+[
+1.6667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattackright.kf": {
+"seq": "AttackRight",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+0,
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.5,
+"a:R"
+],
+[
+0.9667,
+"BlendIn:1"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattackloopisdown.kf": {
+"seq": "AttackLoopISDown",
+"len": 0.1667,
+"cyc": 0,
+"prio": [
+27,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:1"
+],
+[
+0.1667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hajumplandforward.kf": {
+"seq": "JumpLandForward",
+"len": 0.4667,
+"cyc": 2,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Enum: Left"
+],
+[
+0.1333,
+"Blend:3"
+],
+[
+0.4333,
+"Enum: Right"
+],
+[
+0.4667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hajumplandright.kf": {
+"seq": "JumpLandRight",
+"len": 0.5333,
+"cyc": 2,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.1333,
+"Enum: Left"
+],
+[
+0.5,
+"Enum: Right"
+],
+[
+0.5333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhjumploopright.kf": {
+"seq": "JumpLoopRight",
+"len": 2.1,
+"cyc": 0,
+"prio": [
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+2.1,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hlreloada.kf": {
+"seq": "ReloadA",
+"len": 3.0,
+"cyc": 2,
+"prio": [
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.1,
+"Sound: WPNFatManReloadPt1"
+],
+[
+1.3,
+"Sound: WPNFatManReloadPt2"
+],
+[
+2.3667,
+"Sound: WPNFatManReloadPt3"
+],
+[
+3.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hlreloadb.kf": {
+"seq": "ReloadB",
+"len": 3.1667,
+"cyc": 2,
+"prio": [
+27,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:6"
+],
+[
+0.0333,
+"Sound: WPNTeslaCannonReloadPt1"
+],
+[
+1.6333,
+"Sound: WPNTeslaCannonReloadPt2"
+],
+[
+2.3667,
+"Sound: WPNTeslaCannonReloadPt3"
+],
+[
+3.1667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hlreloade.kf": {
+"seq": "ReloadE",
+"len": 4.0,
+"cyc": 2,
+"prio": [
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:6"
+],
+[
+0.4,
+"Sound: WPNMissileLauncherReloadPt1"
+],
+[
+2.4667,
+"Sound: WPNMissileLauncherReloadPt2"
+],
+[
+3.4333,
+"Sound: WPNMissileLauncherReloadPt3"
+],
+[
+4.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackcustom1power.kf": {
+"seq": "AttackCustom1Power",
+"len": 1.6,
+"cyc": 2,
+"prio": [
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.2,
+"Enum: Right"
+],
+[
+0.4333,
+"Sound: SFXGolfswing"
+],
+[
+0.5,
+"Enum: Left"
+],
+[
+0.6667,
+"Enum: Right"
+],
+[
+0.6667,
+"Hit"
+],
+[
+0.7333,
+"Decal: 1"
+],
+[
+1.5667,
+"Enum: Left"
+],
+[
+1.6,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhattackloopdown.kf": {
+"seq": "AttackLoopDown",
+"len": 0.2,
+"cyc": 0,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:1"
+],
+[
+0.2,
+"end"
+]
+],
+"src": "OldWorldBlues - Main.bsa"
+},
+"2hmblockidle.kf": {
+"seq": "BlockIdle",
+"len": 3.5,
+"cyc": 0,
+"prio": [
+26,
+66
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.1333,
+"Blend: 8"
+],
+[
+3.5,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1gtholster.kf": {
+"seq": "Holster",
+"len": 0.1,
+"cyc": 2,
+"prio": [
+5,
+20
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend: 1"
+],
+[
+0.0667,
+"prn: Bip01 Pelvis"
+],
+[
+0.1,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1gtaim.kf": {
+"seq": "Aim",
+"len": 3.1,
+"cyc": 0,
+"prio": [
+0,
+25,
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"prn: Bip01 R Hand"
+],
+[
+3.1,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haaim.kf": {
+"seq": "Aim",
+"len": 3.0,
+"cyc": 0,
+"prio": [
+0,
+25,
+30,
+35
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+3.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhaim.kf": {
+"seq": "Aim",
+"len": 13.3333,
+"cyc": 0,
+"prio": [
+0,
+25,
+30,
+35,
+45
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+13.3333,
+"end"
+]
+],
+"src": "OldWorldBlues - Main.bsa"
+},
+"2hlaim.kf": {
+"seq": "Aim",
+"len": 2.0,
+"cyc": 0,
+"prio": [
+0,
+25,
+37,
+45
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "LonesomeRoad - Main.bsa"
+},
+"2hmaim.kf": {
+"seq": "Aim",
+"len": 3.5,
+"cyc": 0,
+"prio": [
+0,
+15,
+30,
+45
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.1333,
+"prn: Bip01 L Hand"
+],
+[
+3.5,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1lmaim.kf": {
+"seq": "Aim",
+"len": 3.0667,
+"cyc": 0,
+"prio": [
+25,
+30,
+45,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"prn: Bip01 R Hand"
+],
+[
+3.0667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1mdaim.kf": {
+"seq": "Aim",
+"len": 2.0,
+"cyc": 0,
+"prio": [
+25,
+30,
+45
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hareloada.kf": {
+"seq": "ReloadA",
+"len": 2.0,
+"cyc": 2,
+"prio": [
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.2333,
+"Sound: WPNRifleAssaultG3ReloadOut"
+],
+[
+1.0333,
+"Sound: WPNRifleAssaultG3ReloadIn"
+],
+[
+1.3333,
+"Sound: WPNRifleAssaultG3ReloadChamber"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hareloadb.kf": {
+"seq": "ReloadB",
+"len": 3.0,
+"cyc": 2,
+"prio": [
+0,
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.3667,
+"Sound: WPNRiflePlasmaReloadPt1"
+],
+[
+0.8,
+"Sound: WPNRiflePlasmaReloadPt2"
+],
+[
+1.7,
+"Sound: WPNRiflePlasmaReloadPt3"
+],
+[
+2.2667,
+"Sound: WPNRiflePlasmaReloadPt4"
+],
+[
+3.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hareloadc.kf": {
+"seq": "ReloadC",
+"len": 3.0,
+"cyc": 2,
+"prio": [
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.5,
+"Sound: WPNRifleSniperReloadPt1"
+],
+[
+1.5667,
+"Sound: WPNRifleSniperReloadPt2"
+],
+[
+2.3333,
+"Sound: WPNRifleSniperReloadPt3"
+],
+[
+2.5,
+"Sound: WPNRifleSniperReloadPt4"
+],
+[
+3.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hareloadd.kf": {
+"seq": "ReloadD",
+"len": 2.3333,
+"cyc": 2,
+"prio": [
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.5667,
+"Sound: WPNRifleGaussReloadPt1"
+],
+[
+1.6333,
+"Sound: WPNRifleGaussReloadPt2"
+],
+[
+2.3333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hareloade.kf": {
+"seq": "ReloadE",
+"len": 2.2,
+"cyc": 2,
+"prio": [
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.2333,
+"Sound: WPNRifleAssaultReloadOut"
+],
+[
+0.6667,
+"Sound: WPNRifleAssaultReloadIn"
+],
+[
+1.6333,
+"Sound: WPNRifleAssaultReloadChamber"
+],
+[
+2.2,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hareloadf.kf": {
+"seq": "ReloadF",
+"len": 2.0,
+"cyc": 2,
+"prio": [
+0,
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.2333,
+"Sound: WPNMarksCarbReloadPt1"
+],
+[
+0.8,
+"Sound: WPNMarksCarbReloadPt2"
+],
+[
+1.4333,
+"Sound: WPNMarksCarbReloadPt3"
+],
+[
+1.5333,
+"Sound: WPNMarksCarbReloadPt4"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hareloadg.kf": {
+"seq": "ReloadG",
+"len": 2.3333,
+"cyc": 2,
+"prio": [
+0,
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.3417,
+"Sound: WPNSilenced22SMGReloadPt1"
+],
+[
+0.7167,
+"Sound: WPNSilenced22SMGReloadPt2"
+],
+[
+1.475,
+"Sound: WPNSilenced22SMGReloadPt3"
+],
+[
+1.9167,
+"Sound: WPNSilenced22SMGReloadPt4"
+],
+[
+2.3333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hareloadh.kf": {
+"seq": "ReloadH",
+"len": 2.0,
+"cyc": 2,
+"prio": [
+0,
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.4333,
+"Sound: WPN127mmReloadPt1"
+],
+[
+1.1667,
+"Sound: WPN127mmReloadPt2"
+],
+[
+1.6,
+"Sound: WPN127mmReloadPt3"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hareloadi.kf": {
+"seq": "ReloadI",
+"len": 2.1667,
+"cyc": 2,
+"prio": [
+0,
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.1333,
+"Sound: WPNLightMGReloadPt1"
+],
+[
+0.9,
+"Sound: WPNLightMGReloadPt2"
+],
+[
+1.5333,
+"Sound: WPNLightMGReloadPt3"
+],
+[
+2.1667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hareloadj.kf": {
+"seq": "ReloadJ",
+"len": 1.7667,
+"cyc": 2,
+"prio": [
+0,
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.3,
+"Sound: WPNLaserRCWReloadPt1"
+],
+[
+1.4,
+"Sound: WPNLaserRCWReloadPt2"
+],
+[
+1.7667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhjumploopleft.kf": {
+"seq": "JumpLoopLeft",
+"len": 2.1,
+"cyc": 0,
+"prio": [
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+2.1,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmjumploopleft.kf": {
+"seq": "JumpLoopLeft",
+"len": 2.1,
+"cyc": 0,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+2.1,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhunequip.kf": {
+"seq": "Unequip",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Enum: Unequip"
+],
+[
+0.5,
+"Detach"
+],
+[
+0.9667,
+"prn: Bip01 R Hand"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmjumplandbackward.kf": {
+"seq": "JumpLandBackward",
+"len": 0.4667,
+"cyc": 2,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0667,
+"Enum: Left"
+],
+[
+0.4333,
+"Enum: Right"
+],
+[
+0.4667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhattackspin2up.kf": {
+"seq": "AttackSpin2Up",
+"len": 1.3333,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.1667,
+"Fire"
+],
+[
+1.0,
+"Loop"
+],
+[
+1.3333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhjumplandforward.kf": {
+"seq": "JumpLandForward",
+"len": 0.4667,
+"cyc": 2,
+"prio": [
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Enum: Left"
+],
+[
+0.1333,
+"Blend:3"
+],
+[
+0.4333,
+"Enum: Right"
+],
+[
+0.4667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hlattackleftup.kf": {
+"seq": "AttackLeftUp",
+"len": 0.6667,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:1"
+],
+[
+0.0667,
+"Hit"
+],
+[
+0.6333,
+"a:L"
+],
+[
+0.6667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1mdequip.kf": {
+"seq": "Equip",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Enum: Equip"
+],
+[
+0.3333,
+"Attach"
+],
+[
+0.9667,
+"prn: Bip01 R Hand"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "LonesomeRoad - Main.bsa"
+},
+"2hmjumploopforward.kf": {
+"seq": "JumpLoopForward",
+"len": 2.1,
+"cyc": 0,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+2.1,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattackleftdown.kf": {
+"seq": "AttackLeftDown",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.9333,
+"a:L"
+],
+[
+0.9667,
+"BlendIn:1"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattackleftisup.kf": {
+"seq": "AttackLeftISUp",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.9333,
+"a:L"
+],
+[
+0.9667,
+"BlendIn:1"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhjumplandleft.kf": {
+"seq": "JumpLandLeft",
+"len": 0.4,
+"cyc": 2,
+"prio": [
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Enum: Left"
+],
+[
+0.0667,
+"Blend:3"
+],
+[
+0.3667,
+"Enum: Right"
+],
+[
+0.4,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmjumplandleft.kf": {
+"seq": "JumpLandLeft",
+"len": 0.4,
+"cyc": 2,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Enum: Left"
+],
+[
+0.0667,
+"Blend:3"
+],
+[
+0.3667,
+"Enum: Right"
+],
+[
+0.4,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hlholster.kf": {
+"seq": "Holster",
+"len": 0.1,
+"cyc": 2,
+"prio": [
+5,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:1"
+],
+[
+0.0667,
+"prn: Bip01 Spine2"
+],
+[
+0.1,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hahandgrip2_22smg.kf": {
+"seq": "HandGrip2_22smg",
+"len": 0.1333,
+"cyc": 0,
+"prio": [
+6,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:1"
+],
+[
+0.1333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackspin2down.kf": {
+"seq": "AttackSpin2Down",
+"len": 1.5333,
+"cyc": 2,
+"prio": [
+26,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.2667,
+"Fire"
+],
+[
+0.2667,
+"Decal: 0"
+],
+[
+1.0,
+"Loop"
+],
+[
+1.1667,
+"BlendOut:20"
+],
+[
+1.5333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattack3is.kf": {
+"seq": "Attack3IS",
+"len": 0.5667,
+"cyc": 2,
+"prio": [
+0,
+28,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.1667,
+"a:3"
+],
+[
+0.2333,
+"BlendIn:1"
+],
+[
+0.5667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattack3up.kf": {
+"seq": "Attack3Up",
+"len": 0.5667,
+"cyc": 2,
+"prio": [
+0,
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.1667,
+"a:3"
+],
+[
+0.2333,
+"BlendIn:1"
+],
+[
+0.5667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattack4is.kf": {
+"seq": "Attack4IS",
+"len": 0.5,
+"cyc": 2,
+"prio": [
+0,
+28,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.4,
+"a:4"
+],
+[
+0.4667,
+"BlendIn:1"
+],
+[
+0.5,
+"end"
+]
+],
+"src": "TaleOfTwoWastelands - Main.bsa"
+},
+"2haattack4up.kf": {
+"seq": "Attack4Up",
+"len": 0.5,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.4,
+"a:4"
+],
+[
+0.4667,
+"BlendIn:1"
+],
+[
+0.5,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hlattack3up.kf": {
+"seq": "Attack3Up",
+"len": 0.6667,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:1"
+],
+[
+0.0667,
+"Hit"
+],
+[
+0.6333,
+"a:3"
+],
+[
+0.6667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattackrightis.kf": {
+"seq": "AttackRightIS",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+0,
+28,
+55,
+95
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.5,
+"a:R"
+],
+[
+0.9667,
+"BlendIn:1"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattackrightup.kf": {
+"seq": "AttackRightUp",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.5,
+"a:R"
+],
+[
+0.9667,
+"BlendIn:1"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackcustom2power.kf": {
+"seq": "AttackCustom2Power",
+"len": 1.6,
+"cyc": 2,
+"prio": [
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.2,
+"Enum: Right"
+],
+[
+0.5,
+"Enum: Left"
+],
+[
+0.6667,
+"Hit"
+],
+[
+0.6667,
+"Enum: Right"
+],
+[
+0.7333,
+"Decal: 0"
+],
+[
+1.5667,
+"Enum: Left"
+],
+[
+1.6,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haholster.kf": {
+"seq": "Holster",
+"len": 0.1,
+"cyc": 2,
+"prio": [
+5,
+20,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend: 1"
+],
+[
+0.0667,
+"prn: Bip01 Spine2"
+],
+[
+0.1,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hlaimdown.kf": {
+"seq": "AimDown",
+"len": 2.0,
+"cyc": 0,
+"prio": [
+25,
+37
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hlattack3.kf": {
+"seq": "Attack3",
+"len": 0.6667,
+"cyc": 2,
+"prio": [
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:1"
+],
+[
+0.0667,
+"Hit"
+],
+[
+0.6333,
+"a:3"
+],
+[
+0.6667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackrightup_a.kf": {
+"seq": "AttackRightUp_A",
+"len": 1.5333,
+"cyc": 2,
+"prio": [
+17,
+30,
+55,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.4,
+"Sound: FXSwing2hm"
+],
+[
+0.5667,
+"Hit"
+],
+[
+0.6667,
+"a:L"
+],
+[
+1.5333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackrightup_b.kf": {
+"seq": "AttackRightUp_B",
+"len": 1.5333,
+"cyc": 2,
+"prio": [
+17,
+30,
+55,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.3667,
+"Sound: FXSwing2hm"
+],
+[
+0.5667,
+"Hit"
+],
+[
+0.7,
+"a:L"
+],
+[
+1.5333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hlaimup.kf": {
+"seq": "AimUp",
+"len": 2.0,
+"cyc": 0,
+"prio": [
+25,
+37
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haaimis.kf": {
+"seq": "AimIS",
+"len": 3.0,
+"cyc": 0,
+"prio": [
+0,
+26,
+50
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+3.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haaimup.kf": {
+"seq": "AimUp",
+"len": 3.0,
+"cyc": 0,
+"prio": [
+25,
+30,
+35
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+3.0,
+"end"
+]
+],
+"src": "Update.bsa"
+},
+"2hldeath.kf": {
+"seq": "Death",
+"len": 0.1667,
+"cyc": 2,
+"prio": [
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:1"
+],
+[
+0.1667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hadeath.kf": {
+"seq": "Death",
+"len": 0.0667,
+"cyc": 2,
+"prio": [
+15
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:1"
+],
+[
+0.0667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hlequip.kf": {
+"seq": "Equip",
+"len": 2.0,
+"cyc": 2,
+"prio": [
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Enum: Equip"
+],
+[
+0.4667,
+"prn: Bip01 R Hand"
+],
+[
+0.6667,
+"Attach"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "LonesomeRoad - Main.bsa"
+},
+"2haequip.kf": {
+"seq": "Equip",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Enum: Equip"
+],
+[
+0.3667,
+"Attach"
+],
+[
+0.9333,
+"prn: Bip01 R Hand"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmjumploopright.kf": {
+"seq": "JumpLoopRight",
+"len": 2.1,
+"cyc": 0,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+2.1,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmholster.kf": {
+"seq": "Holster",
+"len": 0.1,
+"cyc": 2,
+"prio": [
+5
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend: 1"
+],
+[
+0.0667,
+"prn: Bip01 Spine2"
+],
+[
+0.1,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hajumploopleft.kf": {
+"seq": "JumpLoopLeft",
+"len": 2.1,
+"cyc": 0,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+2.1,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haaimdown.kf": {
+"seq": "AimDown",
+"len": 3.0,
+"cyc": 0,
+"prio": [
+25,
+30,
+35
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+3.0,
+"end"
+]
+],
+"src": "Update.bsa"
+},
+"2haaimisup.kf": {
+"seq": "AimISUp",
+"len": 3.0,
+"cyc": 0,
+"prio": [
+26,
+45,
+50
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+3.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackpower.kf": {
+"seq": "AttackPower",
+"len": 1.6667,
+"cyc": 2,
+"prio": [
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0667,
+"Enum: Left"
+],
+[
+0.4667,
+"Sound: FXSwing2hm"
+],
+[
+0.8,
+"Hit"
+],
+[
+0.8,
+"Decal: 0"
+],
+[
+1.5667,
+"Enum: Left"
+],
+[
+1.6667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1gtunequip.kf": {
+"seq": "Unequip",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+0,
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Enum: Unequip"
+],
+[
+0.4667,
+"Detach"
+],
+[
+0.9667,
+"Prn: Bip01 Pelvis"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackspin2.kf": {
+"seq": "AttackSpin2",
+"len": 1.5333,
+"cyc": 2,
+"prio": [
+26,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.2667,
+"Fire"
+],
+[
+0.2667,
+"Decal: 0"
+],
+[
+1.0,
+"Loop"
+],
+[
+1.1667,
+"BlendOut:20"
+],
+[
+1.5333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattack3.kf": {
+"seq": "Attack3",
+"len": 0.5667,
+"cyc": 2,
+"prio": [
+0,
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.1667,
+"a:3"
+],
+[
+0.2333,
+"BlendIn:1"
+],
+[
+0.5667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattack4.kf": {
+"seq": "Attack4",
+"len": 0.5,
+"cyc": 2,
+"prio": [
+0,
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.4,
+"a:4"
+],
+[
+0.4667,
+"BlendIn:1"
+],
+[
+0.5,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1lmhandgrip1.kf": {
+"seq": "HandGrip1",
+"len": 3.0667,
+"cyc": 0,
+"prio": [
+6,
+50
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+"Blend:1"
+],
+[
+3.0667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hajumplandbackward.kf": {
+"seq": "JumpLandBackward",
+"len": 0.4667,
+"cyc": 2,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0667,
+"Enum: Left"
+],
+[
+0.4333,
+"Enum: Right"
+],
+[
+0.4667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmjumploopbackward.kf": {
+"seq": "JumpLoopBackward",
+"len": 2.1,
+"cyc": 0,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+2.1,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1lmplacemine.kf": {
+"seq": "PlaceMine",
+"len": 3.0667,
+"cyc": 2,
+"prio": [
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.0333,
+"Sound: WPNMineLunchboxAttack"
+],
+[
+1.5,
+"Release"
+],
+[
+2.6333,
+"Attach"
+],
+[
+3.0667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmaimdown.kf": {
+"seq": "AimDown",
+"len": 3.5,
+"cyc": 0,
+"prio": [
+0,
+15,
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+3.5,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackspin2up.kf": {
+"seq": "AttackSpin2Up",
+"len": 1.5333,
+"cyc": 2,
+"prio": [
+26,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.2667,
+"Fire"
+],
+[
+0.2667,
+"Decal: 0"
+],
+[
+1.0,
+"Loop"
+],
+[
+1.1667,
+"BlendOut:20"
+],
+[
+1.5333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmjumplandforward.kf": {
+"seq": "JumpLandForward",
+"len": 0.4667,
+"cyc": 2,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Enum: Left"
+],
+[
+0.1333,
+"Blend:3"
+],
+[
+0.4333,
+"Enum: Right"
+],
+[
+0.4667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackcustom3power.kf": {
+"seq": "AttackCustom3Power",
+"len": 1.6,
+"cyc": 2,
+"prio": [
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.2,
+"Enum: Right"
+],
+[
+0.5,
+"Enum: Left"
+],
+[
+0.6667,
+"Enum: Right"
+],
+[
+0.6667,
+"Hit"
+],
+[
+0.7333,
+"Decal: 0"
+],
+[
+1.5667,
+"Enum: Left"
+],
+[
+1.6,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1mdplacemine.kf": {
+"seq": "PlaceMine",
+"len": 2.0,
+"cyc": 2,
+"prio": [
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNPowderChargeSet"
+],
+[
+0.8,
+"Release"
+],
+[
+1.3,
+"Attach"
+],
+[
+1.9667,
+"prn: Bip01 R Hand  -at none "
+],
+[
+2.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackforwardpower.kf": {
+"seq": "AttackForwardPower",
+"len": 1.6,
+"cyc": 2,
+"prio": [
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.2,
+"Enum: Right"
+],
+[
+0.5,
+"Enum: Left"
+],
+[
+0.5,
+"Sound: FXSwing2hm"
+],
+[
+0.6667,
+"Enum: Right"
+],
+[
+0.7333,
+"Hit"
+],
+[
+0.7333,
+"Decal: 0"
+],
+[
+1.5667,
+"Enum: Left"
+],
+[
+1.6,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattackloopdown.kf": {
+"seq": "AttackLoopDown",
+"len": 0.1667,
+"cyc": 0,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:1"
+],
+[
+0.1667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattackloopisup.kf": {
+"seq": "AttackLoopISUp",
+"len": 0.1667,
+"cyc": 0,
+"prio": [
+27,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:1"
+],
+[
+0.1667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hlunequip.kf": {
+"seq": "Unequip",
+"len": 2.0,
+"cyc": 2,
+"prio": [
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Enum: Unequip"
+],
+[
+0.6667,
+"Detach"
+],
+[
+1.9667,
+"prn: Bip01 Spine2"
+],
+[
+2.0,
+"end"
+]
+],
+"src": "LonesomeRoad - Main.bsa"
+},
+"2hmaimup.kf": {
+"seq": "AimUp",
+"len": 3.5,
+"cyc": 0,
+"prio": [
+0,
+15,
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+3.5,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmequip.kf": {
+"seq": "Equip",
+"len": 1.2,
+"cyc": 2,
+"prio": [
+15,
+30,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"prn: Bip01 R Hand"
+],
+[
+0.0333,
+"Sound: WPNMeleeBackEquip"
+],
+[
+0.3,
+"Attach"
+],
+[
+1.2,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1gtequip.kf": {
+"seq": "Equip",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+0,
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Enum: Equip"
+],
+[
+0.5,
+"Attach"
+],
+[
+0.9667,
+"Prn: Bip01 R Hand"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhattackleft.kf": {
+"seq": "AttackLeft",
+"len": 0.3333,
+"cyc": 2,
+"prio": [
+26,
+55,
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:1"
+],
+[
+0.0667,
+"Hit"
+],
+[
+0.3,
+"a:L"
+],
+[
+0.3333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhattackloop.kf": {
+"seq": "AttackLoop",
+"len": 0.2,
+"cyc": 0,
+"prio": [
+0,
+26,
+35,
+55,
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:1"
+],
+[
+0.2,
+"end"
+]
+],
+"src": "OldWorldBlues - Main.bsa"
+},
+"2hhattackspin.kf": {
+"seq": "AttackSpin",
+"len": 2.5,
+"cyc": 2,
+"prio": [
+26,
+55,
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.9667,
+"Fire"
+],
+[
+1.6333,
+"Loop"
+],
+[
+2.5,
+"end"
+]
+],
+"src": "TaleOfTwoWastelands - Main.bsa"
+},
+"1lmplacemine2.kf": {
+"seq": "PlaceMine2",
+"len": 3.0667,
+"cyc": 2,
+"prio": [
+0,
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.0333,
+"Sound: WPNMineLunchboxAttack"
+],
+[
+0.2667,
+"Sound: WPNTimeBombSet"
+],
+[
+1.5,
+"Release"
+],
+[
+2.6333,
+"Attach"
+],
+[
+3.0667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hlattack3down.kf": {
+"seq": "Attack3Down",
+"len": 0.6667,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:1"
+],
+[
+0.0667,
+"Hit"
+],
+[
+0.6333,
+"a:3"
+],
+[
+0.6667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haunequip.kf": {
+"seq": "Unequip",
+"len": 0.8333,
+"cyc": 2,
+"prio": [
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Enum: Unequip"
+],
+[
+0.4667,
+"Detach"
+],
+[
+0.8,
+"prn: Bip01 Spine2"
+],
+[
+0.8333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackrightdown_a.kf": {
+"seq": "AttackRightDown_A",
+"len": 1.5333,
+"cyc": 2,
+"prio": [
+17,
+30,
+55,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.3667,
+"Sound: FXSwing2hm"
+],
+[
+0.5667,
+"Hit"
+],
+[
+0.6667,
+"a:L"
+],
+[
+1.5333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackrightdown_b.kf": {
+"seq": "AttackRightDown_B",
+"len": 1.5333,
+"cyc": 2,
+"prio": [
+17,
+30,
+55,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.3333,
+"Sound: FXSwing2hm"
+],
+[
+0.5667,
+"Hit"
+],
+[
+0.7,
+"a:L"
+],
+[
+1.5333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattack3isdown.kf": {
+"seq": "Attack3ISDown",
+"len": 0.5667,
+"cyc": 2,
+"prio": [
+0,
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.1667,
+"a:3"
+],
+[
+0.2333,
+"BlendIn:1"
+],
+[
+0.5667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1lmequip.kf": {
+"seq": "Equip",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+0,
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Enum: Equip"
+],
+[
+0.4667,
+"Attach"
+],
+[
+0.6667,
+"Enum: Left"
+],
+[
+0.9667,
+"prn: Bip01 R Hand"
+],
+[
+0.9667,
+"Enum: Right"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "OldWorldBlues - Main.bsa"
+},
+"2hhjumplandbackward.kf": {
+"seq": "JumpLandBackward",
+"len": 0.4667,
+"cyc": 2,
+"prio": [
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0667,
+"Enum: Left"
+],
+[
+0.4333,
+"Enum: Right"
+],
+[
+0.4667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmunequip.kf": {
+"seq": "Unequip",
+"len": 1.2,
+"cyc": 2,
+"prio": [
+15,
+30,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"prn: Bip01 Spine2"
+],
+[
+0.0333,
+"Sound: WPNMeleeBackUnequip"
+],
+[
+0.8667,
+"Detach"
+],
+[
+1.2,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hajumploopbackward.kf": {
+"seq": "JumpLoopBackward",
+"len": 2.1,
+"cyc": 0,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+2.1,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhaimup.kf": {
+"seq": "AimUp",
+"len": 13.3333,
+"cyc": 0,
+"prio": [
+25,
+30,
+35,
+45
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+13.3333,
+"end"
+]
+],
+"src": "OldWorldBlues - Main.bsa"
+},
+"2hhattackleftup.kf": {
+"seq": "AttackLeftUp",
+"len": 0.3333,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:1"
+],
+[
+0.0667,
+"Hit"
+],
+[
+0.3,
+"a:L"
+],
+[
+0.3333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackleft_a.kf": {
+"seq": "AttackLeft_A",
+"len": 0.9667,
+"cyc": 2,
+"prio": [
+16,
+30,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.2,
+"Sound: FXSwing2hm"
+],
+[
+0.3,
+"Hit"
+],
+[
+0.3,
+"Decal: 0"
+],
+[
+0.4,
+"a:R"
+],
+[
+0.9667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackleft_b.kf": {
+"seq": "AttackLeft_B",
+"len": 0.9667,
+"cyc": 2,
+"prio": [
+16,
+30,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.1667,
+"Sound: FXSwing2hm"
+],
+[
+0.3,
+"Hit"
+],
+[
+0.3,
+"Decal: 0"
+],
+[
+0.4333,
+"a:R"
+],
+[
+0.9667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhequip.kf": {
+"seq": "Equip",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Enum: Equip"
+],
+[
+0.5,
+"Attach"
+],
+[
+0.9667,
+"prn: Bip01 R Hand"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhattackloopup.kf": {
+"seq": "AttackLoopUp",
+"len": 0.2,
+"cyc": 0,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:1"
+],
+[
+0.2,
+"end"
+]
+],
+"src": "OldWorldBlues - Main.bsa"
+},
+"2hmattackcustom4power.kf": {
+"seq": "AttackCustom4Power",
+"len": 1.6333,
+"cyc": 2,
+"prio": [
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.2333,
+"Enum: Right"
+],
+[
+0.5667,
+"Enum: Left"
+],
+[
+0.6667,
+"Enum: Right"
+],
+[
+0.7333,
+"Hit"
+],
+[
+0.7333,
+"Decal: 0"
+],
+[
+1.0667,
+"Enum: Right"
+],
+[
+1.2667,
+"Enum: Left"
+],
+[
+1.4,
+"a:L"
+],
+[
+1.6333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackspin.kf": {
+"seq": "AttackSpin",
+"len": 1.5333,
+"cyc": 2,
+"prio": [
+26,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.2667,
+"Fire"
+],
+[
+0.2667,
+"Decal: 0"
+],
+[
+1.0,
+"Loop"
+],
+[
+1.1667,
+"BlendOut:20"
+],
+[
+1.5333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hlattackright.kf": {
+"seq": "AttackRight",
+"len": 0.6667,
+"cyc": 2,
+"prio": [
+26,
+55,
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0667,
+"Hit"
+],
+[
+0.6,
+"BlendIn:1"
+],
+[
+0.6333,
+"a:R"
+],
+[
+0.6667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmjumplandright.kf": {
+"seq": "JumpLandRight",
+"len": 0.5333,
+"cyc": 2,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.1333,
+"Enum: Left"
+],
+[
+0.5,
+"Enum: Right"
+],
+[
+0.5333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1lmholster.kf": {
+"seq": "Holster",
+"len": 0.1667,
+"cyc": 2,
+"prio": [
+0,
+5,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend: 0"
+],
+[
+0.1333,
+"prn: Bip01 Pelvis"
+],
+[
+0.1667,
+"end"
+]
+],
+"src": "OldWorldBlues - Main.bsa"
+},
+"1gthandgrip1.kf": {
+"seq": "HandGrip1",
+"len": 0.1333,
+"cyc": 0,
+"prio": [
+6,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:1"
+],
+[
+0.1333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1gthandgrip2.kf": {
+"seq": "HandGrip2",
+"len": 0.1333,
+"cyc": 0,
+"prio": [
+6,
+50
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:1"
+],
+[
+0.1333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1gthandgrip3.kf": {
+"seq": "HandGrip3",
+"len": 0.1333,
+"cyc": 0,
+"prio": [
+6,
+50
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:1"
+],
+[
+0.1333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackbackpower.kf": {
+"seq": "AttackBackPower",
+"len": 1.5,
+"cyc": 2,
+"prio": [
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.2,
+"Enum: Right"
+],
+[
+0.3,
+"Sound: FXSwing2hm"
+],
+[
+0.5,
+"Hit"
+],
+[
+0.5,
+"Decal: 0"
+],
+[
+0.6,
+"Enum: Left"
+],
+[
+1.1333,
+"Enum: Right"
+],
+[
+1.3333,
+"Enum: Left"
+],
+[
+1.5,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hajumploopright.kf": {
+"seq": "JumpLoopRight",
+"len": 2.1,
+"cyc": 0,
+"prio": [
+30
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+2.1,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhreloadb.kf": {
+"seq": "ReloadB",
+"len": 1.5,
+"cyc": 2,
+"prio": [
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNFlamerReload"
+],
+[
+1.5,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhreloadc.kf": {
+"seq": "ReloadC",
+"len": 3.0,
+"cyc": 2,
+"prio": [
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:6"
+],
+[
+0.6333,
+"Sound: WPNGatlingLaserReloadPt1"
+],
+[
+1.9667,
+"Sound: WPNGatlingLaserReloadPt2"
+],
+[
+3.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhreloadd.kf": {
+"seq": "ReloadD",
+"len": 1.5,
+"cyc": 2,
+"prio": [
+27,
+57,
+65,
+70
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.3667,
+"Sound: WPNIncineratorReloadPt1"
+],
+[
+1.0,
+"Sound: WPNIncineratorReloadPt2"
+],
+[
+1.5,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhreloade.kf": {
+"seq": "ReloadE",
+"len": 4.0,
+"cyc": 2,
+"prio": [
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:6"
+],
+[
+0.3667,
+"Sound: WPNMinigunReloadPt0"
+],
+[
+1.1,
+"Sound: WPNMinigunReloadPt1"
+],
+[
+1.9667,
+"Sound: WPNMinigunReloadPt2"
+],
+[
+2.8333,
+"Sound: WPNMinigunReloadPt3"
+],
+[
+3.2667,
+"Sound: WPNMinigunReloadPt4"
+],
+[
+3.7,
+"Sound: WPNMinigunReloadPt5"
+],
+[
+4.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhreloadf.kf": {
+"seq": "ReloadF",
+"len": 1.3333,
+"cyc": 2,
+"prio": [
+0,
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:6"
+],
+[
+1.3333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhreloadg.kf": {
+"seq": "ReloadG",
+"len": 4.0,
+"cyc": 2,
+"prio": [
+0,
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.2333,
+"Sound: WPNGrndMGunReloadPt1"
+],
+[
+1.2667,
+"Sound: WPNGrndMGunReloadPt2"
+],
+[
+1.7,
+"Sound: WPNGrndMGunReloadPt3"
+],
+[
+2.7667,
+"Sound: WPNGrndMGunReloadPt4"
+],
+[
+3.2333,
+"Sound: WPNGrndMGunReloadPt5"
+],
+[
+3.5667,
+"Sound: WPNGrndMGunReloadPt6"
+],
+[
+4.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1mdholster.kf": {
+"seq": "Holster",
+"len": 0.1333,
+"cyc": 2,
+"prio": [
+5,
+20
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+"prn: Bip01 R Hand  -at none "
+],
+[
+0.0333,
+"Blend:1"
+],
+[
+0.1,
+"prn: Bip01 Pelvis"
+],
+[
+0.1333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmrecoil.kf": {
+"seq": "Recoil",
+"len": 1.1667,
+"cyc": 2,
+"prio": [
+15,
+70
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:2"
+],
+[
+1.1667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattackleft.kf": {
+"seq": "AttackLeft",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+0,
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.9333,
+"a:L"
+],
+[
+0.9667,
+"BlendIn:1"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattackloop.kf": {
+"seq": "AttackLoop",
+"len": 0.1667,
+"cyc": 0,
+"prio": [
+0,
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:1"
+],
+[
+0.1667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattackleftis.kf": {
+"seq": "AttackLeftIS",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+0,
+28,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.9333,
+"a:L"
+],
+[
+0.9667,
+"BlendIn:1"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattackleftup.kf": {
+"seq": "AttackLeftUp",
+"len": 1.0,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.9333,
+"a:L"
+],
+[
+0.9667,
+"BlendIn:1"
+],
+[
+1.0,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhjumploopbackward.kf": {
+"seq": "JumpLoopBackward",
+"len": 2.1,
+"cyc": 0,
+"prio": [
+30,
+36
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+2.1,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackleftup_a.kf": {
+"seq": "AttackLeftUp_A",
+"len": 0.9667,
+"cyc": 2,
+"prio": [
+16,
+30,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.1667,
+"Sound: FXSwing2hm"
+],
+[
+0.3,
+"Hit"
+],
+[
+0.5,
+"a:R"
+],
+[
+0.9667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackleftup_b.kf": {
+"seq": "AttackLeftUp_B",
+"len": 0.9667,
+"cyc": 2,
+"prio": [
+16,
+30,
+56
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.2,
+"Sound: FXSwing2hm"
+],
+[
+0.3,
+"Hit"
+],
+[
+0.5,
+"a:R"
+],
+[
+0.9667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattackloopis.kf": {
+"seq": "AttackLoopIS",
+"len": 0.1667,
+"cyc": 0,
+"prio": [
+0,
+28,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:1"
+],
+[
+0.1667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2haattackloopup.kf": {
+"seq": "AttackLoopUp",
+"len": 0.1667,
+"cyc": 0,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:1"
+],
+[
+0.1667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hhattackleftdown.kf": {
+"seq": "AttackLeftDown",
+"len": 0.3333,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:1"
+],
+[
+0.0667,
+"Hit"
+],
+[
+0.3,
+"a:L"
+],
+[
+0.3333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1gtattackthrow.kf": {
+"seq": "AttackThrow",
+"len": 1.7,
+"cyc": 2,
+"prio": [
+0,
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNGrenadeThrowA"
+],
+[
+0.5667,
+"Hold"
+],
+[
+0.8667,
+"Release"
+],
+[
+0.9,
+"Sound: WPNGrenadeThrowB"
+],
+[
+1.5333,
+"Attach"
+],
+[
+1.7,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackrightpower.kf": {
+"seq": "AttackRightPower",
+"len": 1.5,
+"cyc": 2,
+"prio": [
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.2,
+"Enum: Right"
+],
+[
+0.2333,
+"Sound: FXSwing2hm"
+],
+[
+0.5333,
+"Hit"
+],
+[
+0.5333,
+"Decal: 0"
+],
+[
+0.6,
+"Enum: Left"
+],
+[
+1.1333,
+"Enum: Right"
+],
+[
+1.3333,
+"Enum: Left"
+],
+[
+1.5,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1gtattackthrow2.kf": {
+"seq": "AttackThrow2",
+"len": 2.6667,
+"cyc": 2,
+"prio": [
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.1333,
+"Sound: WPNDynamiteThrow"
+],
+[
+0.5667,
+"Hold"
+],
+[
+0.7667,
+"Sound: WPNDynamiteFuseStart"
+],
+[
+1.8333,
+"Release"
+],
+[
+2.4667,
+"Attach"
+],
+[
+2.6667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1gtattackthrow3.kf": {
+"seq": "AttackThrow3",
+"len": 1.7,
+"cyc": 2,
+"prio": [
+0,
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNGrenadeThrowA"
+],
+[
+0.5667,
+"Hold"
+],
+[
+0.8667,
+"Release"
+],
+[
+0.9,
+"Sound: WPNGrenadeThrowB"
+],
+[
+1.5333,
+"Attach"
+],
+[
+1.7,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1gtattackthrow5.kf": {
+"seq": "AttackThrow5",
+"len": 1.7,
+"cyc": 2,
+"prio": [
+0,
+25,
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Sound: WPNGrenadeThrowA"
+],
+[
+0.5667,
+"Hold"
+],
+[
+0.6,
+"Sound: WPNGrenadeThrowB"
+],
+[
+0.8667,
+"Release"
+],
+[
+1.5333,
+"Attach"
+],
+[
+1.7,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1gtattackthrow6.kf": {
+"seq": "AttackThrow6",
+"len": 1.7,
+"cyc": 2,
+"prio": [
+0,
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.5,
+"Hold"
+],
+[
+0.5333,
+"Sound: WPNThrowAxeAttack"
+],
+[
+0.6667,
+"Release"
+],
+[
+1.3667,
+"Attach"
+],
+[
+1.7,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1gtattackthrow7.kf": {
+"seq": "AttackThrow7",
+"len": 1.9,
+"cyc": 2,
+"prio": [
+26,
+55,
+60
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.4,
+"Sound: WPNThrowSpearGrab"
+],
+[
+0.5667,
+"Hold"
+],
+[
+0.8,
+"Sound: WPNThrowSpearAttack"
+],
+[
+0.9667,
+"Release"
+],
+[
+1.6667,
+"Attach"
+],
+[
+1.9,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"1gtattackthrow8.kf": {
+"seq": "AttackThrow8",
+"len": 0.6333,
+"cyc": 2,
+"prio": [
+26,
+60
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0667,
+"Hold"
+],
+[
+0.1667,
+"Sound: WPNThrowKnifeAttack"
+],
+[
+0.2,
+"Release"
+],
+[
+0.3333,
+"Blend:2"
+],
+[
+0.4667,
+"Attach"
+],
+[
+0.5333,
+"a:Throw8"
+],
+[
+0.6333,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hmattackcustom5power.kf": {
+"seq": "AttackCustom5Power",
+"len": 2.1667,
+"cyc": 2,
+"prio": [
+56,
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.9333,
+"Hit"
+],
+[
+2.1667,
+"end"
+]
+],
+"src": "Fallout - Meshes.bsa"
+},
+"2hajamk.kf": {
+"seq": "Jamk",
+"len": 1.3333,
+"cyc": 2,
+"prio": [
+0,
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+"Sound: WPNLightMGJam"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+1.3333,
+"end"
+]
+],
+"src": "HonestHearts - Main.bsa"
+},
+"2hajaml.kf": {
+"seq": "JamL",
+"len": 1.3333,
+"cyc": 2,
+"prio": [
+0,
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0,
+"Sound: WPNLightMGJam"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+1.3333,
+"end"
+]
+],
+"src": "HonestHearts - Main.bsa"
+},
+"2hareloadk.kf": {
+"seq": "Reloadk",
+"len": 2.1667,
+"cyc": 2,
+"prio": [
+0,
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.1333,
+"Sound: WPNLightMGReloadPt1"
+],
+[
+0.9,
+"Sound: WPNLightMGReloadPt2"
+],
+[
+1.5333,
+"Sound: WPNLightMGReloadPt3"
+],
+[
+2.1667,
+"end"
+]
+],
+"src": "HonestHearts - Main.bsa"
+},
+"2hareloadl.kf": {
+"seq": "Reloadl",
+"len": 2.1667,
+"cyc": 2,
+"prio": [
+0,
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"BlendIn:3"
+],
+[
+0.1333,
+"Sound: WPNLightMGReloadPt1"
+],
+[
+0.9,
+"Sound: WPNLightMGReloadPt2"
+],
+[
+1.5333,
+"Sound: WPNLightMGReloadPt3"
+],
+[
+2.1667,
+"end"
+]
+],
+"src": "HonestHearts - Main.bsa"
+},
+"2hlattackloop.kf": {
+"seq": "AttackLoop",
+"len": 0.3333,
+"cyc": 0,
+"prio": [
+0,
+26,
+55,
+57
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.0833,
+"BlendIn:1"
+],
+[
+0.3333,
+"end"
+]
+],
+"src": "LonesomeRoad - Main.bsa"
+},
+"2hljamf.kf": {
+"seq": "JamF",
+"len": 3.4667,
+"cyc": 2,
+"prio": [
+0,
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Sound: NVDLC04WPNRedGlareJam"
+],
+[
+0.3333,
+"Blend:6"
+],
+[
+3.4667,
+"end"
+]
+],
+"src": "LonesomeRoad - Main.bsa"
+},
+"2hljamg.kf": {
+"seq": "JamG",
+"len": 3.3333,
+"cyc": 2,
+"prio": [
+0,
+27,
+55,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.3333,
+"Blend:6"
+],
+[
+0.3667,
+"Sound: NVDLC04WPNSMMGJamPt1"
+],
+[
+1.1667,
+"Sound: NVDLC04WPNSMMGJamPt2"
+],
+[
+2.3333,
+"Sound: NVDLC04WPNSMMGJamPt3"
+],
+[
+3.3333,
+"end"
+]
+],
+"src": "LonesomeRoad - Main.bsa"
+},
+"2hlreloadf.kf": {
+"seq": "ReloadF",
+"len": 6.8333,
+"cyc": 2,
+"prio": [
+0,
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.3333,
+"Blend:6"
+],
+[
+0.4333,
+"Sound: NVDLC04WPNRedGlareReloadPt1"
+],
+[
+0.9,
+"Sound: NVDLC04WPNRedGlareReloadPt2"
+],
+[
+1.8667,
+"Sound: NVDLC04WPNRedGlareReloadPt3"
+],
+[
+3.7,
+"Sound: NVDLC04WPNRedGlareReloadPt4"
+],
+[
+4.7333,
+"Sound: NVDLC04WPNRedGlareReloadPt5"
+],
+[
+5.3333,
+"Sound: NVDLC04WPNRedGlareReloadPt6"
+],
+[
+5.9,
+"Sound: NVDLC04WPNRedGlareReloadPt7"
+],
+[
+6.8333,
+"end"
+]
+],
+"src": "LonesomeRoad - Main.bsa"
+},
+"2hlreloadg.kf": {
+"seq": "ReloadG",
+"len": 2.8333,
+"cyc": 2,
+"prio": [
+0,
+27,
+55,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.3333,
+"Blend:6"
+],
+[
+0.3667,
+"Sound: NVDLC04WPNSMMGReloadPt1"
+],
+[
+1.6667,
+"Sound: NVDLC04WPNSMMGReloadPt2"
+],
+[
+2.8333,
+"end"
+]
+],
+"src": "LonesomeRoad - Main.bsa"
+},
+"2hlattackloopup.kf": {
+"seq": "AttackLoopUp",
+"len": 0.3333,
+"cyc": 0,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.0833,
+"BlendIn:1"
+],
+[
+0.3333,
+"end"
+]
+],
+"src": "LonesomeRoad - Main.bsa"
+},
+"2hlattackloopdown.kf": {
+"seq": "AttackLoopDown",
+"len": 0.3333,
+"cyc": 0,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Hit"
+],
+[
+0.0833,
+"BlendIn:1"
+],
+[
+0.3333,
+"end"
+]
+],
+"src": "LonesomeRoad - Main.bsa"
+},
+"2hajamm.kf": {
+"seq": "JamM",
+"len": 1.5,
+"cyc": 2,
+"prio": [
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNDLC05AlienRifleJam"
+],
+[
+1.5,
+"end"
+]
+],
+"src": "TaleOfTwoWastelands - Main.bsa"
+},
+"2hajamo.kf": {
+"seq": "JamO",
+"len": 4.0,
+"cyc": 2,
+"prio": [
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNCryolatorJam"
+],
+[
+4.0,
+"end"
+]
+],
+"src": "TaleOfTwoWastelands - Main.bsa"
+},
+"2haattackspinup.kf": {
+"seq": "AttackSpinUp",
+"len": 0.3333,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:4"
+],
+[
+0.1333,
+"Fire"
+],
+[
+0.3,
+"Loop"
+],
+[
+0.3333,
+"end"
+]
+],
+"src": "TaleOfTwoWastelands - Main.bsa"
+},
+"2hareloadm.kf": {
+"seq": "ReloadM",
+"len": 1.5,
+"cyc": 2,
+"prio": [
+27,
+57,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.0333,
+"Sound: WPNDLC05AlienRifleReloadPt1"
+],
+[
+0.5633,
+"Sound: WPNDLC05AlienRifleReloadPt2"
+],
+[
+1.5,
+"end"
+]
+],
+"src": "TaleOfTwoWastelands - Main.bsa"
+},
+"2hareloado.kf": {
+"seq": "ReloadO",
+"len": 3.0,
+"cyc": 2,
+"prio": [
+27,
+65
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:3"
+],
+[
+0.6,
+"Sound: WPNCryolatorReloadPt1"
+],
+[
+0.755,
+"Sound: WPNCryolatorReloadPt2"
+],
+[
+1.23,
+"Sound: WPNCryolatorReloadPt3"
+],
+[
+2.13,
+"Sound: WPNCryolatorReloadPt4"
+],
+[
+3.0,
+"end"
+]
+],
+"src": "TaleOfTwoWastelands - Main.bsa"
+},
+"2haattackspindown.kf": {
+"seq": "AttackSpinDown",
+"len": 0.3333,
+"cyc": 2,
+"prio": [
+25,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:4"
+],
+[
+0.1333,
+"Fire"
+],
+[
+0.3,
+"Loop"
+],
+[
+0.3333,
+"end"
+]
+],
+"src": "TaleOfTwoWastelands - Main.bsa"
+},
+"2haattackspin.kf": {
+"seq": "AttackSpin",
+"len": 0.3333,
+"cyc": 2,
+"prio": [
+25,
+26,
+55
+],
+"keys": [
+[
+0.0,
+"start"
+],
+[
+0.0333,
+"Blend:2"
+],
+[
+0.1333,
+"Fire"
+],
+[
+0.3,
+"Loop"
+],
+[
+0.3333,
+"end"
+]
+],
+"src": "TaleOfTwoWastelands - Main.bsa"
+}
+}

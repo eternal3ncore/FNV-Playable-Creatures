@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+build/
+*.dll
+*.esp
+*.esm
+*.bsa
+*.nif
+*.kf
+*.exe
+docs/PROJECT_LOG.md
+tools/ini_v*.py
+tools/ini_simplify.py
