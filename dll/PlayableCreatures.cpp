@@ -80,7 +80,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 63;
+static const UInt32 kPluginVersion = 64;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -935,19 +935,41 @@ static const UInt32 kSite_CamFinal = 0x0094BDB4, kAddr_CamFinalCont = 0x0094BDBB
 static const UInt32 kPtr_InterfaceManager = 0x011D8A80, kAddr_FindNodeByName2 = 0x004AAE30;
 typedef void* (__cdecl* FindNode_t)(void* root, const char* name);
 static bool g_fpActive = false; static void* g_fpRoot = nullptr; static void* g_fpAnchor = nullptr; static void* g_fpHideNode = nullptr;
-static float g_fpHideScale = 1.0f; static Profile* g_fpProf = nullptr; static bool g_fpWanted = false;
+static float g_fpHideScale = 1.0f; static Profile* g_fpProf = nullptr; static bool g_fpWanted = false, g_fpFlags = false;
 static inline UInt32& AVFlags(void* n) { return *(UInt32*)((UInt8*)n + 0x30); }
 static inline float* WorldRot(void* n) { return (float*)((UInt8*)n + 0x68); }
 static inline float* WorldPos(void* n) { return (float*)((UInt8*)n + 0x8C); }
+// Our root visibility in 1st person (3rd-person root shown, 1st-person root hidden) is the engine's 3rd-person
+// state, and the view setter 0x951A10 compares the roots' hidden flags first: going back to 3rd person it saw "already
+// 3rd person" and returned before its 3rd-person setup (the body stayed missing until VATS rebuilt it). So the
+// vanilla 1st-person flags are put back before the engine changes the view (hook on 0x951A10) or opens a menu.
+static void FPVanillaFlags(void* player) {
+	if (!g_fpFlags || !player) return;
+	g_fpFlags = false;
+	void* r3 = PlayerRoot(player); void* r1 = *(void**)((UInt8*)player + 0x694);
+	if (r3) AVFlags(r3) |= 1;
+	if (r1) AVFlags(r1) &= ~1u;
+}
 static void FPRestore(void* player, const char* why) {
 	if (!g_fpActive) return;
 	g_fpActive = false;
 	if (g_fpHideNode) *(float*)((UInt8*)g_fpHideNode + 0x64) = g_fpHideScale;
-	if (player && !*((UInt8*)player + 0x64A)) {                          // still 1st person (menu): vanilla visibility
-		void* r3 = PlayerRoot(player); void* r1 = *(void**)((UInt8*)player + 0x694);
-		if (r3) AVFlags(r3) |= 1; if (r1) AVFlags(r1) &= ~1u;
-	}
+	if (player && !*((UInt8*)player + 0x64A)) FPVanillaFlags(player);   // still 1st person (menu)
+	else g_fpFlags = false;                                          // 3rd person: our flags are its own
 	Log("first person: creature body off (%s)", why);
+}
+typedef void (__fastcall* ApplyView_t)(void* player, void* edx, UInt8 firstPerson);
+static ApplyView_t g_applyViewTramp = nullptr;
+static void __fastcall Hook_ApplyView(void* player, void* edx, UInt8 firstPerson) {
+	if (g_fpFlags && player == Player()) {
+		FPVanillaFlags(player);
+		if (g_fpActive) {
+			g_fpActive = false; g_fpWanted = false;
+			if (g_fpHideNode) *(float*)((UInt8*)g_fpHideNode + 0x64) = g_fpHideScale;
+			Log("first person: creature body off (view change to %s)", firstPerson ? "1st person" : "3rd person");
+		}
+	}
+	g_applyViewTramp(player, edx, firstPerson);
 }
 static void ShrinkSubtreeOnce(void* n) {                                  // this frame: the node and its children
 	float* wp = WorldPos(n);
@@ -981,7 +1003,7 @@ static void __cdecl FPCamera(float* pos, void* player) {
 			p->fpOff[0], p->fpOff[1], p->fpOff[2], p->fpHide, g_fpHideNode ? "" : " (not found)");
 	}
 	if (!g_fpActive) return;
-	AVFlags(r3) &= ~1u; AVFlags(r1) |= 1;
+	AVFlags(r3) &= ~1u; AVFlags(r1) |= 1; g_fpFlags = true;
 	if (g_fpHideNode) { *(float*)((UInt8*)g_fpHideNode + 0x64) = 0.001f; ShrinkSubtreeOnce(g_fpHideNode); }
 	const float* m = WorldRot(r3); const float* a = WorldPos(g_fpAnchor); const float* o = p->fpOff;
 	pos[0] = a[0] + m[0] * o[0] + m[1] * o[1] + m[2] * o[2];
@@ -1012,6 +1034,18 @@ static void InstallFirstPersonBody() {
 	VirtualProtect(site, 7, old, &old);
 	FlushInstructionCache(GetCurrentProcess(), nullptr, 0);
 	Log("first person: camera position hook at %08X (stub %p)", kSite_CamFinal, stub);
+	// view setter 0x951A10 (thiscall(player, bool firstPerson), ret 4): prologue 55 8B EC 6A FF (5 bytes) copied
+	UInt8* fn = (UInt8*)0x00951A10;
+	static const UInt8 pro[5] = {0x55, 0x8B, 0xEC, 0x6A, 0xFF};
+	if (memcmp(fn, pro, 5)) { Log("first person: view setter 00951A10 bytes unexpected (%02X %02X %02X) -> NOT hooked", fn[0], fn[1], fn[2]); return; }
+	UInt8* t = AllocExec(16); if (!t) return;
+	memcpy(t, pro, 5); t[5] = 0xE9; *(SInt32*)(t + 6) = (SInt32)((UInt32)fn + 5 - ((UInt32)t + 10));
+	g_applyViewTramp = (ApplyView_t)t;
+	DWORD o2; VirtualProtect(fn, 5, PAGE_EXECUTE_READWRITE, &o2);
+	fn[0] = 0xE9; *(SInt32*)(fn + 1) = (SInt32)((UInt32)Hook_ApplyView - ((UInt32)fn + 5));
+	VirtualProtect(fn, 5, o2, &o2);
+	FlushInstructionCache(GetCurrentProcess(), fn, 5);
+	Log("first person: view setter 00951A10 hooked (trampoline %p)", t);
 }
 
 
