@@ -80,7 +80,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 65;
+static const UInt32 kPluginVersion = 67;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -276,13 +276,32 @@ static void LoadConfig() {
 }
 
 // ---------------- engine helpers ----------------
+// DataHandler (0x11C3F2C) +0x218 = loaded file count, +0x21C = TESFile* array (the engine's own lookups, e.g. 0x461D82).
+// A user's game crashed at startup with an entry of 0x26 in that array (another plugin's data there?), so every entry
+// is checked to be a readable TESFile before its name (+0x20, MAX_PATH) and load index (+0x40C) are read.
+static bool Readable(const void* p, UInt32 n) {
+	if ((UInt32)p < 0x10000) return false;
+	MEMORY_BASIC_INFORMATION mbi;
+	if (!VirtualQuery(p, &mbi, sizeof(mbi)) || mbi.State != MEM_COMMIT) return false;
+	if (mbi.Protect & (PAGE_NOACCESS | PAGE_GUARD)) return false;
+	if (!(mbi.Protect & (PAGE_READONLY | PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY))) return false;
+	return (UInt32)p + n <= (UInt32)mbi.BaseAddress + mbi.RegionSize || Readable((const UInt8*)mbi.BaseAddress + mbi.RegionSize, (UInt32)p + n - ((UInt32)mbi.BaseAddress + mbi.RegionSize));
+}
 static UInt8 FindModIndex(const char* name) {
 	UInt8* dh = *(UInt8**)kPtr_DataHandler;
-	if (!dh) return 0xFF;
+	if (!dh || !Readable(dh + 0x218, 4 + 4 * 0xFF)) return 0xFF;
 	UInt32 count = *(UInt32*)(dh + 0x218);
 	UInt8** mods = (UInt8**)(dh + 0x21C);
-	for (UInt32 i = 0; i < count && i < 0xFF; i++)
-		if (mods[i] && !_stricmp((const char*)(mods[i] + 0x20), name)) return *(mods[i] + 0x40C);
+	static bool warned = false;
+	for (UInt32 i = 0; i < count && i < 0xFF; i++) {
+		UInt8* m = mods[i];
+		if (!m) continue;
+		if (!Readable(m, 0x410) || !memchr(m + 0x20, 0, MAX_PATH)) {
+			if (!warned) { warned = true; Log("deps: loaded file list entry %u = %p is not a plugin file (count %u) - skipped", i, m, count); }
+			continue;
+		}
+		if (!_stricmp((const char*)(m + 0x20), name)) return m[0x40C];
+	}
 	return 0xFF;
 }
 // One plugin per creature family (PlayableCreatures_<Family>.esp); the ini names each race's plugin, and the few
