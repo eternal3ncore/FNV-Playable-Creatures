@@ -80,7 +80,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 68;
+static const UInt32 kPluginVersion = 69;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -177,6 +177,7 @@ struct Profile {
 	bool showInMenu;                // ShowInRaceMenu=0 hides the race from the race menu (RACE playable flag)
 	int resistCap;                  // ResistCap= - fPlayerMaxResistance while in the race (0 = unchanged)
 	float sneakCamera;              // SneakCamera= - share of the 1st-person crouch drop the 3rd-person camera takes (default 1)
+	bool animLog;                   // AnimLog=1 - diagnostic: each sequence the player's body starts is logged
 	bool fpBody;                    // FirstPersonBody=1 - 1st person shows the creature's own body (see "first person")
 	char fpNode[64], fpHide[64];    // FirstPersonNode= camera anchor node, FirstPersonHide= node shrunk away (head)
 	float fpOff[3];                 // FirstPersonOffset= right, forward, up from the anchor, in the actor's heading frame
@@ -262,6 +263,7 @@ static void LoadConfig() {
 		GetPrivateProfileStringA(sec, "BodyPartData", "", tmp, sizeof(tmp), g_iniPath); ParseForms(tmp, &p.bodyPartsIni, 1);
 		p.ghostMoves = GetPrivateProfileIntA(sec, "GhostMoves", 0, g_iniPath) != 0;
 		p.blockAnimOverrides = GetPrivateProfileIntA(sec, "BlockAnimOverrides", 1, g_iniPath) != 0;
+		p.animLog = GetPrivateProfileIntA(sec, "AnimLog", 0, g_iniPath) != 0;
 		if (!p.plugin[0] || !p.localID || !p.skeleton[0] || !p.marker[0]) { Log("config: [%s] incomplete, skipped", sec); continue; }
 		Log("config: [%s] %s|%06X skeleton='%s' marker='%s' armor=%d armorVisuals=%d weaponMask=%04X allow=%d silent=%d show=%d",
 			sec, p.plugin, p.localID, p.skeleton, p.marker, p.allowArmor, p.armorVisuals, p.weaponTypeMask, p.numAllow, p.numSilent, p.numShow);
@@ -752,11 +754,24 @@ static void LogFPPlay(void* animData, void* seq) {
 	const char* nm = seq ? *(const char**)((UInt8*)seq + 0x08) : nullptr;
 	Log("first person: %s plays '%s'", first ? "1st-person data" : "creature body", nm ? nm : "?");
 }
+// AnimLog=1 diagnostic: every sequence start on the player's 3rd-person anim data, with the anim group id
+// (BSAnimGroupSequence +0x74 -> TESAnimGroup, group id UInt16 at +0x08: move type << 12 | hand type << 8 | group),
+// 600 lines per game session
+static void LogBodyPlay(void* seq) {
+	static int lines = 0;
+	if (lines >= 600) return;
+	lines++;
+	const char* nm = seq && Readable(seq, 0x78) ? *(const char**)((UInt8*)seq + 0x08) : nullptr;
+	UInt8* grp = seq && Readable(seq, 0x78) ? *(UInt8**)((UInt8*)seq + 0x74) : nullptr;
+	UInt32 id = grp && Readable(grp, 0x0C) ? *(UInt16*)(grp + 0x08) : 0xFFFF;
+	Log("anim log: plays '%s' (group %04X)", nm && Readable(nm, 1) ? nm : "?", id);
+}
 static bool __cdecl BlockOverridesC(void* animData, void* seq) {
 	if (g_fpActive) LogFPPlay(animData, seq);
 	if (!IsCreatureRaceAnim(animData)) return false;
 	UInt8* actor = *(UInt8**)((UInt8*)animData + 4);
 	Profile* p = ProfileForRace(NPCRace(*(UInt8**)(actor + 0x20)));
+	if (p && p->animLog && actor == Player()) LogBodyPlay(seq);
 	return p && p->blockAnimOverrides;
 }
 static UInt8* BuildPlayThunk(UInt8* p, UInt32 prev) {
