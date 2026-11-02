@@ -80,7 +80,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 67;
+static const UInt32 kPluginVersion = 68;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -108,6 +108,7 @@ static const UInt32 kPtr_DefaultBodyPartData = 0x011CAFEC;   // DefaultBodyPartD
 // Each race's body part data = the PNAM of its vanilla creature records (the ones
 // its body / skeleton come from). Keyed by the race's local id in its family plugin (the
 // child races share their adult race's profile). A plugin that isn't loaded leaves the race on the player default.
+// An ini section's BodyPartData=Plugin|id takes the place of this table, so new races need no entry here.
 static const struct { UInt32 race; const char* plugin; UInt32 bptd; } kRaceBodyParts[] = {
 	{0x000800, "FalloutNV.esm",    0x1690AD},   // Zetan                 AlienBodyPartData (CrAlien)
 	{0x0008E0, "FalloutNV.esm",    0x1690AD},   // Zetan (Helmet)        AlienBodyPartData
@@ -168,7 +169,8 @@ struct Profile {
 	bool joinFaction;               // JoinFaction=1 joins them while in the race (default 0: never touched)
 	bool hideWeapon;                // HideWeapon=1 - the equipped weapon is never drawn on the 3rd-person body (1st person unchanged)
 	bool noFallDamage;              // NoFallDamage=1 - the engine's flying-creature fall-damage exemption applies to the player
-	FormRef bodyParts;              // the creature's own body part data (gore / dismemberment / VATS parts), from kRaceBodyParts
+	FormRef bodyParts;              // the creature's own body part data (gore / dismemberment / VATS parts): BodyPartData= or kRaceBodyParts
+	FormRef bodyPartsIni;           // BodyPartData=Plugin|id - takes the place of the kRaceBodyParts entry
 	FormRef give[4]; int numGive;   // GiveItems= - items handed over (one each, not equipped) when the race menu closes
 	bool ghostMoves;                // Ghostification's hop / search on the jump key 
 	bool blockAnimOverrides;        // BlockAnimOverrides=1 (default) - kNVSE never swaps the sequence an actor in this race plays
@@ -257,6 +259,7 @@ static void LoadConfig() {
 		p.hideWeapon = GetPrivateProfileIntA(sec, "HideWeapon", 0, g_iniPath) != 0;
 		p.noFallDamage = GetPrivateProfileIntA(sec, "NoFallDamage", 0, g_iniPath) != 0;
 		GetPrivateProfileStringA(sec, "GiveItems", "", tmp, sizeof(tmp), g_iniPath); p.numGive = ParseForms(tmp, p.give, 4);
+		GetPrivateProfileStringA(sec, "BodyPartData", "", tmp, sizeof(tmp), g_iniPath); ParseForms(tmp, &p.bodyPartsIni, 1);
 		p.ghostMoves = GetPrivateProfileIntA(sec, "GhostMoves", 0, g_iniPath) != 0;
 		p.blockAnimOverrides = GetPrivateProfileIntA(sec, "BlockAnimOverrides", 1, g_iniPath) != 0;
 		if (!p.plugin[0] || !p.localID || !p.skeleton[0] || !p.marker[0]) { Log("config: [%s] incomplete, skipped", sec); continue; }
@@ -376,8 +379,9 @@ static void ResolveProfiles() {
 			if (!f || *((UInt8*)f + 4) != 0x08) { Log("resolve: [%s] faction %s|%06X not loaded - skipped", p.section, fr.plugin, fr.localID); fr.fid = 0; }
 			else Log("resolve: [%s] faction %08X%s", p.section, fr.fid, p.joinFaction ? " (joined while in the race)" : " (JoinFaction=0: not joined)");
 		}
-		memset(&p.bodyParts, 0, sizeof(p.bodyParts));                 // built in, by race (no ini key)
-		for (const auto& e : kRaceBodyParts)
+		memset(&p.bodyParts, 0, sizeof(p.bodyParts));                 // BodyPartData=, else built in by race
+		if (p.bodyPartsIni.localID) p.bodyParts = p.bodyPartsIni;
+		else for (const auto& e : kRaceBodyParts)
 			if (e.race == p.localID) { strcpy(p.bodyParts.plugin, e.plugin); p.bodyParts.localID = e.bptd; break; }
 		if (p.bodyParts.localID) {                                     // must be a BPTD (same form type as DefaultBodyPartData)
 			FormRef& b = p.bodyParts;
