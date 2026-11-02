@@ -22,8 +22,8 @@
 //     afterwards) and speaks the vanilla combat topics (Hit / Death / Attack) through the engine's Actor::Say
 //     (the function the Say command uses for immediate speech: picks the topic's INFO by its conditions, builds the
 //     voice file path from the voice type and plays it) on the same events - the lines themselves are ordinary
-//     dialogue data (in PlayableCreatures.esp / PlayableCreaturesTTW.esp), so they are edited like any NPC voice.
-//  9. Race traits: RadImmune=1 -> a radiation-immunity ability (+100 Rad Resistance, PlayableCreatures.esp SPEL) is
+//     dialogue data (in each family plugin, PlayableCreatures_<Family>.esp), so they are edited like any NPC voice.
+//  9. Race traits: RadImmune=1 -> a radiation-immunity ability (+100 Rad Resistance, the race's own ability) is
 //     given while in the race and the player's resistance cap (fPlayerMaxResistance, 85) is raised to 100;
 //     CloudImmune=1 -> Dead Money's toxic cloud scripts (NVDLC01ToxicCloudSCRIPT / NVDLC01GlobalToxicDamageSCRIPT) do no
 //     damage to the player (their DamageActorValue calls are filtered by script); GhostEssential=1 -> Dead Money's
@@ -80,7 +80,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 61;
+static const UInt32 kPluginVersion = 62;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -106,13 +106,13 @@ static void Log(const char* fmt, ...) {
 struct FormRef { char plugin[64]; UInt32 localID; UInt32 fid; };
 static const UInt32 kPtr_DefaultBodyPartData = 0x011CAFEC;   // DefaultBodyPartData (form 0x1D), set at data load (0x5E53E6)
 // Each race's body part data = the PNAM of its vanilla creature records (the ones
-// its body / skeleton come from). Keyed by the race's local id (same in PlayableCreatures.esp and the TTW plugin; the
+// its body / skeleton come from). Keyed by the race's local id in its family plugin (the
 // child races share their adult race's profile). A plugin that isn't loaded leaves the race on the player default.
 static const struct { UInt32 race; const char* plugin; UInt32 bptd; } kRaceBodyParts[] = {
 	{0x000800, "FalloutNV.esm",    0x1690AD},   // Zetan                 AlienBodyPartData (CrAlien)
 	{0x0008E0, "FalloutNV.esm",    0x1690AD},   // Zetan (Helmet)        AlienBodyPartData
-	{0x000805, "PlayableCreatures.esp", 0x00090A},   // Ghost People     PCGhostBodyPartData = NVDLC01GhostBodyPartData with the
-	{0x000806, "PlayableCreatures.esp", 0x00090A},   // (unhooded)       Head part's headtracking flag (ragdoll pose)
+	{0x000805, "PlayableCreatures_GhostPeople.esp", 0x00090A},   // Ghost People     PCGhostBodyPartData = NVDLC01GhostBodyPartData with the
+	{0x000806, "PlayableCreatures_GhostPeople.esp", 0x00090A},   // (unhooded)       Head part's headtracking flag (ragdoll pose)
 	{0x000855, "FalloutNV.esm",    0x05144E},   // Feral Ghoul           FeralGhoulBodyPartData
 	{0x000856, "FalloutNV.esm",    0x0A18F6},   // Glowing One           FeralGlowingOneBodyPartData
 	{0x000857, "FalloutNV.esm",    0x02026E},   // Super Mutant          SupermutantrBodyPartData
@@ -126,11 +126,11 @@ static const struct { UInt32 race; const char* plugin; UInt32 bptd; } kRaceBodyP
 	// MRHandyBodyPartData 036C18, MRGutsyBodyPartData 036C17, SentryBotBodyPartData 031C61) with the head part
 	// (Mister Handy / Gutsy: the first Tracking Sensor) flagged for head tracking and its IK node = Bip01 Head (the
 	// vanilla ones carry a file path there) - the ragdoll pose reference, as PCGhostBodyPartData
-	{0x000949, "PlayableCreatures.esp", 0x000953},   // Protectron
-	{0x000954, "PlayableCreatures.esp", 0x00095D},   // Robobrain
-	{0x00095E, "PlayableCreatures.esp", 0x000967},   // Mister Handy
-	{0x000968, "PlayableCreatures.esp", 0x00096E},   // Mister Gutsy
-	{0x00096F, "PlayableCreatures.esp", 0x000979},   // Sentry Bot
+	{0x000949, "PlayableCreatures_Protectron.esp", 0x000953},   // Protectron
+	{0x000954, "PlayableCreatures_Robobrain.esp", 0x00095D},   // Robobrain
+	{0x00095E, "PlayableCreatures_MisterHandy.esp", 0x000967},   // Mister Handy
+	{0x000968, "PlayableCreatures_MisterHandy.esp", 0x00096E},   // Mister Gutsy
+	{0x00096F, "PlayableCreatures_SentryBot.esp", 0x000979},   // Sentry Bot
 	{0x008802, "PointLookout.esm", 0x00E968},   // Swampfolk Brawler     DLC04Hillfolk2and3BodyPartData
 	{0x008803, "PointLookout.esm", 0x00E968},   // Swampfolk Scrapper
 	{0x008804, "PointLookout.esm", 0x00E968},   // Swampfolk Creeper
@@ -271,16 +271,12 @@ static UInt8 FindModIndex(const char* name) {
 		if (mods[i] && !_stricmp((const char*)(mods[i] + 0x20), name)) return *(mods[i] + 0x40C);
 	return 0xFF;
 }
-// Two interchangeable plugins: PlayableCreatures.esp (New Vegas) and PlayableCreaturesTTW.esp (Tale of Two
-// Wastelands), which holds every PlayableCreatures.esp record under the same local id plus the Fallout 3 races. A
-// reference to PlayableCreatures.esp (ini or code) resolves to the TTW plugin when only that one is loaded.
-static const char* const kMainPlugin = "PlayableCreatures.esp";
-static const char* const kTTWPlugin = "PlayableCreaturesTTW.esp";
-static UInt8 GetModIndex(const char* name) {
-	UInt8 idx = FindModIndex(name);
-	if (idx == 0xFF && !_stricmp(name, kMainPlugin)) idx = FindModIndex(kTTWPlugin);
-	return idx;
-}
+// One plugin per creature family (PlayableCreatures_<Family>.esp); the ini names each race's plugin, and the few
+// forms the code itself uses are named here with their family plugin. A family that isn't installed leaves its
+// sections / forms unresolved (logged), nothing else.
+static const char* const kGhostPlugin = "PlayableCreatures_GhostPeople.esp";
+static const char* const kSecuritronPlugin = "PlayableCreatures_Securitron.esp";
+static UInt8 GetModIndex(const char* name) { return FindModIndex(name); }
 // Runtime form lookup = read the engine's form map (same as xNVSE/JIP). 0x4F9620 is the *GECK* address - never call it.
 static void* LookupForm(UInt32 fid) {
 	UInt8* map = *(UInt8**)kPtr_FormMap;
@@ -395,7 +391,7 @@ enum Verdict { kAllow = 0, kBlock, kBlockSilent, kBlockFirmware };
 // are Mk I weapons).
 static const UInt32 kFirmwareWeapons[] = { 0x8FB, 0x8FD }, kFID_SecuritronsUpgraded = 0x00120F2F;
 static bool FirmwareMissing(UInt32 fid) {
-	for (UInt32 w : kFirmwareWeapons) if (fid == ResolveFID("PlayableCreatures.esp", w)) {
+	for (UInt32 w : kFirmwareWeapons) if (fid == ResolveFID(kSecuritronPlugin, w)) {
 		void* g = LookupForm(kFID_SecuritronsUpgraded);
 		return !(g && *((UInt8*)g + 4) == kFormType_GLOB && *(float*)((UInt8*)g + 0x24) >= 1.0f);
 	}
@@ -1320,11 +1316,11 @@ static void InstallGhostMoves() {                                    // at load
 	PatchPtr(kSlot_PlayerMoverSetFlags, (UInt32)Hook_PlayerMoverSetFlags, cur, cur == kAddr_PlayerMoverSetFlags ? "PlayerMover::SetMovementFlags (vtbl 0x0C)" : "PlayerMover::SetMovementFlags (chained)");
 }
 static void ResolveGhostMoves() {                                    // at DeferredInit
-	g_moveSpell = ResolveFID("PlayableCreatures.esp", 0x0008A3);
-	g_searchSpell = ResolveFID("PlayableCreatures.esp", 0x0008A7);
+	g_moveSpell = ResolveFID(kGhostPlugin, 0x0008A3);
+	g_searchSpell = ResolveFID(kGhostPlugin, 0x0008A7);
 	// our copies of Dead Money's GhostsIdleLooking / HarvesterTrashPick with Ghostification's whole-body section
 	// (0x14) + no-attacking flag : DM's own are section 7, which the player's movement / jump replaced
-	g_idleTrash = ResolveFID("PlayableCreatures.esp", 0x0008AA);     // PCGhostTrashPick
+	g_idleTrash = ResolveFID(kGhostPlugin, 0x0008AA);     // PCGhostTrashPick
 	g_idleHopL = ResolveFID("DeadMoney.esm", 0x00FE59);              // HopLeft  (CombatIdle_HopLeft.kf)
 	g_idleHopR = ResolveFID("DeadMoney.esm", 0x00FE58);              // HopRight
 	Log("ghost move: spells %08X %08X, idles %08X %08X %08X", g_moveSpell, g_searchSpell, g_idleTrash, g_idleHopL, g_idleHopR);
@@ -1494,8 +1490,8 @@ static void ApplyBodyParts(const char* why) {
 		*slot = g_origBodyParts; g_bodyPartsSwapped = false;
 	}
 }
-// Securitron face screens chosen with the race menu's Eyes: PlayableCreatures.esp EYES 0x8FE-0x905
-// (same ids in the TTW plugin) = the 8 vanilla screens. The securitron skeletons (build_skel_securitron) carry every
+// Securitron face screens chosen with the race menu's Eyes: PlayableCreatures_Securitron.esp EYES 0x8FE-0x905
+// = the 8 vanilla screens. The securitron skeletons (build_skel_securitron) carry every
 // screen as a node 'PCFace:<name>' under Screen01Root (only the race's default visible in the file). The player's eyes
 // (TESNPC +0x1C0, see the NPC save code 0x602150) pick the node to show; the rest get the NiAVObject hidden flag (+0x30
 // bit 0). Eyes that aren't a face leave the file's default. Applied with the other race
@@ -1513,7 +1509,7 @@ static void ApplyFace(const char* why, void* root = nullptr) {    // root: the n
 	void* eyes = At<void*>(npc, 0x1C0);
 	UInt32 efid = eyes ? At<UInt32>(eyes, 0x0C) : 0;
 	int pick = -1;
-	for (int i = 0; i < 8 && efid; i++) if (efid == ResolveFID(kMainPlugin, kFaceEyesFirst + i)) { pick = i; break; }
+	for (int i = 0; i < 8 && efid; i++) if (efid == ResolveFID(kSecuritronPlugin, kFaceEyesFirst + i)) { pick = i; break; }
 	if (pick < 0) { Log("face: eyes %08X are not a face - skeleton default kept (%s)", efid, why); return; }
 	for (int i = 0; i < 8; i++) if (nodes[i]) {
 		UInt32& fl = At<UInt32>(nodes[i], 0x30);
@@ -1658,11 +1654,10 @@ static void MessageHandler(NVSEMessage* msg) {
 		break;
 	case kMessage_PostPostLoad: InstallAnimLookupGuards(); InstallAnimPlayGuards(); InstallMenuRequestDiag(); break;
 	case kMessage_DeferredInit: {
-		UInt8 mi = FindModIndex(kMainPlugin), ti = FindModIndex(kTTWPlugin);
-		Log("deps: %s %s, %s %s%s", kMainPlugin, mi == 0xFF ? "not loaded" : "loaded", kTTWPlugin, ti == 0xFF ? "not loaded" : "loaded",
-			mi != 0xFF && ti != 0xFF ? " - ** BOTH LOADED: use only one (TTW load order: PlayableCreaturesTTW.esp) **" : "");
-		if (mi != 0xFF && ti != 0xFF)
-			((QueueUIMessage_t)kAddr_QueueUIMessage)("Playable Creatures: PlayableCreatures.esp and PlayableCreaturesTTW.esp are both active. Use only one.", 0, nullptr, nullptr, 8.0f, 0);
+		if (FindModIndex("PlayableCreatures.esp") != 0xFF || FindModIndex("PlayableCreaturesTTW.esp") != 0xFF) {
+			Log("deps: ** the old combined plugin PlayableCreatures.esp / PlayableCreaturesTTW.esp is active - it is replaced by the family plugins (PlayableCreatures_<Family>.esp); disable it **");
+			((QueueUIMessage_t)kAddr_QueueUIMessage)("Playable Creatures: disable the old PlayableCreatures.esp / PlayableCreaturesTTW.esp (replaced by the family plugins).", 0, nullptr, nullptr, 8.0f, 0);
+		}
 		ResolveProfiles(); InstallVoiceHandlers(); ResolveCloudScripts(); ResolveGhostMoves();
 		if (GetModuleHandleA("PlayerEssentialFix.dll")) Log("deps: PlayerEssentialFix loaded");
 		else for (int i = 0; i < g_numProf; i++) if (g_prof[i].ghostEssential) { Log("deps: PlayerEssentialFix.dll NOT loaded - an essential player stays ragdolled after the revive"); break; }
