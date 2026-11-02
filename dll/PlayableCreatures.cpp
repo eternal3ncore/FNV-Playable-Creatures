@@ -80,7 +80,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 64;
+static const UInt32 kPluginVersion = 65;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -710,7 +710,22 @@ static const UInt32 kPlaySites[] = {0x494989, 0x4956FF, 0x495E2A, 0x4973B4};
 static const int kNumPlaySites = sizeof(kPlaySites) / sizeof(kPlaySites[0]);
 // a temporary speed probe lived here (player movement groups timed between play calls); it measured the
 // Robobrain at ref scale^2 (Forward 32 units/s), fixed natively by its race ability's SpeedMult ; removed.
-static bool __cdecl BlockOverridesC(void* animData) {
+static bool g_fpActive = false;                      // 1st person with the creature body shown (see "first person")
+// diagnostic while the creature body is shown in 1st person: which sequence each of the player's anim data plays
+// (1st-person data player+0x690 / the 3rd-person body), logged when it changes, 300 lines per game session
+static void LogFPPlay(void* animData, void* seq) {
+	static int lines = 0; static void* last1 = nullptr; static void* last3 = nullptr;
+	void* pl = Player();
+	if (!pl || lines >= 300 || *(void**)((UInt8*)animData + 4) != pl) return;
+	bool first = animData == *(void**)((UInt8*)pl + 0x690);
+	void*& last = first ? last1 : last3;
+	if (seq == last) return;
+	last = seq; lines++;
+	const char* nm = seq ? *(const char**)((UInt8*)seq + 0x08) : nullptr;
+	Log("first person: %s plays '%s'", first ? "1st-person data" : "creature body", nm ? nm : "?");
+}
+static bool __cdecl BlockOverridesC(void* animData, void* seq) {
+	if (g_fpActive) LogFPPlay(animData, seq);
 	if (!IsCreatureRaceAnim(animData)) return false;
 	UInt8* actor = *(UInt8**)((UInt8*)animData + 4);
 	Profile* p = ProfileForRace(NPCRace(*(UInt8**)(actor + 0x20)));
@@ -720,9 +735,10 @@ static UInt8* BuildPlayThunk(UInt8* p, UInt32 prev) {
 	UInt8* start = p;
 	*p++ = 0x51;                                              // push ecx
 	*p++ = 0x52;                                              // push edx
+	*p++ = 0xFF; *p++ = 0x74; *p++ = 0x24; *p++ = 0x0C;      // push [esp+0Ch] (the sequence: caller's arg 1)
 	*p++ = 0x51;                                              // push ecx  (AnimData* this)
 	*p++ = 0xE8; *(SInt32*)p = (SInt32)((UInt32)BlockOverridesC - ((UInt32)p + 4)); p += 4;
-	*p++ = 0x83; *p++ = 0xC4; *p++ = 0x04;                    // add esp, 4
+	*p++ = 0x83; *p++ = 0xC4; *p++ = 0x08;                    // add esp, 8
 	*p++ = 0x5A;                                              // pop edx
 	*p++ = 0x59;                                              // pop ecx
 	*p++ = 0x84; *p++ = 0xC0;                                 // test al, al
@@ -934,7 +950,7 @@ static void InstallCameraPivot() {
 static const UInt32 kSite_CamFinal = 0x0094BDB4, kAddr_CamFinalCont = 0x0094BDBB;
 static const UInt32 kPtr_InterfaceManager = 0x011D8A80, kAddr_FindNodeByName2 = 0x004AAE30;
 typedef void* (__cdecl* FindNode_t)(void* root, const char* name);
-static bool g_fpActive = false; static void* g_fpRoot = nullptr; static void* g_fpAnchor = nullptr; static void* g_fpHideNode = nullptr;
+static void* g_fpRoot = nullptr; static void* g_fpAnchor = nullptr; static void* g_fpHideNode = nullptr;
 static float g_fpHideScale = 1.0f; static Profile* g_fpProf = nullptr; static bool g_fpWanted = false, g_fpFlags = false;
 static inline UInt32& AVFlags(void* n) { return *(UInt32*)((UInt8*)n + 0x30); }
 static inline float* WorldRot(void* n) { return (float*)((UInt8*)n + 0x68); }
