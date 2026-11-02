@@ -80,7 +80,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 62;
+static const UInt32 kPluginVersion = 63;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -175,6 +175,9 @@ struct Profile {
 	bool showInMenu;                // ShowInRaceMenu=0 hides the race from the race menu (RACE playable flag)
 	int resistCap;                  // ResistCap= - fPlayerMaxResistance while in the race (0 = unchanged)
 	float sneakCamera;              // SneakCamera= - share of the 1st-person crouch drop the 3rd-person camera takes (default 1)
+	bool fpBody;                    // FirstPersonBody=1 - 1st person shows the creature's own body (see "first person")
+	char fpNode[64], fpHide[64];    // FirstPersonNode= camera anchor node, FirstPersonHide= node shrunk away (head)
+	float fpOff[3];                 // FirstPersonOffset= right, forward, up from the anchor, in the actor's heading frame
 };
 static Profile g_prof[48];                     // 32 -> 48: 29 sections with the robots
 static int g_numProf = 0;
@@ -201,6 +204,16 @@ static int ParseForms(const char* s, FormRef* out, int max) {
 		strncpy(out[n].plugin, t, 63); out[n].localID = strtoul(bar + 1, nullptr, 16) & 0xFFFFFF; out[n].fid = 0; n++;
 	}
 	return n;
+}
+// FirstPerson* keys: read at startup and again each time 1st person starts, so the ini can be tuned in game.
+static void ReadFirstPersonKeys(Profile& p) {
+	char tmp[96];
+	p.fpBody = GetPrivateProfileIntA(p.section, "FirstPersonBody", 0, g_iniPath) != 0;
+	GetPrivateProfileStringA(p.section, "FirstPersonNode", "Bip01 Head", p.fpNode, sizeof(p.fpNode), g_iniPath);
+	GetPrivateProfileStringA(p.section, "FirstPersonHide", "Bip01 Head", p.fpHide, sizeof(p.fpHide), g_iniPath);
+	GetPrivateProfileStringA(p.section, "FirstPersonOffset", "0,-12,-12", tmp, sizeof(tmp), g_iniPath);
+	p.fpOff[0] = p.fpOff[1] = p.fpOff[2] = 0.0f;
+	sscanf(tmp, "%f , %f , %f", &p.fpOff[0], &p.fpOff[1], &p.fpOff[2]);
 }
 static void LoadConfig() {
 	snprintf(g_iniPath, sizeof(g_iniPath), "%sData\\NVSE\\Plugins\\PlayableCreatures.ini", g_gameDir);
@@ -252,6 +265,7 @@ static void LoadConfig() {
 		p.showInMenu = GetPrivateProfileIntA(sec, "ShowInRaceMenu", 1, g_iniPath) != 0;
 		p.resistCap = GetPrivateProfileIntA(sec, "ResistCap", 0, g_iniPath);
 		GetPrivateProfileStringA(sec, "SneakCamera", "1", tmp, sizeof(tmp), g_iniPath); p.sneakCamera = (float)atof(tmp);
+		ReadFirstPersonKeys(p);
 		if (p.sneakCamera != 1.0f) Log("config: [%s] sneak camera drop x%.2f", sec, p.sneakCamera);
 		if (p.resistCap) Log("config: [%s] resistCap=%d", sec, p.resistCap);
 		Log("config: [%s] traits radImmune=%d cloudImmune=%d ghostEssential=%d", sec, p.radImmune, p.cloudImmune, p.ghostEssential);
@@ -904,6 +918,100 @@ static void InstallCameraPivot() {
 	VirtualProtect(site, 6, old, &old);
 	FlushInstructionCache(GetCurrentProcess(), nullptr, 0);
 	Log("camera: 3rd-person pivot term at %08X -> Camera3rd for creature skeletons (stub %p)", kSite_CamPivotTerm, stub);
+}
+
+// ---------------- first person: the creature's own body ----------------
+// The player's 1st person runs on the human 1st-person skeleton (player+0x694) with the human 1st-person animations;
+// a creature body bound to it is a stretched mess. With FirstPersonBody=1 the engine still runs 1st person (aiming,
+// iron sights zoom, VATS, the view toggle), but what is drawn is the 3rd-person creature (its own animations, kept
+// updated in 1st person - PlayerCharacter::Update updates both): the 3rd-person root is shown, the 1st-person root
+// hidden (the view setter 0x951A10 does the opposite), the FirstPersonHide node is shrunk to nothing (the head), and
+// the camera sits at FirstPersonNode + FirstPersonOffset (right, forward, up in the actor's heading frame) - behind
+// the creature's hands, like the vanilla view behind the human hands. Menus (Pip-Boy) get the vanilla view back.
+// The camera update (0x94AE40) ends with the camera position at [ebp-0x60] (1st person: Camera1st of the 1st-person
+// skeleton, 0x94B1F1) and at 0x94BDB4 puts it on the scene camera (and the audio listener, 0x94BE05); the hook
+// replaces it there in 1st person. No per-frame work outside the camera update itself.
+static const UInt32 kSite_CamFinal = 0x0094BDB4, kAddr_CamFinalCont = 0x0094BDBB;
+static const UInt32 kPtr_InterfaceManager = 0x011D8A80, kAddr_FindNodeByName2 = 0x004AAE30;
+typedef void* (__cdecl* FindNode_t)(void* root, const char* name);
+static bool g_fpActive = false; static void* g_fpRoot = nullptr; static void* g_fpAnchor = nullptr; static void* g_fpHideNode = nullptr;
+static float g_fpHideScale = 1.0f; static Profile* g_fpProf = nullptr; static bool g_fpWanted = false;
+static inline UInt32& AVFlags(void* n) { return *(UInt32*)((UInt8*)n + 0x30); }
+static inline float* WorldRot(void* n) { return (float*)((UInt8*)n + 0x68); }
+static inline float* WorldPos(void* n) { return (float*)((UInt8*)n + 0x8C); }
+static void FPRestore(void* player, const char* why) {
+	if (!g_fpActive) return;
+	g_fpActive = false;
+	if (g_fpHideNode) *(float*)((UInt8*)g_fpHideNode + 0x64) = g_fpHideScale;
+	if (player && !*((UInt8*)player + 0x64A)) {                          // still 1st person (menu): vanilla visibility
+		void* r3 = PlayerRoot(player); void* r1 = *(void**)((UInt8*)player + 0x694);
+		if (r3) AVFlags(r3) |= 1; if (r1) AVFlags(r1) &= ~1u;
+	}
+	Log("first person: creature body off (%s)", why);
+}
+static void ShrinkSubtreeOnce(void* n) {                                  // this frame: the node and its children
+	float* wp = WorldPos(n);
+	*(float*)((UInt8*)n + 0x98) = 0.001f;
+	void** data = *(void***)((UInt8*)n + 0xA0); UInt16 cnt = *(UInt16*)((UInt8*)n + 0xA6);
+	for (UInt16 i = 0; data && i < cnt && i < 64; i++) if (void* c = data[i]) {
+		*(float*)((UInt8*)c + 0x98) = 0.001f;
+		float* cp = WorldPos(c); cp[0] = wp[0]; cp[1] = wp[1]; cp[2] = wp[2];
+	}
+}
+static void __cdecl FPCamera(float* pos, void* player) {
+	if (!player) return;
+	Profile* p = PlayerProfile();
+	void* im = *(void**)kPtr_InterfaceManager;
+	bool menu = im && *(UInt32*)((UInt8*)im + 0x0C) == 2;
+	bool first = !*((UInt8*)player + 0x64A) && !*((UInt8*)player + 0x64C) && !*(UInt8*)0x011E07B8;
+	void* r3 = PlayerRoot(player); void* r1 = *(void**)((UInt8*)player + 0x694);
+	bool want = first && !menu && p && r3 && r1;
+	if (!want) { FPRestore(player, !first ? "3rd person" : menu ? "menu" : "not a creature race"); g_fpWanted = false; return; }
+	if (!g_fpWanted || r3 != g_fpRoot || p != g_fpProf) {                // 1st person starts (or new skeleton / race)
+		if (g_fpActive) FPRestore(player, "skeleton changed");
+		g_fpWanted = true; g_fpRoot = r3; g_fpProf = p;
+		ReadFirstPersonKeys(*p);                                         // once per start, not per frame
+		if (!p->fpBody) return;
+		g_fpAnchor = ((FindNode_t)kAddr_FindNodeByName2)(r3, p->fpNode);
+		g_fpHideNode = p->fpHide[0] ? ((FindNode_t)kAddr_FindNodeByName2)(r3, p->fpHide) : nullptr;
+		if (!g_fpAnchor) { Log("first person: [%s] node '%s' not in the skeleton - vanilla view", p->section, p->fpNode); return; }
+		g_fpHideScale = g_fpHideNode ? *(float*)((UInt8*)g_fpHideNode + 0x64) : 1.0f;
+		g_fpActive = true;
+		Log("first person: [%s] creature body on - camera '%s' %+.1f,%+.1f,%+.1f, hide '%s'%s", p->section, p->fpNode,
+			p->fpOff[0], p->fpOff[1], p->fpOff[2], p->fpHide, g_fpHideNode ? "" : " (not found)");
+	}
+	if (!g_fpActive) return;
+	AVFlags(r3) &= ~1u; AVFlags(r1) |= 1;
+	if (g_fpHideNode) { *(float*)((UInt8*)g_fpHideNode + 0x64) = 0.001f; ShrinkSubtreeOnce(g_fpHideNode); }
+	const float* m = WorldRot(r3); const float* a = WorldPos(g_fpAnchor); const float* o = p->fpOff;
+	pos[0] = a[0] + m[0] * o[0] + m[1] * o[1] + m[2] * o[2];
+	pos[1] = a[1] + m[3] * o[0] + m[4] * o[1] + m[5] * o[2];
+	pos[2] = a[2] + m[6] * o[0] + m[7] * o[1] + m[8] * o[2];
+}
+static void InstallFirstPersonBody() {
+	UInt8* site = (UInt8*)kSite_CamFinal;
+	static const UInt8 expect[7] = {0x8D, 0x55, 0xA0, 0x52, 0x8B, 0x4D, 0x98};   // lea edx,[ebp-0x60]; push edx; mov ecx,[ebp-0x68]
+	if (memcmp(site, expect, sizeof(expect))) {
+		Log("first person: camera site %08X bytes unexpected (%02X %02X %02X %02X) -> NOT patched", kSite_CamFinal, site[0], site[1], site[2], site[3]);
+		return;
+	}
+	UInt8* p = AllocExec(48); if (!p) { Log("first person: VirtualAlloc failed"); return; }
+	UInt8* stub = p;
+	*p++ = 0x60;                                                             // pushad
+	*p++ = 0xFF; *p++ = 0xB5; *(SInt32*)p = -0x414; p += 4;                   // push [ebp-0x414]  (PlayerCharacter*)
+	*p++ = 0x8D; *p++ = 0x45; *p++ = 0xA0;                                   // lea eax,[ebp-0x60]  (camera position)
+	*p++ = 0x50;                                                             // push eax
+	*p++ = 0xE8; *(SInt32*)p = (SInt32)((UInt32)FPCamera - ((UInt32)p + 4)); p += 4;
+	*p++ = 0x83; *p++ = 0xC4; *p++ = 0x08;                                   // add esp,8
+	*p++ = 0x61;                                                             // popad
+	memcpy(p, expect, sizeof(expect)); p += sizeof(expect);                  // the replaced instructions
+	*p++ = 0xE9; *(SInt32*)p = (SInt32)(kAddr_CamFinalCont - ((UInt32)p + 4)); p += 4;
+	DWORD old; VirtualProtect(site, 7, PAGE_EXECUTE_READWRITE, &old);
+	site[0] = 0xE9; *(SInt32*)(site + 1) = (SInt32)((UInt32)stub - ((UInt32)site + 5));
+	site[5] = 0x90; site[6] = 0x90;
+	VirtualProtect(site, 7, old, &old);
+	FlushInstructionCache(GetCurrentProcess(), nullptr, 0);
+	Log("first person: camera position hook at %08X (stub %p)", kSite_CamFinal, stub);
 }
 
 
@@ -1715,7 +1823,7 @@ __declspec(dllexport) bool NVSEPlugin_Load(const NVSEInterface* nvse) {
 	g_events = (NVSEEventManagerInterface*)nvse->QueryInterface(kInterface_EventManager);
 	InstallCloudHook();
 	InstallGhostMoves();
-	InstallCameraPivot();
+	InstallCameraPivot(); InstallFirstPersonBody();
 	InstallFallDamage();
 	InstallGhostLimbHook();
 	InstallRagdollDiag();
