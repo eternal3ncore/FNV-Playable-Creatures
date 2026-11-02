@@ -276,28 +276,33 @@ static void LoadConfig() {
 }
 
 // ---------------- engine helpers ----------------
-// DataHandler (0x11C3F2C) +0x218 = loaded file count, +0x21C = TESFile* array (the engine's own lookups, e.g. 0x461D82).
-// A user's game crashed at startup with an entry of 0x26 in that array (another plugin's data there?), so every entry
-// is checked to be a readable TESFile before its name (+0x20, MAX_PATH) and load index (+0x40C) are read.
+// A plugin's load index (to turn the ini's Plugin|local id into a form id): the TESFile with that name in the
+// DataHandler's file list - the linked list DataHandler+0x210 (ModList.modInfoList; then the count +0x218 and the
+// loadedMods array +0x21C) that xNVSE's own DataHandler::GetModIndex / LookupModByName walk, so the lookup sees
+// exactly what xNVSE and other plugins see. Its load index is TESFile+0x40C (0xFF = not loaded).
+// The loadedMods array itself is not read: in some setups it holds non-pointers inside its count. Each file is also
+// checked to be readable memory before its name is read.
 static bool Readable(const void* p, UInt32 n) {
 	if ((UInt32)p < 0x10000) return false;
 	MEMORY_BASIC_INFORMATION mbi;
 	if (!VirtualQuery(p, &mbi, sizeof(mbi)) || mbi.State != MEM_COMMIT) return false;
 	if (mbi.Protect & (PAGE_NOACCESS | PAGE_GUARD)) return false;
 	if (!(mbi.Protect & (PAGE_READONLY | PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY))) return false;
-	return (UInt32)p + n <= (UInt32)mbi.BaseAddress + mbi.RegionSize || Readable((const UInt8*)mbi.BaseAddress + mbi.RegionSize, (UInt32)p + n - ((UInt32)mbi.BaseAddress + mbi.RegionSize));
+	UInt32 end = (UInt32)mbi.BaseAddress + mbi.RegionSize;
+	return (UInt32)p + n <= end || Readable((const void*)end, (UInt32)p + n - end);
 }
 static UInt8 FindModIndex(const char* name) {
 	UInt8* dh = *(UInt8**)kPtr_DataHandler;
-	if (!dh || !Readable(dh + 0x218, 4 + 4 * 0xFF)) return 0xFF;
-	UInt32 count = *(UInt32*)(dh + 0x218);
-	UInt8** mods = (UInt8**)(dh + 0x21C);
+	if (!dh) return 0xFF;
+	struct Node { UInt8* data; Node* next; };
 	static bool warned = false;
-	for (UInt32 i = 0; i < count && i < 0xFF; i++) {
-		UInt8* m = mods[i];
+	int n = 0;
+	for (Node* it = (Node*)(dh + 0x210); it && n < 4096; it = it->next, n++) {
+		if (!Readable(it, sizeof(Node))) break;
+		UInt8* m = it->data;
 		if (!m) continue;
 		if (!Readable(m, 0x410) || !memchr(m + 0x20, 0, MAX_PATH)) {
-			if (!warned) { warned = true; Log("deps: loaded file list entry %u = %p is not a plugin file (count %u) - skipped", i, m, count); }
+			if (!warned) { warned = true; Log("deps: file list entry %d = %p is not a plugin file - skipped", n, m); }
 			continue;
 		}
 		if (!_stricmp((const char*)(m + 0x20), name)) return m[0x40C];
