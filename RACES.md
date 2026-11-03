@@ -37,9 +37,8 @@ add-ons need their base pack too.
   hits knock the target down.
 - Starts with a built-in recharging **Ghost Gas**: sprays the Sierra Madre gas (a heavy weapon, flamer range);
   poison damage over time, resisted by Poison Resistance.
-- **Palm Casting add-on** (`PlayableCreatures_GhostPeoplePalmCasting`, separate download, animations only): heavy
-  weapons are cast from the open palm; the gun isn't drawn, and the shots, gas, flames or beams leave just in front
-  of the hand.
+- Heavy weapons are cast from the open palm: the gun isn't drawn, and the shots, gas, flames or beams leave just in
+  front of the hand (no backpack either).
 - Constant breathing wheeze.
 - Needs **PlayerEssentialFix** (separate download): without it an essential player stays ragdolled after getting
   back up.

@@ -11,8 +11,11 @@ usage: python3 -P post_build.py <race folder> <race>     race = the folder name 
   3. Eyebot sneak hover lowered 40 (sneak_lower)
   4. block animations (H2H + 1HM / 2HM shared): humanoids = human blocks transferred (block_xfer); robots, Eyebot,
      Securitron, Trog, Tunneler, Deathclaw = own guard (own_block); Mister Handy / Gutsy = their claw 1HM blocks copied
-  5. locomotion / jump upper-body priorities capped under the weapon stances (loco_prio) - Ghost (Dead Money's walk
-     keyed the arms at 45, over the 2HR / 2HA hip stance's 35: walking with a gun out swung it off to the side)
+  5. Ghost heavy weapons cast from the palm (ghost_cast: its 2HH files rebuilt from its pistol files, gun hidden)
+  6. priorities (prio_fix): aim / attack up / down no higher than their level file; walk / run / sneak / turn / jump
+     upper body capped under the race's lowest weapon stance (Ghost: 22 - Dead Money's walk keyed the arms at 45, over
+     the 2HR / 2HA hip stance's 35: walking with a gun out swung it off to the side); Hillfolk's fist / melee aims first
+     raised from 20 (= its idle) to 23
 Every step writes only its own files; sneak copies are made where the step says so."""
 import os, re, shutil, subprocess, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -22,6 +25,8 @@ XFER = {'Ghost': ('ghost', ['2ha', '2hr', '2hh', '2hl']), 'Ghoul': ('ghoul', ['2
 RETIME = {'SuperMutant', 'Nightkin', 'Swampfolk', 'Zetan'}
 SNEAK_LOWER = {'Eyebot': -40}
 LOCO_CAP = {'Ghost': 22}
+PRIO_FIX = {'Ghost', 'Ghoul', 'GlowingOne', 'Hillfolk', 'Swampfolk', 'SuperMutant', 'Nightkin', 'Zetan'}
+AIM_RAISE = {'Hillfolk': (r'^(sneak)?(h2h|1hm|2hm)aim(up|down)?\.kf$', 20, 23)}
 BLOCK_HUMAN = {'Ghost': 'ghost', 'Ghoul': 'ghoul', 'GlowingOne': 'ghoul', 'Hillfolk': 'hillfolk1',
                'SuperMutant': 'supermutant', 'Nightkin': 'supermutant', 'Swampfolk': 'swampfolk', 'Zetan': 'zetan'}
 BLOCK_OWN = {'Eyebot': 'h2h,mt', 'Securitron': 'h2h,mt', 'Protectron': 'h2h,mt', 'Robobrain': 'h2h,mt',
@@ -59,4 +64,20 @@ if __name__ == '__main__':
     elif race in BLOCK_OWN:
         shutil.rmtree(tmp, ignore_errors=True); a = BLOCK_OWN[race].split()
         print(race, 'blocks', py(os.path.join(HERE, 'own_block.py'), d, tmp, *a)); copy_in(tmp, d, sneak=False); shutil.rmtree(tmp)
+    if race == 'Ghost':
+        shutil.rmtree(tmp, ignore_errors=True)
+        print(race, 'ghost_cast', py(os.path.join(HERE, 'ghost_cast.py'), d, tmp)); copy_in(tmp, d, sneak=False); shutil.rmtree(tmp)
+    if race in AIM_RAISE:
+        import struct, prio_fix as PF, loco_prio as LP
+        from nifedit import NifFile
+        pat, old, new = AIM_RAISE[race]; k = 0
+        for f in os.listdir(d):
+            if not re.match(pat, f.lower()): continue
+            nf = NifFile(os.path.join(d, f)); si, sb, ncb = PF._seq(nf)
+            for j in range(ncb):
+                o = 12 + 29 * j; nm = nf.strings[struct.unpack_from('<i', sb, o + 9)[0]]
+                if not LP.LOWER.match(nm) and sb[o + 8] == old: sb[o + 8] = new
+            nf.blocks[si] = bytes(sb); open(os.path.join(d, f), 'wb').write(nf.to_bytes()); k += 1
+        print(race, 'aims raised', k)
     if race in LOCO_CAP: print(race, 'loco_prio', py(os.path.join(HERE, 'loco_prio.py'), d, str(LOCO_CAP[race])))
+    if race in PRIO_FIX: print(race, 'prio_fix', py(os.path.join(HERE, 'prio_fix.py'), d, '--loco', 'auto'))
