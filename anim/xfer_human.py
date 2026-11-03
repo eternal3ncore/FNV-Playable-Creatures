@@ -7,7 +7,11 @@ For every human <prefix>*.kf in the creature's HUMAN_REF (aims, attacks, reloads
     creature's shoulder, with the human hand's world orientation; arms by 2-bone IK with the human elbow as the pole;
     for iron-sight files the right hand is placed relative to the head instead, so the sights stay at the eyes;
   * fingers, the Weapon node and any weapon-part tracks follow the human file (local transforms);
-  * bones the human file doesn't key come from the human aim (or iron-sight aim) pose, as the engine layers them.
+  * bones the human file doesn't key come from the human aim (or iron-sight aim) pose, as the engine layers them;
+  * aim up / down variants (<group>up / <group>down): the human bends its spine to point the gun up / down; that bend
+    (the human Spine2's world rotation against the level file at the same time) is spread over the creature's spine,
+    so the shoulders follow the gun - kept upright, the arms folded into the chest to point it down (Ghost 2HR
+    down: left elbow 1-4 units from the spine).
 Text keys, length, cycle and per-bone priorities are the human file's, so sounds, fire / reload events and the
 engine's timing are vanilla. Written with the human file's name; the caller copies sneak variants."""
 import sys, os, re, importlib, numpy as np
@@ -48,6 +52,9 @@ def transfer(cr, hpath, base_path, fps=30, head_is=6.0, free_left=None, twist=Fa
     name = os.path.basename(hpath).lower()
     iron = bool(re.search(r'is(up|down)?\.kf$', name))
     handwork = bool(re.search(r'reload|jam|equip|holster|grip', name))
+    lvl = re.sub(r'(up|down)\.kf$', '.kf', name)
+    lvl_path = os.path.join(os.path.dirname(hpath), lvl) if lvl != name else None
+    kl = KFEval(lvl_path) if lvl_path and os.path.exists(lvl_path) else None
     Wfree = None
     if free_left and not handwork:
         kf_ = KFEval(free_left); Wfree = human_fk(hs, kf_.sample(0), None); smp_free = kf_.sample(0)
@@ -63,6 +70,20 @@ def transfer(cr, hpath, base_path, fps=30, head_is=6.0, free_left=None, twist=Fa
         if iron:                                                   # look down the sights a little
             W = rig.fk(loc); rig.set_world_rot(loc, W, cr.head, align(np.array([0, 1.0, 0]), np.array([0, 1.0, -np.tan(np.radians(head_is))])) @ W[cr.head][1])
         W = rig.fk(loc)
+        def bend():
+            nonlocal W
+            if kl is None: return
+            Wl = human_fk(hs, kl.sample(min(t, kl.stop)), base_h)
+            D = Wh['Bip01 Spine2'][1] @ Wl['Bip01 Spine2'][1].T
+            ang = np.arccos(np.clip((np.trace(D) - 1) / 2, -1, 1))
+            if ang > 1e-4:
+                ax = np.array([D[2, 1] - D[1, 2], D[0, 2] - D[2, 0], D[1, 0] - D[0, 1]]) / (2 * np.sin(ang))
+                a = ang / len(cr.spine); K = np.array([[0, -ax[2], ax[1]], [ax[2], 0, -ax[0]], [-ax[1], ax[0], 0]])
+                Rs = np.eye(3) + np.sin(a) * K + (1 - np.cos(a)) * K @ K
+                for sp in cr.spine:
+                    rig.set_world_rot(loc, W, sp, Rs @ W[sp][1]); W = rig.fk(loc)
+        spine_twist = getattr(cr.cfg, 'XFER_TWIST_AXIS', 'world') == 'spine'
+        if not spine_twist: bend()
         if twist and Wfree is None:
             # two-handed stances turn the human
             # torso ~40 deg (left shoulder forward); the creature kept its idle's shoulder line, its left shoulder 25
@@ -74,11 +95,27 @@ def transfer(cr, hpath, base_path, fps=30, head_is=6.0, free_left=None, twist=Fa
             d = hd(Wh[uaL][0] - Wh[uaR][0]) - hd(W[uaL][0] - W[uaR][0]); d = (d + np.pi) % (2 * np.pi) - np.pi
             clav_par = {cr.sk.parent[cr.arm[s_][0]] for s_ in ('L', 'R')}            # (the clavicles hang off Bip01 Neck)
             keep = {nm: W[nm][1].copy() for nm in (cr.cfg.BONES.get('neck', []) + [cr.head]) if nm in W and nm not in clav_par}
-            c, s = np.cos(d / len(cr.spine)), np.sin(d / len(cr.spine)); Rz = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1.0]])
-            for sp in cr.spine:
-                rig.set_world_rot(loc, W, sp, Rz @ W[sp][1]); W = rig.fk(loc)
+            if getattr(cr.cfg, 'XFER_TWIST_AXIS', 'world') == 'spine':
+                # a hunched trunk turned about world Z swings the chest and head sideways (Ghost: head 16 units right
+                # of the pelvis, rifle held far out to the right); turned about its own line (first spine bone ->
+                # neck) the chest stays over the hips. The line is tilted, so the turn is repeated until the shoulder
+                # heading matches.
+                top = cr.cfg.BONES.get('neck', [cr.head])[0]
+                for _ in range(4):
+                    ax = W[top][0] - W[cr.spine[0]][0]; ax = ax / np.linalg.norm(ax)
+                    a = d / len(cr.spine); K = np.array([[0, -ax[2], ax[1]], [ax[2], 0, -ax[0]], [-ax[1], ax[0], 0]])
+                    Ra = np.eye(3) + np.sin(a) * K + (1 - np.cos(a)) * K @ K
+                    for sp in cr.spine:
+                        rig.set_world_rot(loc, W, sp, Ra @ W[sp][1]); W = rig.fk(loc)
+                    d = hd(Wh[uaL][0] - Wh[uaR][0]) - hd(W[uaL][0] - W[uaR][0]); d = (d + np.pi) % (2 * np.pi) - np.pi
+                    if abs(d) < np.radians(0.5): break
+            else:
+                c, s = np.cos(d / len(cr.spine)), np.sin(d / len(cr.spine)); Rz = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1.0]])
+                for sp in cr.spine:
+                    rig.set_world_rot(loc, W, sp, Rz @ W[sp][1]); W = rig.fk(loc)
             for nm, Rk in keep.items():
                 rig.set_world_rot(loc, W, nm, Rk); W = rig.fk(loc)
+        if spine_twist: bend()      # turned about the upright trunk first, then bent up / down
         for side in ('R', 'L'):
             cl, ua, fa, hand = cr.arm[side]
             if side == 'L' and Wfree is not None:                 # one-handed: left arm from the hip aim

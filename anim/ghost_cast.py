@@ -9,7 +9,8 @@ forward (fingers along the up direction, perpendicular to the aim, thumb side to
 +X = fingers, +Z = index side, +Y = palm) and the fingers / thumb take their bind (open) pose; the Weapon node is
 keyed PALM_AHEAD in front of the palm (+X = the aim direction, +Y up, +Z right, as a human gun), so the hidden gun's
 projectile node - and with it the shot, its muzzle flash, a flamer's flame - is there. Reloads, jams, equips keep the
-pistol file's hands (nothing seen in them). Weapon scale 0.001 everywhere.
+pistol file's hands (nothing seen in them). Weapon scale 0.001 everywhere, and the weapon model's Backpack node (the
+flamer tank / minigun ammo pack the engine hangs on Bip01 Spine2) keyed to scale 0.001 too.
 usage: python3 -P ghost_cast.py <Ghost anim folder (1hp + 2hh files)> <out folder>"""
 import os, re, sys, struct
 import numpy as np
@@ -71,6 +72,31 @@ def scale_weapon_written(path):
             ib = bytearray(f.blocks[ii]); struct.pack_into('<f', ib, 28, HIDE_SCALE); f.blocks[ii] = bytes(ib)
     open(path, 'wb').write(f.to_bytes())
 
+HIDE_NODES = ('Backpack',)  # weapon-model nodes the engine moves onto the body (flamer tank, minigun ammo pack -> Bip01 Spine2)
+FLT_MAX = 3.4028234663852886e38
+def hide_model_nodes(path):
+    """key each HIDE_NODES node's scale to HIDE_SCALE (translation / rotation left unanimated): a node of the weapon
+    model, so it is added as its own controlled block, typed like the Weapon node's"""
+    f = NifFile(path)
+    si = f.str_index
+    seq = [i for i, t in enumerate(f.btype) if f.types[t] == 'NiControllerSequence'][0]
+    sb = f.blocks[seq]; name, ncb, grow = struct.unpack_from('<iII', sb, 0)
+    have = {}; wblk = None
+    for j in range(ncb):
+        cb = struct.unpack_from('<iiBiiiii', sb, 12 + 29 * j); nm = f.strings[cb[3]] if cb[3] >= 0 else ''
+        have[nm] = cb
+        if nm == 'Weapon': wblk = cb
+    assert wblk is not None, path
+    cbs = []
+    for nm in HIDE_NODES:
+        if nm in have: continue
+        interp = struct.pack('<3f4ffi', -FLT_MAX, -FLT_MAX, -FLT_MAX, -FLT_MAX, -FLT_MAX, -FLT_MAX, -FLT_MAX, HIDE_SCALE, -1)
+        ii = f.add_block('NiTransformInterpolator', interp)
+        cbs.append(struct.pack('<iiBiiiii', ii, -1, wblk[2], si(nm), wblk[4], wblk[5], wblk[6], wblk[7]))
+    if cbs:
+        f.blocks[seq] = struct.pack('<iII', name, ncb + len(cbs), grow) + sb[12:12 + 29 * ncb] + b''.join(cbs) + sb[12 + 29 * ncb:]
+        open(path, 'wb').write(f.to_bytes())
+
 def build(dst_path, src_path, out_path):
     kt = KFEval(dst_path); ks = KFEval(src_path)
     L = kt.stop; Ls = ks.stop
@@ -92,6 +118,7 @@ def build(dst_path, src_path, out_path):
     keys = [(t, s) for t, s in kt.textkeys if not s.lower().startswith('prn')]
     write_kf(cr, out_path, kt.name, L, keys, frames, bones=bones, cycle=kt.cycle)
     scale_weapon_written(out_path)
+    hide_model_nodes(out_path)
     return casting
 
 if __name__ == '__main__':
