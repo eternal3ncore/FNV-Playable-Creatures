@@ -68,13 +68,13 @@ add-ons need their base pack too.
 ## Tunnelers
 `PlayableCreatures_Tunnelers.esp`
 *Tunneler, Spore Carrier*
-- Unarmed and melee only.
+- Unarmed and melee only; melee weapons aren't drawn.
 - Can't use chairs or stools (the game treats creatures this short as children).
 - **Spore Carrier:** immune to poison.
 
 ## Eyebot
 `PlayableCreatures_Eyebot.esp`
-- Built-in recharging laser; can also fire guns.
+- Built-in recharging laser; can also fire guns. Weapons aren't drawn: every shot leaves its laser.
 - No fall damage.
 - Hovers lower when sneaking.
 - Immune to radiation and poison.
@@ -83,6 +83,8 @@ add-ons need their base pack too.
 `PlayableCreatures_Securitron.esp`
 *Securitron, Securitron Mk II*
 - Built-in recharging machine gun, laser, grenade launcher and shoulder missiles; can also fire guns.
+- Weapons aren't drawn: pistols and automatics fire from the machine gun arm, rifles from the laser arm, launchers,
+  grenades and mines from the grenade launcher arm, heavy weapons from the shoulder missiles.
 - **Securitron:** damage threshold +20. After the Securitron upgrade (Fortification Hill): +30, +55 health and
   self-repair. The missiles and grenade launcher need the upgrade.
 - **Securitron Mk II:** the infantry face, damage threshold +30. Hidden from the race menu by default.
@@ -90,13 +92,15 @@ add-ons need their base pack too.
 
 ## Protectron
 `PlayableCreatures_Protectron.esp`
-- Built-in recharging hand laser and head laser; can also fire guns.
+- Built-in recharging hand laser and head laser; can also fire guns. Weapons aren't drawn: guns fire from the hand
+  laser, launchers from the head laser.
 - Hovers on its back jet when running.
 - Immune to radiation and poison.
 
 ## Robobrain
 `PlayableCreatures_Robobrain.esp`
-- Built-in recharging laser and Mesmetron; can also fire guns.
+- Built-in recharging laser and Mesmetron; can also fire guns. Weapons aren't drawn: guns fire from the laser arm,
+  launchers from the head.
 - Immune to radiation and poison.
 
 ### TTW add-on: `PlayableCreatures_RobobrainTTW.esp`
@@ -105,15 +109,17 @@ add-ons need their base pack too.
 ## Mister Handy
 `PlayableCreatures_MisterHandy.esp`
 *Mister Handy, Mister Gutsy*
-- One-handed melee, unarmed and guns (no two-handed melee).
-- **Mister Handy:** built-in recharging flamer and buzzsaw.
-- **Mister Gutsy:** built-in recharging flamer and plasma gun; the pincer claw for melee.
+- One-handed melee, unarmed and guns (no two-handed melee). Weapons aren't drawn.
+- **Mister Handy:** built-in recharging flamer and buzzsaw; guns, grenades and mines fire from the flamer arm.
+- **Mister Gutsy:** built-in recharging flamer and plasma gun; heavy weapons fire from the flamer arm, every other gun
+  from the plasma arm; the pincer claw for melee.
 - No fall damage.
 - Immune to radiation and poison.
 
 ## Sentry Bot
 `PlayableCreatures_SentryBot.esp`
-- Built-in recharging gatling laser and missile launcher; can also fire guns.
+- Built-in recharging gatling laser and missile launcher; can also fire guns. Weapons aren't drawn: guns fire from the
+  gatling arm, launchers, grenades and mines from the missile pod.
 - Immune to radiation and poison.
 
 ## Deathclaws
@@ -154,7 +160,7 @@ add-ons need their base pack too.
 ### Trogs
 `PlayableCreatures_Trogs.esp`
 *Trog, Trog Brute, Trog Savage*
-- Unarmed and melee only.
+- Unarmed and melee only; melee weapons aren't drawn.
 - Can't use chairs or stools (the game treats creatures this short as children).
 - Brute and Savage are hidden from the race menu by default.
 
