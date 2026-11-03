@@ -80,7 +80,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 74;
+static const UInt32 kPluginVersion = 73;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -1743,43 +1743,6 @@ static void ApplyBodyParts(const char* why) {
 // 0x4AAE30(root, name). (Securitrons: the 8 vanilla screens as 'PCFace:<name>' nodes under Screen01Root.)
 static const UInt32 kAddr_FindNodeByName = 0x004AAE30;
 typedef void* (__cdecl* FindByName_t)(void* root, const char* name);
-// AnimLog=1 diagnostic: what hangs on the player's Bip01 Head (hair / FaceGen parts) and where, after a 3D (re)build
-typedef void* (__fastcall* GetRTTI_t)(void*, void*);
-static const char* RTTIName(void* o) {                               // NiObject vtbl+8 GetRTTI (after the destructor and Free) -> NiRTTI { name, parent }
-	void* rt = ((GetRTTI_t)At<void**>(o, 0)[2])(o, nullptr);
-	const char* nm = rt && Readable(rt, 4) ? At<const char*>(rt, 0) : nullptr;
-	return nm && Readable(nm, 1) ? nm : "?";
-}
-static void LogHeadNode(void* n, void* player, int depth, bool walk) {
-	if (!n || depth > 5 || !Readable(n, 0xAC)) return;
-	const char* nm = At<const char*>(n, 0x08); const char* cls = RTTIName(n);
-	float* wp = (float*)((UInt8*)n + 0x8C); float* pp = (float*)((UInt8*)player + 0x30);
-	float* wr = (float*)((UInt8*)n + 0x68);
-	Log("headdiag: %*s%s '%s' flags %08X scale %.3f world (%.1f %.1f %.1f) rel player (%.1f %.1f %.1f) +Y (%.2f %.2f %.2f)",
-		depth * 2, "", cls, nm && Readable(nm, 1) ? nm : "", At<UInt32>(n, 0x30), *(float*)((UInt8*)n + 0x98),
-		wp[0], wp[1], wp[2], wp[0] - pp[0], wp[1] - pp[1], wp[2] - pp[2], wr[1], wr[4], wr[7]);
-	if (!walk || !strstr(cls, "Node")) return;
-	void** data = *(void***)((UInt8*)n + 0xA0); UInt16 cnt = *(UInt16*)((UInt8*)n + 0xA6);
-	if (!data || cnt > 64 || !Readable(data, cnt * 4)) return;
-	for (UInt16 i = 0; i < cnt; i++) if (void* c = data[i]) LogHeadNode(c, player, depth + 1, true);
-}
-static void LogHeadDiag(const char* why, void* root = nullptr) {
-	static int calls = 0;
-	Profile* p = PlayerProfile(); void* player = Player(); void* npc = PlayerNPC();
-	if (!p || !p->animLog || !player || !npc || calls >= 12) return;
-	calls++;
-	if (!root) root = PlayerRoot(player);
-	if (!root) return;
-	for (UInt32 off = 0x1B4; off <= 0x1C4; off += 4) {
-		void* f = At<void*>(npc, off);
-		if (f && Readable(f, 0x10)) Log("headdiag: npc +%03X -> form %08X type %02X", off, At<UInt32>(f, 0x0C), At<UInt8>(f, 4));
-	}
-	void* head = ((FindByName_t)kAddr_FindNodeByName)(root, "Bip01 Head");
-	void* face = ((FindByName_t)kAddr_FindNodeByName)(root, "PCSecuritronFace");
-	Log("headdiag: (%s) root %p head %p face node %p", why, root, head, face);
-	if (head) LogHeadNode(head, player, 0, true);
-	if (face && face != head) { Log("headdiag: face node parent chain:"); for (void* n = face; n && Readable(n, 0x1C); n = At<void*>(n, 0x18)) LogHeadNode(n, player, 0, false); }
-}
 static void ApplyFace(const char* why, void* root = nullptr) {    // root: the new 3D at OnRefSet3D (render state not yet on it)
 	void* player = Player(); void* npc = PlayerNPC(); Profile* p = PlayerProfile();
 	if (!p || !p->numFaces) return;
@@ -1828,7 +1791,7 @@ static void ApplyVoice(const char* why) {
 	ApplyUnarmedEffect(why);
 	ApplyMaterial(why);
 	ApplyBodyParts(why);
-	ApplyFace(why); LogHeadDiag(why);
+	ApplyFace(why);
 	ApplyRad(why);
 	ApplyEssential(why);
 	ApplyFaction(why);
@@ -1964,7 +1927,7 @@ static void MessageHandler(NVSEMessage* msg) {
 			LogRagdoll("player 3D set");
 			UpdateLoop("player 3D set", node);
 			ApplyVoice("player 3D set");
-			ApplyFace("player 3D set (new root)", node); LogHeadDiag("player 3D set (new root)", node);
+			ApplyFace("player 3D set (new root)", node);
 		}
 		break;
 	default: break;
