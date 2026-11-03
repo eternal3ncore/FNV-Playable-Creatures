@@ -14,7 +14,7 @@ add-ons need their base pack too.
   save/reload).
 - Its own hit, death and attack voices, footsteps and blood type.
 - Block animations for unarmed and melee.
-- Furniture use (except Tunnelers / Spore Carriers and Trogs) and getting up after a knockdown.
+- Furniture use (chairs, stools, the Vault 112 pods) and getting up after a knockdown.
 - The creature's own body parts for gore, dismemberment and VATS.
 - Armor can be worn for its stats but isn't drawn (except where noted).
 - Human animation overrides from kNVSE animation mods don't apply to creature races.
@@ -69,7 +69,7 @@ add-ons need their base pack too.
 `PlayableCreatures_Tunnelers.esp`
 *Tunneler, Spore Carrier*
 - Unarmed and melee only; melee weapons aren't drawn.
-- Can't use chairs or stools (the game treats creatures this short as children).
+- Uses chairs, stools and pods: Core keeps the game from treating this short a creature as a child.
 - **Spore Carrier:** immune to poison.
 
 ## Eyebot
@@ -161,7 +161,7 @@ add-ons need their base pack too.
 `PlayableCreatures_Trogs.esp`
 *Trog, Trog Brute, Trog Savage*
 - Unarmed and melee only; melee weapons aren't drawn.
-- Can't use chairs or stools (the game treats creatures this short as children).
+- Uses chairs, stools and pods: Core keeps the game from treating this short a creature as a child.
 - Brute and Savage are hidden from the race menu by default.
 
 ### Mirelurks
