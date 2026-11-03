@@ -23,7 +23,7 @@ The skeleton gets ProjectileNode on the head at the mouth (+Y = level forward in
 when the hidden gun has none.
 Grenades / mines (claw_attack): every 1GT / 1MD / 1LM aim = the claw aim, every throw / placement = the claw strike with
 its Hit on the file's Release, the grenade in the right claw (shown); their equips hold it at the Weapon bind.
-usage: python3 mouth_fire.py <creature> <folder> <Skeleton.nif to patch> [--hide | --throws]     creature = lakelurk | mirelurk
+usage: python3 mouth_fire.py <creature> <folder> <Skeleton.nif to patch> [--hide | --throws]     creature = lakelurk | mirelurk | tunneler | trog
   --throws: only the grenade / mine files"""
 import os, re, sys, struct
 import numpy as np
@@ -35,6 +35,7 @@ from sound_keys import text_keys
 import importlib
 
 GUNS = ('1hp', '2hr', '2ha', '2hh', '2hl')
+SPORE = '/home/claude/fnv/tunneler_src/base/meshes/creatures/nvsporecarrier/'
 HIDE = ('h2h', '1hm', '2hm') + GUNS
 PITCH = 30.0
 WIND = 0.45                       # seconds of the wind-up kept before an early Hit
@@ -59,6 +60,17 @@ CREATURES = {
                      claw_aim='h2haim.kf', claw_attack='h2hattackright.kf',
                      pitch_bones=('Bip01 Neck', 'Bip01 Head'),
                      lower=r'^Bip01( NonAccum| Pelvis| [LR] (Thigh|Calf|Foot|Toe\d*)| Tail\d*)$'),
+    # tunneler / spore carrier / trog (one skeleton; the street trog's cfg): every gun fires as the spore carrier's
+    # standing power attack, the bite - the shot on its jaw (Bip01 Ponytail1) wide open (0.15 s, 33 deg; it snaps shut
+    # on the Hit at 0.2); the head keeps the aim's facing (the bite lunges it down at the target)
+    'tunneler': dict(cfg='trog', aim=SPORE + 'h2haim.kf', attack=SPORE + 'h2hattackpower.kf', fire_at=0.15,
+                     mouth_fu=(5.0, -1.0), level_head=True, claw_aim=SPORE + 'h2haim.kf', claw_attack=SPORE + 'h2hattackright.kf',
+                     pitch_bones=('Bip01 Neck', 'Bip01 Head'),
+                     lower=r'^Bip01( NonAccum| Pelvis| [LR] (Thigh|Calf|Foot|Toe\d*))$'),
+    'trog': dict(cfg='trog', aim='h2haim.kf', attack=SPORE + 'h2hattackpower.kf', fire_at=0.15,
+                 mouth_fu=(5.0, -1.0), level_head=True, claw_aim='h2haim.kf', claw_attack='h2hattackright.kf',
+                 pitch_bones=('Bip01 Neck', 'Bip01 Head'),
+                 lower=r'^Bip01( NonAccum| Pelvis| [LR] (Thigh|Calf|Foot|Toe\d*))$'),
 }
 SPEC = CREATURES[sys.argv[1]]
 LOWER = re.compile(SPEC['lower'])
@@ -81,7 +93,7 @@ def full(skel, sample):
 
 aim = KFEval(os.path.join(SRC, SPEC['aim']))
 shriek = KFEval(os.path.join(SRC, SPEC['attack']))
-S_HIT = [t for t, k in shriek.textkeys if k in ('Hit', 'Fire')][0]
+S_HIT = SPEC.get('fire_at') or [t for t, k in shriek.textkeys if k in ('Hit', 'Fire')][0]
 S_END = shriek.stop
 PRIO = {'aim': {b[0]: b[2] for b in aim.blocks}, 'attack': {b[0]: b[2] for b in shriek.blocks}}
 BONES = [b[0] for b in shriek.blocks if b[0] not in ('Bip01', 'Weapon')]

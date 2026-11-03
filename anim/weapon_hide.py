@@ -137,8 +137,8 @@ RACES = {
     'securitron': (_em(all='ProjectileNode_Launcher', **{'1hp': 'ProjectileNode_MachineGun', '2ha': 'ProjectileNode_MachineGun',
                                                      '2hr': 'ProjectileNode_GatlingLaser', '2hh': 'ProjectileNode_Missle'}), ['h2h']),
     'eyebot': ({}, ['h2h'] + list(_G)),                 # its Weapon node already sits on the emitter: kept at its bind
-    'trog': ({}, ['h2h', '1hm', '2hm']), 'tunneler': ({}, ['h2h', '1hm', '2hm']),
-    'misterhandy': ({}, ['h2h', '1hm']), 'mistergutsy': ({}, ['h2h', '1hm']),
+    'trog': ({}, ['h2h', '1hm', '2hm']), 'tunneler': ({}, ['h2h', '1hm', '2hm']),   # guns: mouth_fire.py
+    'misterhandy': ({}, ['h2h', '1hm', '2hm']), 'mistergutsy': ({}, ['h2h', '1hm', '2hm']),
 }
 
 

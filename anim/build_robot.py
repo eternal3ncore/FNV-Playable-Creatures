@@ -308,6 +308,9 @@ RL.h2h(ctx, ZREF, OUT, C['H2H'], made)
 for f in list(made):
     set_priority(os.path.join(OUT, f), set(C['LOWER']), 26)
 if C.get('claw'): claw_retarget(ctx, [f for f in made if f.startswith('1hm') or f.startswith('h2h')])
+if ROBOT in ('misterhandy', 'mistergutsy'):      # two-handed melee = the one-handed set (the weapon unseen either way)
+    for f in [f for f in made if f.startswith('1hm')]:
+        shutil.copyfile(os.path.join(OUT, f), os.path.join(OUT, '2hm' + f[3:])); made.append('2hm' + f[3:])
 C['loco'](ctx)
 # every locomotion group slower than the human male's (vanilla characters\_male\locomotion\male, world
 # units/s, measured) gets its root travel scaled up to it; skeleton units = world / race height (robobrain 0.33)

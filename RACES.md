@@ -70,7 +70,7 @@ add-ons need their base pack too.
 ## Tunnelers
 `PlayableCreatures_Tunnelers.esp`
 *Tunneler, Spore Carrier*
-- Unarmed and melee only; melee weapons aren't drawn.
+- All weapon types. Weapons aren't drawn: every gun fires from its mouth as its bite, the shot leaving as the jaws open; grenades and mines are thrown and placed with its claws.
 - Uses chairs, stools and pods: Core keeps the game from treating this short a creature as a child.
 - **Spore Carrier:** immune to poison.
 
@@ -111,7 +111,7 @@ add-ons need their base pack too.
 ## Mister Handy
 `PlayableCreatures_MisterHandy.esp`
 *Mister Handy, Mister Gutsy*
-- One-handed melee, unarmed and guns (no two-handed melee). Weapons aren't drawn.
+- All weapon types; two-handed melee weapons swing like one-handed ones. Weapons aren't drawn.
 - **Mister Handy:** built-in recharging flamer and buzzsaw; guns, grenades and mines fire from the flamer arm.
 - **Mister Gutsy:** built-in recharging flamer and plasma gun; heavy weapons fire from the flamer arm, every other gun
   from the plasma arm; the pincer claw for melee.
@@ -162,7 +162,7 @@ add-ons need their base pack too.
 ### Trogs
 `PlayableCreatures_Trogs.esp`
 *Trog, Trog Brute, Trog Savage*
-- Unarmed and melee only; melee weapons aren't drawn.
+- All weapon types. Weapons aren't drawn: every gun fires from its mouth as its bite, the shot leaving as the jaws open; grenades and mines are thrown and placed with its claws.
 - Uses chairs, stools and pods: Core keeps the game from treating this short a creature as a child.
 - Brute and Savage are hidden from the race menu by default.
 
