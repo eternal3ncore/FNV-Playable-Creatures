@@ -295,7 +295,8 @@ _R = ('1hp', '2ha', '2hr', '1gt', '1md', '1lm')
 CFG['misterhandy'] = dict(CFG['misterhandy'],
                           SRC_OF=dict(CFG['misterhandy']['SRC_OF'], **{t: '2hl' for t in _R}),
                           PRN_OF=dict(CFG['misterhandy']['PRN_OF'], **{t: 'ProjectileNode_HeadLaser' for t in _R}),
-                          level_attacks=('2hh', '2hl') + _R)
+                          level_attacks=('2hh', '2hl') + _R, weapon_follow=True)
+CFG['mistergutsy'] = dict(CFG['mistergutsy'], weapon_follow=True)
 C = CFG[ROBOT]
 ctx = RL.Ctx([os.path.join(SRCDIR, d) for d in C['dirs']] + [os.path.join(SRCDIR, 'locomotion')], SKEL)
 if C.get('jet'):
@@ -373,5 +374,50 @@ if C.get('projnode'):
             kf.set_channel('ProjectileNode', keys)
         kf.save(p); set_priority(p, {'ProjectileNode'}, 60, exact=True); nf += 1
     print('  ProjectileNode keyed in', nf, 'files (follows', TGT, 'in', FOLLOW, '; bind in', BIND, ')')
+if C.get('weapon_follow'):
+    # (the player's gun was drawn on the Mister Handy - HideWeapon notwithstanding - turned to the side and firing that
+    # way: a prn key moves the skeleton's Weapon node (and the model on it) under the named bone with its bind transform
+    # from under the claw's Dummy01) every gun / thrown / mine file keeps Weapon under its own parent (prn keys -> that
+    # parent) and keys it, scale 0.001, onto the type's emitter (PRN_OF) frame by frame, +X along the emitter's +Y (level
+    # forward), +Y up: the model is unseen and its own ProjectileNode is on the emitter, pointing ahead; equips /
+    # unequips / holsters hold it at its bind, unseen
+    SK = Skeleton(SKEL); WP = SK.parent['Weapon']; wb = SK.local['Weapon']; nf = 0
+    for f in made:
+        m = re.match(r'^(1hp|2ha|2hr|2hh|2hl|1gt|1md|1lm)(.*)\.kf$', f)
+        if not m or m.group(1) not in C['PRN_OF']: continue
+        EM = C['PRN_OF'][m.group(1)]; p = os.path.join(OUT, f); kf = KFFile(p)
+        d = bytearray(kf.f.blocks[kf.tk_block]); n, = struct.unpack_from('<I', d, 4)
+        for j in range(n):
+            t, si = struct.unpack_from('<fi', d, 8 + 8 * j)
+            if kf.f.strings[si].lower().startswith('prn:'): struct.pack_into('<i', d, 8 + 8 * j + 4, kf.f.str_index('prn: ' + WP))
+        kf.f.blocks[kf.tk_block] = bytes(d)
+        if 'Weapon' in [c for _, c in kf.cb]: drop_channel(kf, 'Weapon')
+        RL.add_channel(kf, 'Weapon', tr=np.array(wb[0], float), R=np.array(wb[1], float))
+        if re.match(r'^(equip|unequip|holster)', m.group(2)):
+            keys = [(0.0, np.array(wb[0], float), np.array(wb[1], float))]
+        else:
+            k = KFEval(p); nk = max(2, int(round((k.stop - k.start) * 30)) + 1); keys = []
+            for i in range(nk):
+                tt = k.start + (k.stop - k.start) * i / (nk - 1); smp = k.sample(tt); loc = {}
+                for nm in SK.order:
+                    tr, R, _ = SK.local[nm]
+                    if nm in smp:
+                        if smp[nm][0] is not None: tr = smp[nm][0]
+                        if smp[nm][1] is not None: R = smp[nm][1]
+                    loc[nm] = (np.array(tr, float), np.array(R, float))
+                W = SK.fk(loc); pp, pR = W[WP][0], W[WP][1]; ep, eR = W[EM][0], W[EM][1]
+                ps = W[WP][2] if len(W[WP]) > 2 else 1.0
+                Rw = np.column_stack([eR[:, 1], eR[:, 2], np.cross(eR[:, 1], eR[:, 2])])
+                keys.append((tt, pR.T @ (ep - pp) / ps, pR.T @ Rw))
+        kf.set_channel('Weapon', keys)
+        ent = [o for o, c in kf.cb if c == 'Weapon'][0]
+        ii = struct.unpack_from('<i', kf.f.blocks[kf.seq], ent)[0]
+        b = bytearray(kf.f.blocks[ii]); struct.pack_into('<f', b, 28, 0.001); kf.f.blocks[ii] = bytes(b)
+        di = struct.unpack_from('<i', b, 32)[0]
+        if di >= 0:                                   # keyed: a scale key too (the data's own scale track, not only the static value)
+            db = kf.f.blocks[di]; assert db[-4:] == b'\0\0\0\0'
+            kf.f.blocks[di] = db[:-4] + struct.pack('<IIff', 1, 1, keys[0][0], 0.001)
+        kf.save(p); set_priority(p, {'Weapon'}, 55, exact=True); nf += 1
+    print('  Weapon on the emitter (scale 0.001, prn ->', WP + ') in', nf, 'files')
 RL.sneak_copies(OUT, made)
 print(ROBOT, len(made), 'groups +', len(made), 'sneak copies (+ hurt) ->', OUT, '| hover:', sorted(HOVER))
