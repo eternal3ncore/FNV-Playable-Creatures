@@ -7,6 +7,7 @@ with none the activation does nothing (drinking from a water source only played 
   Cannibal.kf         Cannibal perk: bends lower (CANNIBAL deg) and feeds with a slow bob; the human file's timing and its
                       'Sound: NPCHumanPerkCannibal'
   Stimpak.kf          using a stimpak (ActStimpakSource): looks down (STIM deg) and back; the human file's timing
+  (Cannibal.kf is then replaced by cannibal.py's per-race feeding animation; Ghost gets the vanilla Sandman files)
   SandManBedLeft.kf / SandManBedRight.kf / SandManFlrLeft.kf / SandManFlrRight.kf   the Mister Sandman kill (the
                       engine's StartMisterSandman, FurnitureIdles > Sleeping > SandMan / SandManFloor by the victim's
                       bed marker): leans over the sleeper (bed WATER x 0.6 deg, floor WATER deg) and strikes with the
@@ -16,7 +17,7 @@ Each keeps the creature's own idle (its mtidle.kf, looped) for every bone the id
 the bones from the trunk up to Bip01 Head (the root, NonAccum and pelvis excluded), about the actor's sideways axis.
 Bip01 is not keyed (the locomotion keeps its heading). Priority 45.
 usage: python3 act_idles.py <race folder with mtidle.kf> <Skeleton.nif> <out IdleAnims dir> [water cannibal stim deg]"""
-import os, sys
+import os, shutil, sys
 import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.append(os.path.dirname(HERE))
 from kf import KF, KFEval, Skeleton, slerp, m2q, q2m
@@ -174,4 +175,9 @@ if __name__ == '__main__':
     if len(a) > 3: deg = dict(zip(deg, map(float, a[3:6])))
     elif os.path.basename(os.path.normpath(a[0])) in DEG: deg = dict(zip(deg, DEG[os.path.basename(os.path.normpath(a[0]))]))
     print(build(a[0], a[1], a[2], deg))
-    if os.path.exists(os.path.join(a[0], 'h2hattackpower.kf')): build_sandman(a[0], a[1], a[2], deg['ActWaterSource.kf'])
+    name = os.path.basename(os.path.normpath(a[0]))
+    if name == 'Ghost':                       # the human skeleton: the vanilla Sandman files as they are
+        for o, (hf, _) in SANDMAN.items(): shutil.copyfile(os.path.join(REF, hf), os.path.join(a[2], o))
+    elif os.path.exists(os.path.join(a[0], 'h2hattackpower.kf')): build_sandman(a[0], a[1], a[2], deg['ActWaterSource.kf'])
+    import cannibal                           # Cannibal.kf: the race's own feeding animation (cannibal.py)
+    print(cannibal.build(name, a[0], a[2]))
