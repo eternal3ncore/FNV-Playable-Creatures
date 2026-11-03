@@ -80,7 +80,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 81;
+static const UInt32 kPluginVersion = 82;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -546,6 +546,21 @@ typedef void (__fastcall* QueueRef_t)(void* loader, void* edx, void* ref, UInt32
 // died, the next game load rebuilds the player 3D (the same queued rebuild as a race switch) even when the skeleton
 // already matches - a fresh skeleton, animation data and ragdoll, as a load of a different race gets.
 static bool g_playerDied = false;
+// The engine caches an actor's height on its process (+0x42C, getter 0x8853A0: bound box height x scale, kept once
+// computed) and IsChild (vtbl 0x1A0, 0x8D40E0) calls anything under 110 a child (no furniture). Only a race / sex
+// change through AgeRace / MatchRace / SexChange clears it (0x8D3FA0 -> 0x8854B0(0)); a race switched in the race menu,
+// a live skeleton rebuild or a save of another race loaded into the same session kept the old height (a Deathclaw,
+// 152 tall, refused chairs as a child after the player had been a Tunneler, 56). Cleared here the same way.
+typedef int (__fastcall* ProcFn_t)(void* proc, void* edx);
+typedef void (__fastcall* ProcSetF_t)(void* proc, void* edx, float v);
+static void ResetPlayerHeight(const char* why) {
+	void* player = Player(); if (!player) return;
+	void* proc = *(void**)((UInt8*)player + 0x68); if (!proc) return;
+	if (((ProcFn_t)0x0045CD60)(proc, nullptr)) return;               // as 0x8D3FA0: not for that process kind
+	float old = *(float*)((UInt8*)proc + 0x42C);
+	((ProcSetF_t)0x008854B0)(proc, nullptr, 0.0f);
+	if (old != 0.0f) Log("height: cached player height %.1f cleared (%s)", old, why);
+}
 static void SyncPlayerSkeleton(const char* why) {
 	void* player = Player();
 	if (!player || !PlayerNPC()) return;
@@ -553,6 +568,7 @@ static void SyncPlayerSkeleton(const char* why) {
 	const char* have = RootMarker(PlayerRoot(player));
 	const char* wantMarker = want ? want->marker : "";
 	Log("sync(%s): race=%p have='%s' want='%s'", why, NPCRace(PlayerNPC()), have ? have : "(no 3D)", wantMarker);
+	ResetPlayerHeight(why);
 	bool afterDeath = g_playerDied && !strcmp(why, "game loaded") && have && *wantMarker && !strcmp(have, wantMarker);
 	if (!strcmp(why, "game loaded")) g_playerDied = false;
 	if (afterDeath) Log("sync: the player died before this load - rebuilding the same skeleton");
@@ -1949,6 +1965,7 @@ static void MessageHandler(NVSEMessage* msg) {
 			void* node = ((void**)msg->data)[1];
 			const char* m = RootMarker(node);
 			Log("player 3D set: root=%p marker='%s'", node, m ? m : "");
+			ResetPlayerHeight("player 3D set");
 			LogRagdoll("player 3D set");
 			UpdateLoop("player 3D set", node);
 			ApplyVoice("player 3D set");
