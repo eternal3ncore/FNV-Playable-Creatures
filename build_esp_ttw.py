@@ -292,6 +292,22 @@ if 'ThePitt.esm' in MASTERS:            # the TTW master list (build_plugins.py)
     HILLFOLK_BPTD = _bptd_from('/home/claude/fnv/ttw/PointLookout.esm', 0x010C37, 'PCHillfolkBodyPartData', 'Head', 'Bip01 Head', clear=0x22)
     print('  body part data: trog %06X, hillfolk (tracker / bruiser, no head tracking) %06X' % (TROG_BPTD & 0xFFFFFF, HILLFOLK_BPTD & 0xFFFFFF))
 
+
+# The player's action idles per skeleton folder (as build_esp.py act_idles): ActivateIdles > ActWaterSource /
+# ActStimpakSource, StartCannibal; vanilla conditions / DATA; files from anim/act_idles.py. Ids after everything else.
+def _vanilla_idle(fid):
+    r = SRC.byfid[fid]
+    return [v for k, v in r.subs() if k == 'CTDA'], dict(r.subs())['DATA'].hex()
+_AC = {f: _vanilla_idle(f) for f in (0x3BDC, 0x221B4, 0x23035, 0x7D409)}
+def act_idles(tag, folder):
+    act, = chain(0, [(f'PC{tag}ActivateIdles', folder, *_AC[0x3BDC])])
+    water, stim = chain(act, [(f'PC{tag}ActWaterSource', folder, *_AC[0x221B4]), (f'PC{tag}ActStimpakSource', folder, *_AC[0x23035])])
+    chain(water, [(f'PC{tag}ActWater', folder + '\\ActWaterSource.kf', [], '070000cd0000')])
+    chain(stim, [(f'PC{tag}ActStimpak', folder + '\\Stimpak.kf', [], '070000cd0000')])
+    chain(0, [(f'PC{tag}StartCannibal', folder + '\\Cannibal.kf', *_AC[0x7D409])])
+for _tag, _f in (('Swampfolk', 'Swampfolk'), ('Hillfolk', 'Hillfolk'), ('Trog', 'Trog'), ('Mirelurk', 'Mirelurk'), ('SuperMutantDC', 'SuperMutantDC')):
+    act_idles(_tag, 'PlayableCreatures\\%s\\IdleAnims' % _f)
+
 groups = [group('HAIR', [hair]), group('EYES', [eyes]), group('RACE', races), group('SPEL', spels), group('ARMO', armors), group('NPC_', npcs), group('IDLE', idles), group('BPTD', bptds)]
 nrec = 2 + len(races) + len(spels) + len(armors) + len(npcs) + len(idles) + len(bptds) + len(groups)
 tes4 = record('TES4', 0, [

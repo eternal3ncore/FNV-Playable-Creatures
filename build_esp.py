@@ -1052,6 +1052,28 @@ SECURITRON_BPTD = robot_bptd(0x10699E, 'PCSecuritronBodyPartData', 'Head', 'Bip0
 EYEBOT_BPTD = robot_bptd(0x2F870, 'PCEyebotBodyPartData', 'Combat Inhibitor', 'Bip01 Spine Brain')
 TUNNELER_BPTD = robot_bptd(0x945BB, 'PCTunnelerBodyPartData', 'Head', 'Bip01 Head')
 print('  body part data: securitron %06X, eyebot %06X, tunneler %06X' % (SECURITRON_BPTD & 0xFFFFFF, EYEBOT_BPTD & 0xFFFFFF, TUNNELER_BPTD & 0xFFFFFF))
+
+# The player's action idles (vanilla ActivateIdles / StartCannibal of the human tree): the engine plays them from the
+# actor's own idle tree and the action waits for them - with none, drinking from a water source only played the activate
+# sound. Per skeleton folder: ActivateIdles > ActWaterSource (drink) / ActStimpakSource (stimpak), and StartCannibal;
+# conditions and DATA copied from the vanilla records; the files are anim/act_idles.py's. Ids after everything else.
+def _vanilla_idle(fid):
+    r = SRC.byfid[fid]
+    return [v for k, v in r.subs() if k == 'CTDA'], dict(r.subs())['DATA'].hex()
+_AC = {f: _vanilla_idle(f) for f in (0x3BDC, 0x221B4, 0x23035, 0x7D409)}
+def act_idles(tag, folder):
+    act, = chain(0, [(f'PC{tag}ActivateIdles', folder, *_AC[0x3BDC])])
+    water, stim = chain(act, [(f'PC{tag}ActWaterSource', folder, *_AC[0x221B4]), (f'PC{tag}ActStimpakSource', folder, *_AC[0x23035])])
+    chain(water, [(f'PC{tag}ActWater', folder + '\\ActWaterSource.kf', [], '070000cd0000')])
+    chain(stim, [(f'PC{tag}ActStimpak', folder + '\\Stimpak.kf', [], '070000cd0000')])
+    chain(0, [(f'PC{tag}StartCannibal', folder + '\\Cannibal.kf', *_AC[0x7D409])])
+_idle_next[0] = _next_id
+for _tag, _f in (('Zetan', 'Zetan'), ('Ghost', 'Ghost'), ('FeralGhoul', 'Ghoul'), ('GlowingOne', 'GlowingOne'), ('SuperMutant', 'SuperMutant'),
+                 ('Nightkin', 'Nightkin'), ('Tunneler', 'Tunneler'), ('Eyebot', 'Eyebot'), ('Securitron', 'Securitron'),
+                 ('Protectron', 'Protectron'), ('Robobrain', 'Robobrain'), ('MisterHandy', 'MisterHandy'), ('MisterGutsy', 'MisterGutsy'),
+                 ('SentryBot', 'SentryBot'), ('Deathclaw', 'Deathclaw'), ('Lakelurk', 'Lakelurk')):
+    act_idles(_tag, 'PlayableCreatures\\%s\\IdleAnims' % _f)
+_next_id = _idle_next[0]
 for k, v in LAKELURKS.items():
     print('  lakelurk %s: race %06X child %06X ability %06X' % (k, v['race'] & 0xFFFFFF, v['child'] & 0xFFFFFF, v['ability'] & 0xFFFFFF))
 print('  young lakelurk ability %06X, shriek %06X, body part data %06X' % (_lk_young_ab & 0xFFFFFF, LAKELURK_SHRIEK & 0xFFFFFF, LAKELURK_BPTD & 0xFFFFFF))

@@ -61,7 +61,7 @@ class Src:
         self.own_idx = len(self.masters)
         self.own = {r.fid for r in self.recs if r.fid >> 24 == self.own_idx}
         self.refs = {r.fid: {struct.unpack_from('<I', v, i)[0] for k, v in r.subs() if k != 'EDID' for i in refs_at(v, self.own)
-                             if k != 'BPND' or i in BPND_FORMS}
+                             if (k != 'BPND' or i in BPND_FORMS) and not (r.type == 'WEAP' and k == 'DATA')}   # WEAP DATA: value / health / weight / damage / clip, no form ids
                      for r in self.recs}
 
 
