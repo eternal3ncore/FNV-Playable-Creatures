@@ -22,6 +22,7 @@ BONES = dict(
     leg_R=['Bip01 R Thigh', 'Bip01 R Calf', 'Bip01 R Foot', 'Bip01 R Toe0'],
     leg_L=['Bip01 L Thigh', 'Bip01 L Calf', 'Bip01 L Foot', 'Bip01 L Toe0'],
 )
+XFER_HIP_SHIFT = (-8.0, 10.0, 0.0)   # xfer_human: two-handed hip holds (not iron sights / equips / deaths) 8 units toward the middle, 10 forward (stock clear of the belly)
 XFER_TWIST_AXIS = 'spine'          # xfer_human: two-handed torso turn about the trunk line (the hunch stays over the hips)
 GRASP = (6.0, 0.0, 0.0)            # palm point in the hand frame (human-size hand)
 CURL_AXIS = (0, 0, 1)

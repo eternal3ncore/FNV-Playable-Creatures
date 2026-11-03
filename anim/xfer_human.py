@@ -130,6 +130,10 @@ def transfer(cr, hpath, base_path, fps=30, head_is=6.0, free_left=None, twist=Fa
                 tgt = W[cr.head][0] + (Wh[hand][0] - Wh[cr.head][0]) + np.array(getattr(cr.cfg, 'XFER_IS_SHIFT', (0, 0, 0)), float)
             else:
                 tgt = Sg + (Wh[hand][0] - Sh)
+                if twist and not iron and not re.search(r'equip|holster|death', name):
+                    # XFER_HIP_SHIFT (cfg, world units): the hip hold moved toward the middle (a hunched trunk that
+                    # stays over the hips leaves a human-placed hip rifle hanging out to the right of the chest)
+                    tgt = tgt + np.array(getattr(cr.cfg, 'XFER_HIP_SHIFT', (0, 0, 0)), float)
             pole = Sg + (Wh[fa][0] - Sh) * 2.0
             loc = rig.ik(loc, side, tgt, loc[hand][0], pole)
             W = rig.fk(loc)
