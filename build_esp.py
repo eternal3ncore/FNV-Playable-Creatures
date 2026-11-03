@@ -1039,10 +1039,11 @@ weaps[-1] = record('WEAP', _lfid, [(k, (lambda d: (struct.pack_into('<i', d, 0, 
 # The player's ragdoll sets up its pose matching from the body part data's headtracking part's IK node (see the ghost BPTD
 # above): MirelurkKingBodyPartData's Head part (node Bip01 Neck1, flags with headtracking) names the skeleton file as its
 # IK node, not a bone, so the pose was never set up - the eye-position code read an empty pose and the game crashed on a
-# save load. PCLakelurkBodyPartData = that BPTD with the Head part's IK node Bip01 Head (the head-tracking bone; it has no
-# ragdoll body, the DLL sets the head pose up from its ragdoll ancestor Bip01 Neck1 - Neck1 as the IK node would turn the
-# neck to look); ini BodyPartData. Ids after everything else.
-LAKELURK_BPTD = robot_bptd(0x5362D, 'PCLakelurkBodyPartData', 'Head', 'Bip01 Head')
+# save load. PCLakelurkBodyPartData = that BPTD with the Head part's IK node Bip01 Neck1 (its ragdoll top bone: Bip01 Head
+# has no body). Its neck is also the head-tracking bone - tested: the lakelurk faces its target (unlike Hillfolk1, whose
+# neck tracking tipped the head up; those keep Bip01 Head, the DLL takes the pose from the ragdoll ancestor). Ids after
+# everything else.
+LAKELURK_BPTD = robot_bptd(0x5362D, 'PCLakelurkBodyPartData', 'Head', 'Bip01 Neck1')
 # The same ragdoll head pose for every other robot / creature whose vanilla body part data has no part with both 'IK Data'
 # (0x02) and 'IK Data - Headtracking' (0x20) on a ragdoll bone (tools/bptd_audit.py): Securitron (Head flags 0x49, IK node
 # = the skeleton file), Eyebot (no head part: its Combat Inhibitor - the brain, Bip01 Spine Brain - takes the flags),
