@@ -234,10 +234,16 @@ for e, c in _mlids.items(): print('  child race', e, '%06X' % (c & 0xFFFFFF))
 F = 'PlayableCreatures\\Mirelurk\\IdleAnims'
 creature_idles('Mirelurk', F, *human_set(F + '\\'), (MLK + 'IdleAnims\\specialidle_getupfaceup.kf', MLK + 'IdleAnims\\specialidle_getupfacedown.kf'))
 
+# The Capital super mutants' own skeleton folder PlayableCreatures\\SuperMutantDC (anim/assemble_smdc.py: the New Vegas set
+# with Fallout 3's own animations where they differ) has its own idle tree: the New Vegas furniture set, Fallout 3's own
+# get-ups (Creatures\\SMSpineBreakerDC\\IdleAnims). New ids follow everything above.
+F = 'PlayableCreatures\\SuperMutantDC\\IdleAnims'
+creature_idles('SuperMutantDC', F, *human_set(F + '\\'), (DC + 'IdleAnims\\specialidle_getupfaceup.kf', DC + 'IdleAnims\\specialidle_getupfacedown.kf'))
+
 groups = [group('HAIR', [hair]), group('EYES', [eyes]), group('RACE', races), group('SPEL', spels), group('ARMO', armors), group('NPC_', npcs), group('IDLE', idles)]
 nrec = 2 + len(races) + len(spels) + len(armors) + len(npcs) + len(idles) + len(groups)
 tes4 = record('TES4', 0, [
-    ('HEDR', struct.pack('<fII', 1.34, nrec, _next[0])), ('CNAM', z('Claude (Playable Creatures project)')),
+    ('HEDR', struct.pack('<fII', 1.34, nrec, _next[0])), ('CNAM', z('i3ncore')),
     ('SNAM', z('Playable Creatures (TTW add-on): Swampfolk (Brawler, Scrapper, Creeper, Tracker, Bruiser), Trogs, Capital Wasteland super mutants (Super Mutant, Brute, Master) as playable races; idle trees. Needs Tale of Two Wastelands and PlayableCreatures.dll.')),
     *[x for m in MASTERS for x in (('MAST', z(m)), ('DATA', struct.pack('<Q', 0)))]])
 open(OUT, 'wb').write(tes4 + b''.join(groups))

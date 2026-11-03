@@ -314,7 +314,7 @@ groups = [group('QUST', [quest])] + ([group('VTYP', vtyp_recs)] if vtyp_recs els
 dial_top = b''.join(dial_groups)
 groups.append(b'GRUP' + struct.pack('<I4sIIHH', 24 + len(dial_top), b'DIAL', 0, 0, 0, 0) + dial_top)
 nrec = 1 + len(vtyp_recs) + len(TOPICS) + n_info + len(groups) + len(TOPICS)   # quest + vtyps + dials + infos + groups + child groups
-hdr = [('HEDR', struct.pack('<fII', 1.34, nrec, next_id[0])), ('CNAM', z('Claude (Playable Creatures project)')),
+hdr = [('HEDR', struct.pack('<fII', 1.34, nrec, next_id[0])), ('CNAM', z('i3ncore')),
        ('SNAM', z('Playable Creatures: creature voice sets as combat dialogue'))]
 for m in masters: hdr += [('MAST', z(m)), ('DATA', struct.pack('<Q', 0))]
 open(OUT, 'wb').write(record('TES4', 0, hdr) + b''.join(groups))

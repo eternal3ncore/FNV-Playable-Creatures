@@ -61,6 +61,9 @@ add-ons need their base pack too.
 ### TTW add-on: `PlayableCreatures_SuperMutantsTTW.esp`
 - **Capital Wasteland super mutants:** Super Mutant, Brute and Master, with four Capital armors and their own
   voices. Brute and Master are hidden from the race menu by default.
+- They move and fight with Fallout 3's own super mutant animations where those differ from New Vegas': idle, walk,
+  run, strafes, unarmed and melee attacks, grenade throws, and Fallout 3's extra rifle / assault rifle / heavy weapon /
+  launcher attacks and reloads.
 
 ## Tunnelers
 `PlayableCreatures_Tunnelers.esp`

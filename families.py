@@ -39,7 +39,7 @@ FAMILIES = [
     F('Swampfolk', list(range(0x8802, 0x8807)) + list(range(0x8882, 0x8887)), ['PCSwampfolk', 'PCHillfolk'],
       ['Swampfolk', 'Hillfolk'], ttw=True),
     F('Trogs', [0x8807, 0x8808, 0x8809, 0x8887, 0x8888, 0x8889], ['PCTrog'], ['Trog'], ttw=True),
-    F('SuperMutantsTTW', [0x8877, 0x887A, 0x887D, 0x888A, 0x888B, 0x888C], SMDC, [], ttw=True, addon_of='SuperMutants'),
+    F('SuperMutantsTTW', [0x8877, 0x887A, 0x887D, 0x888A, 0x888B, 0x888C], SMDC, ['SuperMutantDC'], ttw=True, addon_of='SuperMutants'),
     F('Mirelurks', [0x8893, 0x8896, 0x8899, 0x889C, 0x889D, 0x889E], ['PCMirelurk'], ['Mirelurk'], ttw=True),
     F('RobobrainTTW', [], [], [], ttw=True, addon_of='Robobrain'),          # the Fallout 3 (female) robobrain voice
 ]

@@ -19,6 +19,7 @@ PLAN = {
     # back power are its own regular right / left swings (root 0, Hit 0.5 s), sneak files included
     'Ghoul': {T: {'AttackPower': f'{T}attackright', 'AttackBackPower': f'{T}attackleft'} for T in ('h2h', '1hm', '2hm')},
     'SuperMutant': {'h2h': {'AttackPower': 'h2hattackleftpower', 'AttackBackPower': 'h2hattackrightpower'}},
+    'SuperMutantDC': {'h2h': {'AttackPower': 'h2hattackleftpower', 'AttackBackPower': 'h2hattackrightpower'}},   # TTW: Fallout 3's own
     'Trog': {T: {'AttackBackPower': f'{T}attackpower'} for T in ('h2h', '1hm', '2hm')},
     'Zetan': {'h2h': {g: 'h2hattackpower' for g in ('AttackForwardPower', 'AttackBackPower', 'AttackLeftPower', 'AttackRightPower')}},
     # Deathclaw: own forward / left / right power attacks only; its side powers are in-place swings (no root travel)

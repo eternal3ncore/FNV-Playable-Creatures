@@ -1044,7 +1044,7 @@ groups = [group('HAIR', [hair]), group('EYES', [eyes] + eyes_extra), group('RACE
 nrec = 2 + len(ipcts) + len(ipdss) + len(enchs) + len(projs) + len(eyes_extra) + len(armors) + len(bptds) + len(races) + len(weaps) + len(npcs) + len(souns) + len(mgefs) + len(scpts) + len(spels) + len(vtyp) + len(idles) + len(anios) + len(groups)
 tes4 = record('TES4', 0, [
     ('HEDR', struct.pack('<fII', 1.34, nrec, _next_id)),
-    ('CNAM', z('Claude (Playable Creatures project)')),
+    ('CNAM', z('i3ncore')),
     ('SNAM', z('Playable Creatures: Zetan (+ helmeted), Ghost People (hooded / unhooded), Feral Ghoul, Glowing One, Super Mutant, Nightkin, Tunneler, Spore Carrier, Eyebot, Securitron Mk I / II, robots, Deathclaws, Lakelurks; creature voices, idle trees, radiation immunity')),
     *[x for m in MASTERS for x in (('MAST', z(m)), ('DATA', struct.pack('<Q', 0)))]])
 open(OUT, 'wb').write(tes4 + b''.join(groups))

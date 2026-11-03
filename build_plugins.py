@@ -111,7 +111,7 @@ def write_family_records(path, fam, src, recs):
         if label in groups:
             body = b''.join(groups[label])
             out += b'GRUP' + struct.pack('<I4sIIHH', 24 + len(body), label.encode(), 0, 0, 0, 0) + body
-    hdr = [('HEDR', struct.pack('<fII', 1.34, len(recs), next_id)), ('CNAM', z('Claude (Playable Creatures project)'))]
+    hdr = [('HEDR', struct.pack('<fII', 1.34, len(recs), next_id)), ('CNAM', z('i3ncore'))]
     for m in masters: hdr += [('MAST', z(m)), ('DATA', struct.pack('<Q', 0))]
     body = b''.join(sub(k, v) for k, v in hdr)
     open(path, 'wb').write(b'TES4' + struct.pack('<IIIIHH', len(body), 0, 0, 0, 15, 0) + body + out)
@@ -169,7 +169,7 @@ def merge(out, masters, desc, parts):
             body = groups[label]
             out_groups += b'GRUP' + struct.pack('<I4sIIHH', 24 + len(body), label.encode(), 0, 0, 0, 0) + body
             nrec += 1 + count(body)
-    hdr = [('HEDR', struct.pack('<fII', 1.34, nrec, next_id)), ('CNAM', z('Claude (Playable Creatures project)')), ('SNAM', z(desc))]
+    hdr = [('HEDR', struct.pack('<fII', 1.34, nrec, next_id)), ('CNAM', z('i3ncore')), ('SNAM', z(desc))]
     for mm in masters: hdr += [('MAST', z(mm)), ('DATA', struct.pack('<Q', 0))]
     body = b''.join(sub(k, v) for k, v in hdr)
     open(out, 'wb').write(b'TES4' + struct.pack('<IIIIHH', len(body), 0, 0, 0, 15, 0) + body + out_groups)
