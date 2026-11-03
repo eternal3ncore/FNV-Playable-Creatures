@@ -278,6 +278,15 @@ CFG = {
 # chain, a clone of the buzzsaw arm's R Thigh chain: same bone lengths) with the buzzsaw arm's swing, while the plasma
 # arm holds its idle pose.
 CFG['mistergutsy'] = dict(CFG['misterhandy'], claw=True)
+# Mister Gutsy: heavy weapons (2HH) on its flamer arm, every other gun / launcher / thrown / mine on its plasma arm. The
+# player's weapon model is never drawn (HideWeapon), so every shot leaves the skeleton's ProjectileNode (on the flamer
+# tip, for the Flame projectile): the plasma-arm files key ProjectileNode onto the plasma emitter
+# (ProjectileNode_HeadLaser01) frame by frame, the 2HH files key it back at its bind on the flamer tip (projnode).
+CFG['mistergutsy'] = dict(CFG['mistergutsy'],
+                          SRC_OF=dict(CFG['mistergutsy']['SRC_OF'], **{'2hl': '1hp'}),
+                          PRN_OF=dict(CFG['mistergutsy']['PRN_OF'], **{'2hl': 'ProjectileNode_HeadLaser01'}),
+                          level_attacks=('2hh',),
+                          projnode=('ProjectileNode_HeadLaser01', ('1hp', '2ha', '2hr', '2hl', '1gt', '1md', '1lm'), ('2hh',)))
 # Mister Handy has no gun arm (right arm = buzzsaw): every gun, thrown weapon and mine is fired / thrown with its flamer
 # arm (its 2HL spin motion, aims / attacks level), from the flamer tip. The player's weapon model is never drawn
 # (HideWeapon), so the shot leaves the skeleton's ProjectileNode - on the flamer tip since skeleton v3 - while the
@@ -340,5 +349,29 @@ if C.get('pin'):
     print('  pinned', C['pin'], 'in', len(made), 'files; root priority 0 -> 26 in', len(ROOT0))
 for f in made + [os.path.join('Locomotion', 'Hurt', x) for x in os.listdir(os.path.join(OUT, 'Locomotion', 'Hurt'))]:
     RL.enum_to_sound(os.path.join(OUT, f), C['ENUM'])
+if C.get('projnode'):
+    TGT, FOLLOW, BIND = C['projnode']; SK = Skeleton(SKEL); nf = 0
+    PAR = SK.parent['ProjectileNode']; b0 = SK.local['ProjectileNode']
+    for f in made:
+        m = re.match(r'^(1hp|2ha|2hr|2hh|2hl|1gt|1md|1lm)', f)
+        if not m or m.group(1) not in FOLLOW + BIND: continue
+        p = os.path.join(OUT, f); kf = KFFile(p)
+        if 'ProjectileNode' in [c for _, c in kf.cb]: drop_channel(kf, 'ProjectileNode')
+        RL.add_channel(kf, 'ProjectileNode', tr=np.array(b0[0], float), R=np.array(b0[1], float))
+        if m.group(1) in FOLLOW:
+            k = KFEval(p); n = max(2, int(round((k.stop - k.start) * 30)) + 1); keys = []
+            for i in range(n):
+                tt = k.start + (k.stop - k.start) * i / (n - 1); smp = k.sample(tt); loc = {}
+                for nm in SK.order:
+                    tr, R, _ = SK.local[nm]
+                    if nm in smp:
+                        if smp[nm][0] is not None: tr = smp[nm][0]
+                        if smp[nm][1] is not None: R = smp[nm][1]
+                    loc[nm] = (np.array(tr, float), np.array(R, float))
+                W = SK.fk(loc); pp, pR = W[PAR][0], W[PAR][1]; tp, tR = W[TGT][0], W[TGT][1]
+                keys.append((tt, pR.T @ (tp - pp), pR.T @ tR))
+            kf.set_channel('ProjectileNode', keys)
+        kf.save(p); set_priority(p, {'ProjectileNode'}, 60, exact=True); nf += 1
+    print('  ProjectileNode keyed in', nf, 'files (follows', TGT, 'in', FOLLOW, '; bind in', BIND, ')')
 RL.sneak_copies(OUT, made)
 print(ROBOT, len(made), 'groups +', len(made), 'sneak copies (+ hurt) ->', OUT, '| hover:', sorted(HOVER))
