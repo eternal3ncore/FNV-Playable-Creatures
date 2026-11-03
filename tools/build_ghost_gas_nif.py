@@ -1,8 +1,10 @@
 """Ghost Gas projectile model: the Dead Money ghost leg gas spray (nvdlc01_ghostlegrhtfx.nif: billboard particle system,
 textures\\nvdlc01\\effects\\FXGhostLegFX.dds, its colour / alpha / rotation) as a flame-type projectile model, laid out as
 the vanilla flamer's (Projectiles\\FlamerFlame01.NIF): root + BSX copied from it, the spray subtree grafted under the root,
-the emitter node turned as the flamer's (emits along the projectile's +Y), world-space particles, and the emitter tuned
-from the leg's slow puff to a spray that carries over the flamer's reach.
+the emitter node turned as the flamer's (emits along the projectile's +Y), world-space particles, the emitter tuned
+from the leg's slow puff to a spray that carries over the flamer's reach, and the emitter switched on as the flamer's:
+the leg's emitter-active track only puffs from 0.25 to 0.37 s of a 1.75 s loop, longer than a projectile lives (nothing
+was drawn), so its controller timing and on / off keys are the flamer's (on from 0 to 0.33 s).
 usage: python3 -P build_ghost_gas_nif.py <flamerflame01.nif> <nvdlc01_ghostlegrhtfx.nif> <out.nif>"""
 import os, sys, struct
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -20,6 +22,9 @@ GROW, FADE, BASE = 0.12, 0.20, 0.30    # grow-from / fade-out times, start size 
 flame, leg, out = sys.argv[1:4]
 dst = NifFile(flame)
 emit_rot = dst.node(dst.find('FireStrips01-Emitter'))['rot']
+_fl = lambda t: [b for i, b in enumerate(dst.blocks) if dst.types[dst.btype[i]] == t]
+FLAME_CTLR_TIMING = _fl('NiPSysEmitterCtlr')[0][4:22]      # flags, frequency, phase, start, stop
+FLAME_ACTIVE = _fl('NiBoolData')[0]                         # emitter on at 0, off at the stop time
 # keep only the flamer's root + its BSX flags
 dst.blocks = dst.blocks[:2]; dst.btype = dst.btype[:2]
 assert dst.types[dst.btype[1]] == 'BSXFlags'
@@ -43,8 +48,11 @@ for i in blocks_of('NiPSysGrowFadeModifier'):
 for i in blocks_of('NiPSysData'):
     b = bytearray(dst.blocks[i]); struct.pack_into('<H', b, 4, MAXP); dst.blocks[i] = bytes(b)
 for i in blocks_of('NiPSysEmitterCtlr'):
-    fi = struct.unpack_from('<i', dst.blocks[i], 26)[0]
+    c = bytearray(dst.blocks[i]); c[4:22] = FLAME_CTLR_TIMING; dst.blocks[i] = bytes(c)
+    fi = struct.unpack_from('<i', c, 26)[0]
     b = bytearray(dst.blocks[fi]); struct.pack_into('<f', b, 0, BIRTH); dst.blocks[fi] = bytes(b)
+    vi = struct.unpack_from('<i', c, 34)[0]                                    # emitter-active bool interpolator
+    di = struct.unpack_from('<i', dst.blocks[vi], 1)[0]; dst.blocks[di] = FLAME_ACTIVE
 # drop strings no block uses any more is not needed (an unused string table entry is harmless)
 open(out, 'wb').write(dst.to_bytes())
 print('wrote', out, len(dst.blocks), 'blocks,', n, 'grafted')
