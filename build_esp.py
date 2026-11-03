@@ -890,15 +890,13 @@ print('  eyebot laser %06X, damage %d' % (EYEBOT_ZAP & 0xFFFFFF, EYEBOT_LASER_DA
 # from the Flamer: projectile PCGhostGasProjectile (FlameProjectile's flight, model = the ghost leg gas spray as a flame
 # projectile, tools/build_ghost_gas_nif.py; no muzzle flash, no fire light), enchantment PCGhostGasEnch (the vanilla
 # Poison effect 031851 - Damage Health over time, resisted by Poison Resistance - 2 pts for 5 s, as the Flamer's burn),
-# no burn critical spell, no scorch impacts (NoImpactSet), the Sierra Madre toxic-cloud loop as its spray sound (own
-# SOUN on the Flamer's fire-loop settings), no pilot-light idle loop; recharging like the robots' weapons
+# no burn critical spell, gas-puff impacts instead of scorch marks (PCGhostGasImpactSet, below), the Flamer's own fire
+# loop as its spray sound, no pilot-light idle loop; recharging like the robots' weapons
 # (AmmoMicroBreeder, nothing to carry; clip 60, 0.5 s per round = 30 s), Can't Drop, weightless, worth nothing, no
 # weapon mods. Given at race-menu close (ini GiveItems), not equipped.
 GHOST_GAS_MODEL = 'PlayableCreatures\\Ghost\\GhostGasProjectile.nif'
-GHOST_GAS_SOUND = 'fx\\emt\\~dlc01\\toxiccloud\\emt_dlc01_toxiccloud_lp.wav'
-gas_snd = _new()
-souns.append(record('SOUN', gas_snd, [(k, z('PCGhostGasSprayLP') if k == 'EDID' else z(GHOST_GAS_SOUND) if k == 'FNAM' else v)
-                                      for k, v in SRC.byfid[0x50F8E].subs()]))          # WPNFlamerFire3DLPM
+gas_snd = _new()        # (id kept, no record: the toxic-cloud loop played nothing as a weapon loop; the Flamer's own
+                        # fire loop WPNFlamerFire3DLPM is used)
 gas_ench = _new()
 enchs = [record('ENCH', gas_ench, [('EDID', z('PCGhostGasEnch')), ('FULL', z('Ghost Gas')),
                                    ('ENIT', bytes.fromhex('02000000000000000000000002cdcdcd')),     # weapon enchantment (as EnchFlamerEffect)
@@ -920,8 +918,7 @@ def _gw(k, v):
     if k == 'FULL': return z('Ghost Gas')
     if k == 'EITM': return u32(gas_ench)
     if k == 'NAM0': return u32(0x121155)                                        # AmmoMicroBreeder
-    if k == 'INAM': return u32(_NO_IMPACT)                                     # no flame scorch decals
-    if k == 'NAM7': return u32(gas_snd)
+    if k == 'INAM': return u32(_NO_IMPACT)                                     # no flame scorch decals; -> PCGhostGasImpactSet below
     if k == 'DATA': d = bytearray(v); struct.pack_into('<iif', d, 0, 0, 200, 0.0); return bytes(d)    # value 0, health, weight 0
     if k == 'DNAM':
         d = bytearray(v); d[12] |= 0x08                                         # Can't Drop
@@ -930,7 +927,7 @@ def _gw(k, v):
     return v
 weaps.append(record('WEAP', GHOST_GAS, [(k, _gw(k, v)) for k, v in SRC.byfid[0x432D].subs()
                                         if k not in ('UNAM', 'MOD4', 'MWD1', 'WNM1', 'WMI1')]))        # no idle loop, no mods
-print('  ghost gas %06X (projectile %06X, enchantment %06X, sound %06X)' % (GHOST_GAS & 0xFFFFFF, gas_proj & 0xFFFFFF, gas_ench & 0xFFFFFF, gas_snd & 0xFFFFFF))
+print('  ghost gas %06X (projectile %06X, enchantment %06X)' % (GHOST_GAS & 0xFFFFFF, gas_proj & 0xFFFFFF, gas_ench & 0xFFFFFF))
 
 # ---------------- Ghost knife spear ----------------
 # Ghost People's thrown knife spear: Dead Money's best one, NVDLC01WeapThrowingSpearGhost50 (0117FC: the level-50 ghost's
@@ -968,8 +965,24 @@ def _gs(k, v):
 weaps.append(record('WEAP', GHOST_SPEAR, [(k, _gs(k, v)) for k, v in DMP.byfid[0x010117FC].subs()]))
 print('  ghost knife spear %06X (knockdown spell %06X, effect %06X, script %06X)' % (GHOST_SPEAR & 0xFFFFFF, _sk_spel & 0xFFFFFF, _sk_mgef & 0xFFFFFF, _sk_scpt & 0xFFFFFF))
 
-groups = [group('HAIR', [hair]), group('EYES', [eyes] + eyes_extra), group('RACE', races), group('SOUN', souns), group('MGEF', mgefs), group('SCPT', scpts), group('ENCH', enchs), group('SPEL', spels), group('ARMO', armors), group('WEAP', weaps), group('NPC_', npcs), group('IDLE', idles)] + ([group('PROJ', projs)] if projs else []) + [group('ANIO', anios), group('BPTD', bptds), group('VTYP', vtyp)]   # vanilla group order
-nrec = 2 + len(enchs) + len(projs) + len(eyes_extra) + len(armors) + len(bptds) + len(races) + len(weaps) + len(npcs) + len(souns) + len(mgefs) + len(scpts) + len(spels) + len(vtyp) + len(idles) + len(anios) + len(groups)
+# ---------------- Ghost Gas impacts ----------------
+# Where Ghost Gas hits (actors, ground, walls - every material but water) a slow green puff of the same gas billows out:
+# IPCT PCGhostGasImpact (model PlayableCreatures\Ghost\GhostGasImpact.nif = build_ghost_gas_nif.py --impact; no decal,
+# no sound - the Flamer's fire loop plays) in IPDS PCGhostGasImpactSet (water: NoImpact 0686ED), the Ghost Gas WEAP's
+# impact data set. Ids after everything else.
+_GAS_IMPACT, _GAS_IMPACT_SET = _new(), _new()
+ipcts = [record('IPCT', _GAS_IMPACT, [('EDID', z('PCGhostGasImpact')), ('MODL', z('PlayableCreatures\\Ghost\\GhostGasImpact.nif')),
+    ('DATA', struct.pack('<fIffII', 1.6, 0, 45.0, 16.0, 1, 1))])]       # duration, surface normal, angle, radius, sound level, no decal
+ipdss = [record('IPDS', _GAS_IMPACT_SET, [('EDID', z('PCGhostGasImpactSet')),
+    ('DATA', struct.pack('<12I', *[0x686ED if m == 'Water' else _GAS_IMPACT for m in
+        ('Stone', 'Dirt', 'Grass', 'Glass', 'Metal', 'Wood', 'Organic', 'Cloth', 'Water', 'HollowMetal', 'OrganicBug', 'OrganicGlow')]))])]
+for i, w in enumerate(weaps):
+    typ, fl, fid, subs = RX.parse(w)
+    if fid == GHOST_GAS: weaps[i] = record('WEAP', fid, [(k, u32(_GAS_IMPACT_SET) if k == 'INAM' else v) for k, v in subs], fl)
+print('  ghost gas impact %06X, set %06X' % (_GAS_IMPACT & 0xFFFFFF, _GAS_IMPACT_SET & 0xFFFFFF))
+
+groups = [group('HAIR', [hair]), group('EYES', [eyes] + eyes_extra), group('RACE', races), group('SOUN', souns), group('MGEF', mgefs), group('SCPT', scpts), group('ENCH', enchs), group('SPEL', spels), group('ARMO', armors), group('WEAP', weaps), group('NPC_', npcs), group('IDLE', idles)] + ([group('PROJ', projs)] if projs else []) + [group('ANIO', anios), group('BPTD', bptds), group('VTYP', vtyp), group('IPCT', ipcts), group('IPDS', ipdss)]   # vanilla group order
+nrec = 2 + len(ipcts) + len(ipdss) + len(enchs) + len(projs) + len(eyes_extra) + len(armors) + len(bptds) + len(races) + len(weaps) + len(npcs) + len(souns) + len(mgefs) + len(scpts) + len(spels) + len(vtyp) + len(idles) + len(anios) + len(groups)
 tes4 = record('TES4', 0, [
     ('HEDR', struct.pack('<fII', 1.34, nrec, _next_id)),
     ('CNAM', z('Claude (Playable Creatures project)')),
