@@ -44,21 +44,22 @@ def human_local(sk, smp, base, nm):
     return np.array(t, float), np.array(R, float)
 
 _HIP_IS = {}
-def hip_from_is(cr, ref, pre):
-    """XFER_HIP_FROM_IS (cfg, world units at the level aim: x right, y forward, z up): the two-handed hip hold is the
-    creature's own iron-sight hold moved by that much (a hunched creature's human-placed hip rifle hung out to the right
-    of its chest; its iron-sight hold sits right). Returns the right hand's offset and turn from the hip aim to that
-    hold, both in Spine2's frame, so up / down variants carry them with the bent chest."""
-    key = (cr.cfg.__name__, pre)
+def hip_from_is(cr, ref, pre, level):
+    """XFER_HIP_FROM_IS (cfg, world units at the level aim: x right, y forward, z up): every two-handed hip file starts
+    from the creature's own iron-sight hold moved by that much (a hunched creature's human-placed hip rifle hung out to
+    the right of its chest; its iron-sight hold sits right). For the file's level version (<group>up / down -> <group>)
+    the turn that brings its first-frame gun onto the sight gun, and the right-hand offset that then puts the gun at the
+    sight gun's place + the cfg offset, both in Spine2's frame (up / down variants carry them with the bent chest). Per
+    file, not one for the type: the human hip aim isn't always pointed where its attacks are (2HA: a low-ready diagonal
+    48 deg to the left, its hip attacks straight ahead - one turn for both swung the hip bursts 58 deg to the right)."""
+    key = (cr.cfg.__name__, level)
     if key not in _HIP_IS:
-        sp = cr.cfg.BONES['torso']; hand = cr.arm['R'][3]
+        sp = cr.cfg.BONES['torso']; hand = cr.arm['R'][3]; wp = cr.weapon
         res = []
-        for f, base in ((f'{pre}aim.kf', f'{pre}aim.kf'), (f'{pre}aimis.kf', f'{pre}aimis.kf')):
+        for f, base in ((level, f'{pre}aim.kf'), (f'{pre}aimis.kf', f'{pre}aimis.kf')):
             fr = transfer(cr, os.path.join(ref, f), os.path.join(ref, base), twist=True, _hip_is=False)[0]
             res.append(Rig(cr, base_kf=cr.cfg.IDLE_KF).fk(fr[0][1]))
-        Wh_, Wi = res; S0 = Wh_[sp][1]; wp = cr.weapon
-        # the turn that brings the hip gun onto the sight gun, and the hand offset that then puts the gun where the
-        # sight gun is (the Weapon node's own local transform differs between the hip and the sight files)
+        Wh_, Wi = res; S0 = Wh_[sp][1]
         Rc = Wi[wp][1] @ Wh_[wp][1].T
         off = (Wi[wp][0] + np.array(cr.cfg.XFER_HIP_FROM_IS, float)) - Rc @ (Wh_[wp][0] - Wh_[hand][0]) - Wh_[hand][0]
         _HIP_IS[key] = (S0.T @ off, S0.T @ Rc @ S0)
@@ -85,7 +86,7 @@ def transfer(cr, hpath, base_path, fps=30, head_is=6.0, free_left=None, twist=Fa
     if (_hip_is and twist and not iron and hasattr(cr.cfg, 'XFER_HIP_FROM_IS') and Wfree is None
             and not re.search(r'equip|holster|death', name)
             and os.path.exists(os.path.join(os.path.dirname(hpath), name[:3] + 'aimis.kf'))):   # (heavy weapons: no sights)
-        hip = hip_from_is(cr, os.path.dirname(hpath), name[:3])
+        hip = hip_from_is(cr, os.path.dirname(hpath), name[:3], lvl if os.path.exists(os.path.join(os.path.dirname(hpath), lvl)) else name)
     L = k.stop; n = max(2, int(round(L * fps)) + 1)
     frames = []
     for i in range(n):
