@@ -80,7 +80,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 72;
+static const UInt32 kPluginVersion = 73;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -105,45 +105,6 @@ static void Log(const char* fmt, ...) {
 // ---------------- creature profiles ----------------
 struct FormRef { char plugin[64]; UInt32 localID; UInt32 fid; };
 static const UInt32 kPtr_DefaultBodyPartData = 0x011CAFEC;   // DefaultBodyPartData (form 0x1D), set at data load (0x5E53E6)
-// Each race's body part data = the PNAM of its vanilla creature records (the ones
-// its body / skeleton come from). Keyed by the race's local id in its family plugin (the
-// child races share their adult race's profile). A plugin that isn't loaded leaves the race on the player default.
-// An ini section's BodyPartData=Plugin|id takes the place of this table, so new races need no entry here.
-static const struct { UInt32 race; const char* plugin; UInt32 bptd; } kRaceBodyParts[] = {
-	{0x000800, "FalloutNV.esm",    0x1690AD},   // Zetan                 AlienBodyPartData (CrAlien)
-	{0x0008E0, "FalloutNV.esm",    0x1690AD},   // Zetan (Helmet)        AlienBodyPartData
-	{0x000805, "PlayableCreatures_GhostPeople.esp", 0x00090A},   // Ghost People     PCGhostBodyPartData = NVDLC01GhostBodyPartData with the
-	{0x000806, "PlayableCreatures_GhostPeople.esp", 0x00090A},   // (unhooded)       Head part's headtracking flag (ragdoll pose)
-	{0x000855, "FalloutNV.esm",    0x05144E},   // Feral Ghoul           FeralGhoulBodyPartData
-	{0x000856, "FalloutNV.esm",    0x0A18F6},   // Glowing One           FeralGlowingOneBodyPartData
-	{0x000857, "FalloutNV.esm",    0x02026E},   // Super Mutant          SupermutantrBodyPartData
-	{0x000858, "FalloutNV.esm",    0x02026E},   // Nightkin              SupermutantrBodyPartData
-	{0x0008AC, "FalloutNV.esm",    0x0945BB},   // Tunneler              DLCPittTrogBodyPartData (NVDLC04Tunneler*)
-	{0x0008CE, "FalloutNV.esm",    0x0945BB},   // Spore Carrier         DLCPittTrogBodyPartData (CrSporeCarrier*)
-	{0x0008E4, "FalloutNV.esm",    0x02F870},   // Eyebot                EyebotBodypartdata
-	{0x0008ED, "FalloutNV.esm",    0x10699E},   // Securitron            NVSecuritronBodyPartData
-	{0x0008F1, "FalloutNV.esm",    0x10699E},   // Securitron Mk II
-	// robots: copies of their vanilla BPTDs (ProtectronBodyPartData 017F2C, Robobrainbodypartdata 02E7AF,
-	// MRHandyBodyPartData 036C18, MRGutsyBodyPartData 036C17, SentryBotBodyPartData 031C61) with the head part
-	// (Mister Handy / Gutsy: the first Tracking Sensor) flagged for head tracking and its IK node = Bip01 Head (the
-	// vanilla ones carry a file path there) - the ragdoll pose reference, as PCGhostBodyPartData
-	{0x000949, "PlayableCreatures_Protectron.esp", 0x000953},   // Protectron
-	{0x000954, "PlayableCreatures_Robobrain.esp", 0x00095D},   // Robobrain
-	{0x00095E, "PlayableCreatures_MisterHandy.esp", 0x000967},   // Mister Handy
-	{0x000968, "PlayableCreatures_MisterHandy.esp", 0x00096E},   // Mister Gutsy
-	{0x00096F, "PlayableCreatures_SentryBot.esp", 0x000979},   // Sentry Bot
-	{0x008802, "PointLookout.esm", 0x00E968},   // Swampfolk Brawler     DLC04Hillfolk2and3BodyPartData
-	{0x008803, "PointLookout.esm", 0x00E968},   // Swampfolk Scrapper
-	{0x008804, "PointLookout.esm", 0x00E968},   // Swampfolk Creeper
-	{0x008805, "PointLookout.esm", 0x010C37},   // Swampfolk Tracker     DLC04Hillfolk1BodyPartData
-	{0x008806, "PointLookout.esm", 0x010C37},   // Swampfolk Bruiser
-	{0x008807, "ThePitt.esm",      0x003CEA},   // Trog                  DLCPittTrogBodyPartDataDC
-	{0x008808, "ThePitt.esm",      0x003CEA},   // Trog Brute
-	{0x008809, "ThePitt.esm",      0x003CEA},   // Trog Savage
-	{0x008877, "Fallout3.esm",     0x02026E},   // Super Mutant (Capital) SupermutantBodyPartDataDC
-	{0x00887A, "Fallout3.esm",     0x02026E},   // Super Mutant Brute (Capital)
-	{0x00887D, "Fallout3.esm",     0x02026E},   // Super Mutant Master (Capital)
-};
 struct Profile {
 	char section[64], name[64], plugin[128], skeleton[260], marker[64];
 	char ini[MAX_PATH];             // the config file the section came from (FirstPerson* keys are read again from it)
@@ -171,10 +132,17 @@ struct Profile {
 	UInt16 hideWeaponMask;          // HideWeapon=1 (every weapon) or a type list (e.g. H2H,1HM,2HM) - those weapons are never
 	                                // drawn on the 3rd-person body (1st person unchanged)
 	bool noFallDamage;              // NoFallDamage=1 - the engine's flying-creature fall-damage exemption applies to the player
-	FormRef bodyParts;              // the creature's own body part data (gore / dismemberment / VATS parts): BodyPartData= or kRaceBodyParts
-	FormRef bodyPartsIni;           // BodyPartData=Plugin|id - takes the place of the kRaceBodyParts entry
+	FormRef bodyParts;              // BodyPartData= - the creature's own body part data (gore / dismemberment / VATS parts)
 	FormRef give[4]; int numGive;   // GiveItems= - items handed over (one each, not equipped) when the race menu closes
-	bool ghostMoves;                // Ghostification's hop / search on the jump key 
+	bool ghostMoves;                // Ghostification's hop / search on the jump key
+	FormRef ghostForms[5];          // GhostMoveForms= hop spell, search spell, search idle, hop-left idle, hop-right idle
+	FormRef locked[8]; int numLocked;  // LockedItems= - refused (and unequipped) until UnlockGlobal is 1 or more
+	FormRef unlockGlobal;           // UnlockGlobal= - the GLOB that unlocks them
+	char lockedMsg[128];            // LockedMessage= - shown when one is refused
+	FormRef faceEyes[16]; int numFaces; // FaceEyes= - eyes forms; the n-th picks the n-th FaceNodes= node to show
+	char faceNodes[16][48];         // FaceNodes= - skeleton nodes (the others are hidden)
+	FormRef unarmedEffect;          // UnarmedEffect= - enchantment given to the player's unarmed attacks while in the race
+	UInt16 unarmedAnim;             // UnarmedEffectAnim= - the attack animation it fires on (anim group id, e.g. 0x5E)
 	bool blockAnimOverrides;        // BlockAnimOverrides=1 (default) - kNVSE never swaps the sequence an actor in this race plays
 	bool showInMenu;                // ShowInRaceMenu=0 hides the race from the race menu (RACE playable flag)
 	int resistCap;                  // ResistCap= - fPlayerMaxResistance while in the race (0 = unchanged)
@@ -266,7 +234,19 @@ static int LoadConfigFile(const char* ini) {
 		p.hideWeaponMask = !strcmp(tmp, "1") ? 0xFFFF : !strcmp(tmp, "0") || !tmp[0] ? 0 : WeaponMaskFromList(tmp);
 		p.noFallDamage = GetPrivateProfileIntA(sec, "NoFallDamage", 0, ini) != 0;
 		GetPrivateProfileStringA(sec, "GiveItems", "", tmp, sizeof(tmp), ini); p.numGive = ParseForms(tmp, p.give, 4);
-		GetPrivateProfileStringA(sec, "BodyPartData", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.bodyPartsIni, 1);
+		GetPrivateProfileStringA(sec, "BodyPartData", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.bodyParts, 1);
+		GetPrivateProfileStringA(sec, "GhostMoveForms", "", tmp, sizeof(tmp), ini); ParseForms(tmp, p.ghostForms, 5);
+		GetPrivateProfileStringA(sec, "LockedItems", "", tmp, sizeof(tmp), ini); p.numLocked = ParseForms(tmp, p.locked, 8);
+		GetPrivateProfileStringA(sec, "UnlockGlobal", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.unlockGlobal, 1);
+		GetPrivateProfileStringA(sec, "LockedMessage", "You can't use that yet.", p.lockedMsg, sizeof(p.lockedMsg), ini);
+		GetPrivateProfileStringA(sec, "FaceEyes", "", tmp, sizeof(tmp), ini); p.numFaces = ParseForms(tmp, p.faceEyes, 16);
+		GetPrivateProfileStringA(sec, "FaceNodes", "", tmp, sizeof(tmp), ini);
+		{ int n = 0; for (char* t = strtok(tmp, ","); t && n < 16; t = strtok(nullptr, ",")) {
+			while (*t == ' ') t++; char* e = t + strlen(t); while (e > t && e[-1] == ' ') *--e = 0;
+			strncpy(p.faceNodes[n++], t, 47); }
+		  if (n < p.numFaces) p.numFaces = n; }
+		GetPrivateProfileStringA(sec, "UnarmedEffect", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.unarmedEffect, 1);
+		GetPrivateProfileStringA(sec, "UnarmedEffectAnim", "0", tmp, sizeof(tmp), ini); p.unarmedAnim = (UInt16)strtoul(tmp, nullptr, 0);
 		p.ghostMoves = GetPrivateProfileIntA(sec, "GhostMoves", 0, ini) != 0;
 		p.blockAnimOverrides = GetPrivateProfileIntA(sec, "BlockAnimOverrides", 1, ini) != 0;
 		p.animLog = GetPrivateProfileIntA(sec, "AnimLog", 0, ini) != 0;
@@ -351,11 +331,8 @@ static UInt8 FindModIndex(const char* name) {
 	}
 	return 0xFF;
 }
-// One plugin per creature family (PlayableCreatures_<Family>.esp); the ini names each race's plugin, and the few
-// forms the code itself uses are named here with their family plugin. A family that isn't installed leaves its
-// sections / forms unresolved (logged), nothing else.
-static const char* const kGhostPlugin = "PlayableCreatures_GhostPeople.esp";
-static const char* const kSecuritronPlugin = "PlayableCreatures_Securitron.esp";
+// One plugin per creature family (PlayableCreatures_<Family>.esp); each pack's config names its races' plugin and every
+// form the code uses for them. A family that isn't installed leaves its sections / forms unresolved (logged).
 static UInt8 GetModIndex(const char* name) { return FindModIndex(name); }
 // Runtime form lookup = read the engine's form map (same as xNVSE/JIP). 0x4F9620 is the *GECK* address - never call it.
 static void* LookupForm(UInt32 fid) {
@@ -418,10 +395,16 @@ static void ResolveProfiles() {
 			if (!f || *((UInt8*)f + 4) != 0x08) { Log("resolve: [%s] faction %s|%06X not loaded - skipped", p.section, fr.plugin, fr.localID); fr.fid = 0; }
 			else Log("resolve: [%s] faction %08X%s", p.section, fr.fid, p.joinFaction ? " (joined while in the race)" : " (JoinFaction=0: not joined)");
 		}
-		memset(&p.bodyParts, 0, sizeof(p.bodyParts));                 // BodyPartData=, else built in by race
-		if (p.bodyPartsIni.localID) p.bodyParts = p.bodyPartsIni;
-		else for (const auto& e : kRaceBodyParts)
-			if (e.race == p.localID) { strcpy(p.bodyParts.plugin, e.plugin); p.bodyParts.localID = e.bptd; break; }
+		for (FormRef& r : p.ghostForms) r.fid = r.localID ? ResolveFID(r.plugin, r.localID) : 0;
+		for (int k = 0; k < p.numLocked; k++) p.locked[k].fid = ResolveFID(p.locked[k].plugin, p.locked[k].localID);
+		p.unlockGlobal.fid = p.unlockGlobal.localID ? ResolveFID(p.unlockGlobal.plugin, p.unlockGlobal.localID) : 0;
+		for (int k = 0; k < p.numFaces; k++) p.faceEyes[k].fid = ResolveFID(p.faceEyes[k].plugin, p.faceEyes[k].localID);
+		p.unarmedEffect.fid = p.unarmedEffect.localID ? ResolveFID(p.unarmedEffect.plugin, p.unarmedEffect.localID) : 0;
+		if (p.ghostMoves) Log("resolve: [%s] ghost moves: spells %08X %08X, idles %08X %08X %08X", p.section, p.ghostForms[0].fid,
+			p.ghostForms[1].fid, p.ghostForms[2].fid, p.ghostForms[3].fid, p.ghostForms[4].fid);
+		if (p.numLocked) Log("resolve: [%s] %d locked item(s) until global %08X", p.section, p.numLocked, p.unlockGlobal.fid);
+		if (p.numFaces) Log("resolve: [%s] %d faces chosen by eyes", p.section, p.numFaces);
+		if (p.unarmedEffect.fid) Log("resolve: [%s] unarmed effect %08X on anim %02X", p.section, p.unarmedEffect.fid, p.unarmedAnim);
 		if (p.bodyParts.localID) {                                     // must be a BPTD (same form type as DefaultBodyPartData)
 			FormRef& b = p.bodyParts;
 			b.fid = GetModIndex(b.plugin) == 0xFF ? 0 : ResolveFID(b.plugin, b.localID);
@@ -462,28 +445,20 @@ static const char* __fastcall Hook_NPCGetModelPath(void* model, void* edx) {
 
 // ---------------- equipment policy ----------------
 static bool InList(const FormRef* l, int n, UInt32 fid) { for (int i = 0; i < n; i++) if (l[i].fid && l[i].fid == fid) return true; return false; }
-enum Verdict { kAllow = 0, kBlock, kBlockSilent, kBlockFirmware };
-// The securitrons' Mk II weapons (same ids in both plugins) are refused until the Securitron upgrade: FalloutNV global VStoryEventSecuritronsUpgraded (120F2F; TESGlobal
-// value +0x24, see its save code 0x5A6488) == 1 - the same global the race ability's Mk II effects use. Also unequipped
-// by the load-time equipment check while the upgrade hasn't happened.
-// (from Mr. House's basement demonstration: the Mark I OS lacks the drivers for the securitrons'
-// primary weapons, the Mark II OS enables the missile launcher and the grenade launcher; the gatling laser and the SMG
-// are Mk I weapons) -> PCSecuritronGrenadeLauncher 0x8FB + PCSecuritronMissiles 0x8FD (the laser and the SMG
-// are Mk I weapons).
-static const UInt32 kFirmwareWeapons[] = { 0x8FB, 0x8FD }, kFID_SecuritronsUpgraded = 0x00120F2F;
-static bool FirmwareMissing(UInt32 fid) {
-	for (UInt32 w : kFirmwareWeapons) if (fid == ResolveFID(kSecuritronPlugin, w)) {
-		void* g = LookupForm(kFID_SecuritronsUpgraded);
-		return !(g && *((UInt8*)g + 4) == kFormType_GLOB && *(float*)((UInt8*)g + 0x24) >= 1.0f);
-	}
-	return false;
+enum Verdict { kAllow = 0, kBlock, kBlockSilent, kBlockLocked };
+// LockedItems= stay refused until the UnlockGlobal= GLOB reaches 1 (TESGlobal value +0x24, see its save code 0x5A6488);
+// the load-time equipment check unequips them too. (Securitrons: the Mk II weapons until the Securitron upgrade.)
+static bool ItemLocked(Profile* p, UInt32 fid) {
+	if (!p->numLocked || !InList(p->locked, p->numLocked, fid)) return false;
+	void* g = p->unlockGlobal.fid ? LookupForm(p->unlockGlobal.fid) : nullptr;
+	return !(g && *((UInt8*)g + 4) == kFormType_GLOB && *(float*)((UInt8*)g + 0x24) >= 1.0f);
 }
 static Verdict Judge(Profile* p, void* form) {
 	if (!p || !form) return kAllow;
 	UInt8 type = *((UInt8*)form + 4);
 	UInt32 fid = *(UInt32*)((UInt8*)form + 0x0C);
 	if (type != kFormType_ARMO && type != kFormType_WEAP) return kAllow;       // food, chems, ammo...
-	if (type == kFormType_WEAP && FirmwareMissing(fid)) return kBlockFirmware;
+	if (ItemLocked(p, fid)) return kBlockLocked;
 	if (InList(p->allow, p->numAllow, fid)) return kAllow;
 	if (InList(p->silent, p->numSilent, fid)) return kBlockSilent;
 	if (type == kFormType_ARMO) return p->allowArmor ? kAllow : kBlock;
@@ -506,12 +481,12 @@ static void __fastcall Hook_EquipItem(void* actor, void* edx, void* form, UInt32
 		Verdict v = Judge(p, form);
 		if (v != kAllow) {
 			Log("equip: blocked %08X (type %02X) for [%s]%s (noMsg %u)", *(UInt32*)((UInt8*)form + 0x0C), *((UInt8*)form + 4), p->section,
-				v == kBlockSilent ? " silently" : v == kBlockFirmware ? " (firmware missing)" : "", noMsg);
+				v == kBlockSilent ? " silently" : v == kBlockLocked ? " (locked)" : "", noMsg);
 			if (v == kBlock && !noMsg) Notify(p, *((UInt8*)form + 4));
 			// the Pip-Boy's equip passes noMsg = 1, so this one ignores it
-			if (v == kBlockFirmware) {
-				bool shown = ((QueueUIMessage_t)kAddr_QueueUIMessage)("Firmware missing: this weapon needs the Securitron upgrade.", 0, nullptr, nullptr, 3.0f, 0);
-				Log("equip: firmware message %s", shown ? "queued" : "NOT queued");
+			if (v == kBlockLocked) {
+				bool shown = ((QueueUIMessage_t)kAddr_QueueUIMessage)(p->lockedMsg, 0, nullptr, nullptr, 3.0f, 0);
+				Log("equip: locked message %s", shown ? "queued" : "NOT queued");
 			}
 			return;
 		}
@@ -1494,7 +1469,6 @@ typedef void (__fastcall* V_t)(void*, void*);
 typedef void (__fastcall* Cast_t)(void* caster, void*, void* spell, UInt32, void* target, float, UInt32);
 typedef void (__fastcall* QueueIdle_t)(void*, void*, void*, UInt32);
 static Jump_t g_origJump = (Jump_t)kAddr_ActorJump;
-static UInt32 g_moveSpell = 0, g_searchSpell = 0, g_idleTrash = 0, g_idleHopL = 0, g_idleHopR = 0;
 static void CastOnSelf(void* actor, UInt32 spellFid) {             // the CastImmediateOnSelf command's steps (0x5C1FE0)
 	void* spell = LookupForm(spellFid); if (!spell) return;
 	void* caster = ((P_t)VFn(actor, 0x198))(actor, nullptr);
@@ -1532,19 +1506,20 @@ typedef void (__fastcall* MoverFlags_t)(void*, void*, UInt32);
 static MoverFlags_t g_origMoverFlags = (MoverFlags_t)kAddr_PlayerMoverSetFlags;
 static int g_holdPending = 0;
 static bool g_holdLogged = false;
-static bool IsHoldIdle(void* idle) {
+static bool IsHoldIdle(void* idle, UInt32 holdFid) {
 	if (!idle) return false;
 	UInt32 id = At<UInt32>(idle, 0x0C);
-	return id && id == g_idleTrash;
+	return id && id == holdFid;
 }
 // anim data +0x124 = the idle being played, +0x128 = the forced idle waiting to start (0x497F20 stores it there,
 // 0x498290 starts it); both hold an idle-play object (ctor 0x4965D0) whose IDLE form is at +0x2C (+0x14 section,
 // +0x18 the anim sequence; the sequence at +0x18 is not the idle).
 static bool HoldIdlePlaying(void* actor, void* ad) {
-	if (!ad) return false;
+	Profile* p = PlayerProfile();
+	if (!ad || !p) return false;
 	for (UInt32 off = 0x124; off <= 0x128; off += 4) {
 		void* obj = At<void*>(ad, off);
-		if (obj && IsHoldIdle(At<void*>(obj, 0x2C))) return true;
+		if (obj && IsHoldIdle(At<void*>(obj, 0x2C), p->ghostForms[2].fid)) return true;
 	}
 	return false;
 }
@@ -1575,13 +1550,13 @@ static void* __fastcall Hook_PlayerJump(void* actor, void* edx) {
 		// the hop is Dead Money's own HopLeft / HopRight idle (the ghosts' combat hop), played like the scan /
 		// search idles (the engine dodge's DodgeLeft/Right groups never reach the player's anim map).
 		bool left = (mv & 4) != 0;
-		if (PlayIdleForm(actor, left ? g_idleHopL : g_idleHopR)) {
-			CastOnSelf(actor, g_moveSpell); Log("ghost move: hop %s", left ? "left" : "right"); return nullptr;
+		if (PlayIdleForm(actor, p->ghostForms[left ? 3 : 4].fid)) {
+			CastOnSelf(actor, p->ghostForms[0].fid); Log("ghost move: hop %s", left ? "left" : "right"); return nullptr;
 		}
 		Log("ghost move: hop idle missing - normal jump");
 	} else if (mv == 2 && !out) {
 		// the search (trash pick) is back + jump with the weapon holstered
-		if (PlayIdleForm(actor, g_idleTrash)) { g_holdPending = 2; CastOnSelf(actor, g_searchSpell); Log("ghost move: search"); return nullptr; }
+		if (PlayIdleForm(actor, p->ghostForms[2].fid)) { g_holdPending = 2; CastOnSelf(actor, p->ghostForms[1].fid); Log("ghost move: search"); return nullptr; }
 	}
 	Log("ghost move: normal jump (movement %X, weapon out %d, sneaking %d)", mv, out, sneak);
 	return g_origJump(actor, edx);
@@ -1595,16 +1570,6 @@ static void InstallGhostMoves() {                                    // at load
 	cur = *(UInt32*)kSlot_PlayerMoverSetFlags;
 	g_origMoverFlags = (MoverFlags_t)cur;
 	PatchPtr(kSlot_PlayerMoverSetFlags, (UInt32)Hook_PlayerMoverSetFlags, cur, cur == kAddr_PlayerMoverSetFlags ? "PlayerMover::SetMovementFlags (vtbl 0x0C)" : "PlayerMover::SetMovementFlags (chained)");
-}
-static void ResolveGhostMoves() {                                    // at DeferredInit
-	g_moveSpell = ResolveFID(kGhostPlugin, 0x0008A3);
-	g_searchSpell = ResolveFID(kGhostPlugin, 0x0008A7);
-	// our copies of Dead Money's GhostsIdleLooking / HarvesterTrashPick with Ghostification's whole-body section
-	// (0x14) + no-attacking flag : DM's own are section 7, which the player's movement / jump replaced
-	g_idleTrash = ResolveFID(kGhostPlugin, 0x0008AA);     // PCGhostTrashPick
-	g_idleHopL = ResolveFID("DeadMoney.esm", 0x00FE59);              // HopLeft  (CombatIdle_HopLeft.kf)
-	g_idleHopR = ResolveFID("DeadMoney.esm", 0x00FE58);              // HopRight
-	Log("ghost move: spells %08X %08X, idles %08X %08X %08X", g_moveSpell, g_searchSpell, g_idleTrash, g_idleHopL, g_idleHopR);
 }
 
 // ---- Ghost People: NVDLC01GhostSCRIPT for the player ----
@@ -1753,7 +1718,7 @@ static void ApplyMaterial(const char* why) {
 // explodable debris, explosion, impact data set, limb replacement model). An NPC's comes from 0x5F0F80: the player's
 // base gets the global PlayerBodyPartData (form 0x1C, pointer 0x11CAFF0), everyone else DefaultBodyPartData (0x1D,
 // 0x11CAFEC); both use GoreBits01 + BloodSpoutRedDataSet. While the player is in one of our races that global points at
-// the creature's own BPTD (kRaceBodyParts; Ghost People: NVDLC01GhostBodyPartData, InsectGoreBits01 + BloodSpoutBugDataSet),
+// the race's BodyPartData= BPTD (Ghost People: NVDLC01GhostBodyPartData, InsectGoreBits01 + BloodSpoutBugDataSet),
 // and puts the original back when leaving. Applied with the other race traits, before the race menu's 3D rebuild.
 static const UInt32 kPtr_PlayerBodyPartData = 0x011CAFF0;
 static void* g_origBodyParts = nullptr; static bool g_bodyPartsSwapped = false;
@@ -1771,50 +1736,43 @@ static void ApplyBodyParts(const char* why) {
 		*slot = g_origBodyParts; g_bodyPartsSwapped = false;
 	}
 }
-// Securitron face screens chosen with the race menu's Eyes: PlayableCreatures_Securitron.esp EYES 0x8FE-0x905
-// = the 8 vanilla screens. The securitron skeletons (build_skel_securitron) carry every
-// screen as a node 'PCFace:<name>' under Screen01Root (only the race's default visible in the file). The player's eyes
-// (TESNPC +0x1C0, see the NPC save code 0x602150) pick the node to show; the rest get the NiAVObject hidden flag (+0x30
-// bit 0). Eyes that aren't a face leave the file's default. Applied with the other race
-// traits (race menu closed, game load, player 3D set). Node lookup = the engine's by-name search 0x4AAE30(root, name).
-static const char* const kFaces[] = { "police", "infantry", "victor", "yesman", "mrhouse", "jane", "marilyn", "blank" };
-static const UInt32 kFaceEyesFirst = 0x8FE, kAddr_FindNodeByName = 0x004AAE30;
+// Faces chosen with the race menu's Eyes: FaceEyes= lists eyes forms, FaceNodes= the skeleton nodes they show (the
+// n-th eyes form shows the n-th node; the others get the NiAVObject hidden flag, +0x30 bit 0). Eyes not in the list
+// leave the skeleton file's default. The player's eyes = TESNPC +0x1C0 (see the NPC save code 0x602150). Applied with
+// the other race traits (race menu closed, game load, player 3D set). Node lookup = the engine's by-name search
+// 0x4AAE30(root, name). (Securitrons: the 8 vanilla screens as 'PCFace:<name>' nodes under Screen01Root.)
+static const UInt32 kAddr_FindNodeByName = 0x004AAE30;
 typedef void* (__cdecl* FindByName_t)(void* root, const char* name);
 static void ApplyFace(const char* why, void* root = nullptr) {    // root: the new 3D at OnRefSet3D (render state not yet on it)
-	void* player = Player(); void* npc = PlayerNPC();
+	void* player = Player(); void* npc = PlayerNPC(); Profile* p = PlayerProfile();
+	if (!p || !p->numFaces) return;
 	if (!root) root = player ? PlayerRoot(player) : nullptr;
 	if (!root || !npc) return;
-	char nm[32]; void* nodes[8]; int have = 0;
-	for (int i = 0; i < 8; i++) { sprintf(nm, "PCFace:%s", kFaces[i]); nodes[i] = ((FindByName_t)kAddr_FindNodeByName)(root, nm); have += nodes[i] != nullptr; }
+	void* nodes[16]; int have = 0;
+	for (int i = 0; i < p->numFaces; i++) { nodes[i] = ((FindByName_t)kAddr_FindNodeByName)(root, p->faceNodes[i]); have += nodes[i] != nullptr; }
 	if (!have) return;
 	void* eyes = At<void*>(npc, 0x1C0);
 	UInt32 efid = eyes ? At<UInt32>(eyes, 0x0C) : 0;
 	int pick = -1;
-	for (int i = 0; i < 8 && efid; i++) if (efid == ResolveFID(kSecuritronPlugin, kFaceEyesFirst + i)) { pick = i; break; }
+	for (int i = 0; i < p->numFaces && efid; i++) if (efid == p->faceEyes[i].fid) { pick = i; break; }
 	if (pick < 0) { Log("face: eyes %08X are not a face - skeleton default kept (%s)", efid, why); return; }
-	for (int i = 0; i < 8; i++) if (nodes[i]) {
+	for (int i = 0; i < p->numFaces; i++) if (nodes[i]) {
 		UInt32& fl = At<UInt32>(nodes[i], 0x30);
 		if (i == pick) fl &= ~1u; else fl |= 1u;
 	}
-	Log("face: %s (%s)", kFaces[pick], why);
+	Log("face: %s (%s)", p->faceNodes[pick], why);
 }
-// (the Glowing One's radiation burst) Vanilla glowing ones carry it as
-// their unarmed attack effect: CREA EITM = GlowingOneAttack (FalloutNV 06191A: GlowOneBurstMagicEffect -> script
-// GlowingOneBurstScript -> GlowingOneBurstExplode) + EAMT = the attack animation it fires on (0x5E, AttackBackPower).
-// An NPC_ base has the same fields (TESEnchantableForm at TESNPC +0x70: item +0x74, EAMT u16 +0x78; see the NPC_ load
-// code 0x6027BE / 0x6027E8; the player's record has EAMT 0xFF = none). While the player is a Glowing One its base gets
-// them; they are put back when leaving the race. The Glowing One's own skeleton folder has the vanilla cast as its
-// H2H AttackBackPower again (the Feral Ghoul keeps its swing).
-static const struct { UInt32 race; const char* plugin; UInt32 spell; UInt16 eamt; } kRaceUnarmedEffect[] = {
-	{0x000856, "FalloutNV.esm", 0x06191A, 0x5E},   // Glowing One: GlowingOneAttack on AttackBackPower
-};
+// UnarmedEffect= / UnarmedEffectAnim=: vanilla creatures carry an unarmed attack effect as CREA EITM + EAMT (the attack
+// animation it fires on). An NPC_ base has the same fields (TESEnchantableForm at TESNPC +0x70: item +0x74, EAMT u16
+// +0x78; see the NPC_ load code 0x6027BE / 0x6027E8; the player's record has EAMT 0xFF = none). While the player is in
+// the race its base gets them; they are put back when leaving it. (Glowing One: GlowingOneAttack 06191A ->
+// GlowOneBurstMagicEffect, on AttackBackPower 0x5E - its radiation burst.)
 static void* g_origUnarmedItem = nullptr; static UInt16 g_origUnarmedAnim = 0; static bool g_unarmedSwapped = false;
 static void ApplyUnarmedEffect(const char* why) {
 	void* npc = PlayerNPC(); if (!npc) return;
 	Profile* p = PlayerProfile();
-	void* item = nullptr; UInt16 anim = 0;
-	for (const auto& e : kRaceUnarmedEffect)
-		if (p && e.race == p->localID) { item = LookupForm(ResolveFID(e.plugin, e.spell)); anim = e.eamt; break; }
+	void* item = p && p->unarmedEffect.fid ? LookupForm(p->unarmedEffect.fid) : nullptr;
+	UInt16 anim = p ? p->unarmedAnim : 0;
 	void*& slot = At<void*>(npc, 0x74); UInt16& aslot = At<UInt16>(npc, 0x78);
 	if (item) {
 		if (slot == item && aslot == anim) return;
@@ -1939,7 +1897,7 @@ static void MessageHandler(NVSEMessage* msg) {
 			Log("deps: ** the old combined plugin PlayableCreatures.esp / PlayableCreaturesTTW.esp is active - it is replaced by the family plugins (PlayableCreatures_<Family>.esp); disable it **");
 			((QueueUIMessage_t)kAddr_QueueUIMessage)("Playable Creatures: disable the old PlayableCreatures.esp / PlayableCreaturesTTW.esp (replaced by the family plugins).", 0, nullptr, nullptr, 8.0f, 0);
 		}
-		ResolveProfiles(); InstallVoiceHandlers(); ResolveCloudScripts(); ResolveGhostMoves();
+		ResolveProfiles(); InstallVoiceHandlers(); ResolveCloudScripts();
 		if (GetModuleHandleA("PlayerEssentialFix.dll")) Log("deps: PlayerEssentialFix loaded");
 		else for (int i = 0; i < g_numProf; i++) if (g_prof[i].ghostEssential) { Log("deps: PlayerEssentialFix.dll NOT loaded - an essential player stays ragdolled after the revive"); break; }
 		break; }
