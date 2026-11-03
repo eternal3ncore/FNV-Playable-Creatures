@@ -10,7 +10,9 @@ usage: python3 -P post_build.py <race folder> <race>     race = the folder name 
   2. aimed (IS) attacks time-warped onto the hip attack's timing (retime_is) - Super Mutant, Nightkin, Swampfolk, Zetan
   3. Eyebot sneak hover lowered 40 (sneak_lower)
   4. block animations (H2H + 1HM / 2HM shared): humanoids = human blocks transferred (block_xfer); robots, Eyebot,
-     Securitron, Trog, Tunneler = own guard (own_block); Mister Handy / Gutsy = their claw 1HM blocks copied
+     Securitron, Trog, Tunneler, Deathclaw = own guard (own_block); Mister Handy / Gutsy = their claw 1HM blocks copied
+  5. locomotion / jump upper-body priorities capped under the weapon stances (loco_prio) - Ghost (Dead Money's walk
+     keyed the arms at 45, over the 2HR / 2HA hip stance's 35: walking with a gun out swung it off to the side)
 Every step writes only its own files; sneak copies are made where the step says so."""
 import os, re, shutil, subprocess, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -19,10 +21,11 @@ XFER = {'Ghost': ('ghost', ['2ha', '2hr', '2hh', '2hl']), 'Ghoul': ('ghoul', ['2
         'GlowingOne': ('ghoul', ['2ha', '2hr', '2hh', '2hl']), 'Hillfolk': ('hillfolk1', ['2ha', '2hr', '2hh', '2hl'])}
 RETIME = {'SuperMutant', 'Nightkin', 'Swampfolk', 'Zetan'}
 SNEAK_LOWER = {'Eyebot': -40}
+LOCO_CAP = {'Ghost': 22}
 BLOCK_HUMAN = {'Ghost': 'ghost', 'Ghoul': 'ghoul', 'GlowingOne': 'ghoul', 'Hillfolk': 'hillfolk1',
                'SuperMutant': 'supermutant', 'Nightkin': 'supermutant', 'Swampfolk': 'swampfolk', 'Zetan': 'zetan'}
 BLOCK_OWN = {'Eyebot': 'h2h,mt', 'Securitron': 'h2h,mt', 'Protectron': 'h2h,mt', 'Robobrain': 'h2h,mt',
-             'SentryBot': 'h2h,mt', 'Trog': 'h2h,mt,1hm,2hm', 'Tunneler': 'h2h,mt,1hm,2hm',
+             'SentryBot': 'h2h,mt', 'Trog': 'h2h,mt,1hm,2hm', 'Deathclaw': 'h2h,mt,1hm,2hm', 'Tunneler': 'h2h,mt,1hm,2hm',
              'MisterHandy': 'h2h,mt --keep-1hm', 'MisterGutsy': 'h2h,mt --keep-1hm'}
 
 def py(*a):
@@ -56,3 +59,4 @@ if __name__ == '__main__':
     elif race in BLOCK_OWN:
         shutil.rmtree(tmp, ignore_errors=True); a = BLOCK_OWN[race].split()
         print(race, 'blocks', py(os.path.join(HERE, 'own_block.py'), d, tmp, *a)); copy_in(tmp, d, sneak=False); shutil.rmtree(tmp)
+    if race in LOCO_CAP: print(race, 'loco_prio', py(os.path.join(HERE, 'loco_prio.py'), d, str(LOCO_CAP[race])))

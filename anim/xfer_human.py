@@ -192,6 +192,10 @@ def transfer(cr, hpath, base_path, fps=30, head_is=6.0, free_left=None, twist=Fa
     names = list(cr.spine) + b.get('neck', []) + [cr.head]
     for side in ('R', 'L'): names += list(cr.arm[side]) + list(cr.fingers[side])
     names.append(cr.weapon)
+    if 'handgrip' in name:
+        # hand-grip files are layered over every aim / attack of the weapon (the human keys only the off hand's
+        # fingers, at 50): keying the whole upper body at that priority froze the arms in the grip file's pose
+        names = [nm for nm in names if nm in pr]
     bones = []
     for nm in names:
         if nm in cr.sk.local: bones.append((nm, pr.get(nm, top)))
