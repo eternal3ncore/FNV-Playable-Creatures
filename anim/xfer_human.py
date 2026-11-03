@@ -189,6 +189,11 @@ def transfer(cr, hpath, base_path, fps=30, head_is=6.0, free_left=None, twist=Fa
     # bones: creature upper body + spine/head (held at its own pose); priorities from the human file
     pr = {nm: p for nm, _, p in k.blocks}
     top = max(pr.values()) if pr else 65
+    # bones the human file doesn't key come from the file it is blended with: an up / down variant is blended with its
+    # level file (same group), anything else is layered over the base aim. They take that file's priority, not this
+    # file's top one - the human 2HR aim up / down key only the spine and the gun, so the creature's up / down arms went
+    # in at 45 over the hip aim's 35, and the slightest up / down weight pulled the arms out of the hip hold
+    bpr = {nm: p for nm, _, p in (kl.blocks if kl is not None else kb.blocks)}
     names = list(cr.spine) + b.get('neck', []) + [cr.head]
     for side in ('R', 'L'): names += list(cr.arm[side]) + list(cr.fingers[side])
     names.append(cr.weapon)
@@ -198,7 +203,7 @@ def transfer(cr, hpath, base_path, fps=30, head_is=6.0, free_left=None, twist=Fa
         names = [nm for nm in names if nm in pr]
     bones = []
     for nm in names:
-        if nm in cr.sk.local: bones.append((nm, pr.get(nm, top)))
+        if nm in cr.sk.local: bones.append((nm, pr.get(nm, bpr.get(nm, top))))
     return frames, bones, L, list(k.textkeys), k.cycle, k.name
 
 if __name__ == '__main__':
