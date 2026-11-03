@@ -42,9 +42,6 @@ Sections whose plugin isn't loaded are skipped (logged "NOT FOUND (plugin inacti
                       don't run while you're this race: no damage, screen effect, weather change or message)
   Faction           : the species' in-game factions, Plugin|FormID[,Plugin|FormID...] (up to 4); a plugin that
                       isn't loaded is skipped (one ini serves New Vegas and TTW)
-  HideWeapon        : 1 = the equipped weapon is never drawn on the 3rd-person body (still equipped and used; the
-                      1st-person view still shows it). Set for the races on all fours. A weapon-type list (as
-                      WeaponAnims, e.g. H2H,1HM,2HM) hides only those types. Default 0
   BodyPartData      : Plugin|FormID of the body part data (BPTD: gore, dismemberment, VATS parts) the race uses;
                       empty = the player's default
   LockedItems       : Plugin|FormID[,...] (up to 8): items refused, and unequipped at load, until UnlockGlobal= is 1 or
