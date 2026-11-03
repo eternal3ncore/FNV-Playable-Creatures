@@ -235,11 +235,14 @@ def chain(parent, items):
     return out
 SIDES = (('Left', 11), ('Right', 12), ('Back', 13), ('Front', None))    # GetFurnitureMarkerID of the entry side
 
-def creature_idles(tag, folder, chair_enter, chair_exit, chair_loop, stool_enter, stool_exit, stool_loop, specials, get_up):
-    """All paths are full MODL paths. folder = the creature's skeleton folder + IdleAnims (the tree key)."""
+def creature_idles(tag, folder, chair_enter, chair_exit, chair_loop, stool_enter, stool_exit, stool_loop, specials, get_up,
+                   root=None, root_prev=0):
+    """All paths are full MODL paths. folder = the creature's skeleton folder + IdleAnims (the tree key).
+    root: an existing FurnitureIdles root to put the Sitting group under (after root_prev)"""
     G = folder                       # group nodes carry the folder as MODL, like vanilla
-    root, = chain(0, [(f'PC{tag}FurnitureIdles', G, [ctda(F_SITTING, 0, 2, OR=True), ctda(F_SLEEPING, 0, 2)], '840000cd0000003c')])
-    sitting, = chain(root, [(f'PC{tag}Sitting', G, [ctda(F_SITTING, 0, 2)], '840000cd0000000d')])
+    if root is None:
+        root, = chain(0, [(f'PC{tag}FurnitureIdles', G, [ctda(F_SITTING, 0, 2, OR=True), ctda(F_SLEEPING, 0, 2)], '840000cd0000003c')])
+    sitting = idle(f'PC{tag}Sitting', G, [ctda(F_SITTING, 0, 2)], root, '840000cd0000000d', root_prev)
     # stools (marker 15) first; every other sit marker (chairs, benches, couches, ...) is treated as a chair
     stool, chair = chain(sitting, [(f'PC{tag}StoolSitting', G, [ctda(F_MARKER, 15)], '870000cd0000000c'),
                                    (f'PC{tag}ChairSitting', G, [], '070000cd00000000')])
@@ -1093,6 +1096,36 @@ for _tag, _f in (('Zetan', 'Zetan'), ('Ghost', 'Ghost'), ('FeralGhoul', 'Ghoul')
                  ('Protectron', 'Protectron'), ('Robobrain', 'Robobrain'), ('MisterHandy', 'MisterHandy'), ('MisterGutsy', 'MisterGutsy'),
                  ('SentryBot', 'SentryBot'), ('Deathclaw', 'Deathclaw'), ('Lakelurk', 'Lakelurk')):
     sandman_idles(_tag, 'PlayableCreatures\\%s\\IdleAnims' % _f)
+
+# Tranquility Lane / Vault 112 pods (FurnitureIdles > Sitting > POD, marker 16; vanilla conditions / DATA): a Pod group
+# under the race's Sitting group, evaluated before ChairSitting (that fallback has no condition, so its 'previous
+# sibling' link is moved to the pod). Files from anim/pod.py; the Ghost (human skeleton) uses the vanilla files.
+def set_prev(fid, prev):
+    for i, r in enumerate(idles):
+        if struct.unpack_from('<I', r, 12)[0] == fid:
+            j = r.index(b'ANAM\x08\x00'); idles[i] = r[:j + 10] + struct.pack('<I', prev) + r[j + 14:]; return
+    raise KeyError(hex(fid))
+_POD = {f: _vanilla_idle(f) for f in (0x926C2, 0x926C3, 0x93A64, 0x93A65, 0x926C4, 0x926C5)}
+def pod_idles(tag, folder, files=None):
+    f = files or {k: folder + '\\' + k for k in ('PodEnter.kf', 'PodExit.kf', 'PodIdle.kf')}
+    sitting = IDLE_BY_EDID[f'PC{tag}Sitting']; stool = IDLE_BY_EDID[f'PC{tag}StoolSitting']
+    pod = idle(f'PC{tag}Pod', folder, _POD[0x926C2][0], sitting, _POD[0x926C2][1], stool)
+    set_prev(IDLE_BY_EDID[f'PC{tag}ChairSitting'], pod)
+    sit, = chain(pod, [(f'PC{tag}PodSitIdle', folder, *_POD[0x926C3])])
+    chain(sit, [(f'PC{tag}PodSitIdle1stPerson', HUMAN + '1stP_PodDynamicIdle.kf', *_POD[0x93A64]),
+                (f'PC{tag}PodSitIdle3rdPerson', f['PodIdle.kf'], *_POD[0x93A65])])
+    idle(f'PC{tag}PodEnter', f['PodEnter.kf'], _POD[0x926C4][0], pod, _POD[0x926C4][1], sit)
+    idle(f'PC{tag}PodExit', f['PodExit.kf'], _POD[0x926C5][0], pod, _POD[0x926C5][1], IDLE_BY_EDID[f'PC{tag}PodEnter'])
+for _tag, _f in (('Zetan', 'Zetan'), ('FeralGhoul', 'Ghoul'), ('GlowingOne', 'GlowingOne'), ('SuperMutant', 'SuperMutant'),
+                 ('Nightkin', 'Nightkin'), ('Deathclaw', 'Deathclaw'), ('Lakelurk', 'Lakelurk')):
+    pod_idles(_tag, 'PlayableCreatures\\%s\\IdleAnims' % _f)
+pod_idles('Ghost', 'PlayableCreatures\\Ghost\\IdleAnims', {'PodEnter.kf': HUMAN + 'SitTranquilityChairEnter.kf',
+          'PodExit.kf': HUMAN + 'SitTranquilityChairExit.kf', 'PodIdle.kf': HUMAN + 'SitTranquilityChairIdle.kf'})
+# Robots without a seated pose (Robobrain, Securitron, Sentry Bot, Mister Handy / Gutsy): the chair / stool tree with
+# placeholder files (their own idle; anim/pod.py --robot) under the FurnitureIdles root sandman_idles made for them
+for _tag, _f in (('Robobrain', 'Robobrain'), ('Securitron', 'Securitron'), ('SentryBot', 'SentryBot'), ('MisterHandy', 'MisterHandy'), ('MisterGutsy', 'MisterGutsy')):
+    _F = 'PlayableCreatures\\%s\\IdleAnims' % _f
+    creature_idles(_tag, _F, *_human_set(_F + '\\'), None, root=IDLE_BY_EDID[f'PC{_tag}FurnitureIdles'], root_prev=IDLE_BY_EDID[f'PC{_tag}Sleeping'])
 _next_id = _idle_next[0]
 for k, v in LAKELURKS.items():
     print('  lakelurk %s: race %06X child %06X ability %06X' % (k, v['race'] & 0xFFFFFF, v['child'] & 0xFFFFFF, v['ability'] & 0xFFFFFF))

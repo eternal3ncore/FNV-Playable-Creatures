@@ -325,6 +325,28 @@ def sandman_idles(tag, folder):
 for _tag, _f in (('Swampfolk', 'Swampfolk'), ('Hillfolk', 'Hillfolk'), ('Trog', 'Trog'), ('Mirelurk', 'Mirelurk'), ('SuperMutantDC', 'SuperMutantDC')):
     sandman_idles(_tag, 'PlayableCreatures\\%s\\IdleAnims' % _f)
 
+# Tranquility Lane / Vault 112 pods (FurnitureIdles > Sitting > POD, marker 16; vanilla conditions / DATA): a Pod group
+# under the race's Sitting group, evaluated before ChairSitting (that fallback has no condition, so its 'previous
+# sibling' link is moved to the pod). Files from anim/pod.py; the Ghost (human skeleton) uses the vanilla files.
+def set_prev(fid, prev):
+    for i, r in enumerate(idles):
+        if struct.unpack_from('<I', r, 12)[0] == fid:
+            j = r.index(b'ANAM\x08\x00'); idles[i] = r[:j + 10] + struct.pack('<I', prev) + r[j + 14:]; return
+    raise KeyError(hex(fid))
+_POD = {f: _vanilla_idle(f) for f in (0x926C2, 0x926C3, 0x93A64, 0x93A65, 0x926C4, 0x926C5)}
+def pod_idles(tag, folder, files=None):
+    f = files or {k: folder + '\\' + k for k in ('PodEnter.kf', 'PodExit.kf', 'PodIdle.kf')}
+    sitting = IDLE_BY_EDID[f'PC{tag}Sitting']; stool = IDLE_BY_EDID[f'PC{tag}StoolSitting']
+    pod = idle(f'PC{tag}Pod', folder, _POD[0x926C2][0], sitting, _POD[0x926C2][1], stool)
+    set_prev(IDLE_BY_EDID[f'PC{tag}ChairSitting'], pod)
+    sit, = chain(pod, [(f'PC{tag}PodSitIdle', folder, *_POD[0x926C3])])
+    chain(sit, [(f'PC{tag}PodSitIdle1stPerson', HUMAN + '1stP_PodDynamicIdle.kf', *_POD[0x93A64]),
+                (f'PC{tag}PodSitIdle3rdPerson', f['PodIdle.kf'], *_POD[0x93A65])])
+    idle(f'PC{tag}PodEnter', f['PodEnter.kf'], _POD[0x926C4][0], pod, _POD[0x926C4][1], sit)
+    idle(f'PC{tag}PodExit', f['PodExit.kf'], _POD[0x926C5][0], pod, _POD[0x926C5][1], IDLE_BY_EDID[f'PC{tag}PodEnter'])
+for _tag, _f in (('Swampfolk', 'Swampfolk'), ('Hillfolk', 'Hillfolk'), ('SuperMutantDC', 'SuperMutantDC')):
+    pod_idles(_tag, 'PlayableCreatures\\%s\\IdleAnims' % _f)
+
 groups = [group('HAIR', [hair]), group('EYES', [eyes]), group('RACE', races), group('SPEL', spels), group('ARMO', armors), group('NPC_', npcs), group('IDLE', idles), group('BPTD', bptds)]
 nrec = 2 + len(races) + len(spels) + len(armors) + len(npcs) + len(idles) + len(bptds) + len(groups)
 tes4 = record('TES4', 0, [
