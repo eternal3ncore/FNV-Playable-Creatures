@@ -231,6 +231,22 @@ for edid, full, body, h, ab in (('PCMirelurkRace', 'Mirelurk', 'hatchling.nif', 
 _mla, _mlc, _mlids = RX.add_extras([r for r, _, _ in _ml], {e: [a] for _, e, a in _ml}, nid)
 races += _mla + _mlc
 for e, c in _mlids.items(): print('  child race', e, '%06X' % (c & 0xFFFFFF))
+# body part data: MirelurkBodyPartData's Face part (Bip01 Head) without the headtracking flag - the player's ragdoll pose
+# matching needs a headtracking part with a ragdoll bone as IK node (build_esp.py, ghost / lakelurk BPTD):
+# PCMirelurkBodyPartData = it with the Face part flagged and its IK node Bip01 Head (ini BodyPartData).
+bptds = []
+def _bptd(src_fid, edid, part, node):
+    out = []; cur = None; done = False
+    for k, v in SRC.byfid[src_fid].subs():
+        if k == 'EDID': v = z(edid)
+        elif k == 'BPTN': cur = v.rstrip(b'\0').decode('latin1') == part and not done
+        elif k == 'BPNI' and cur: v = z(node)
+        elif k == 'BPND' and cur: d = bytearray(v); d[4] |= 0x20; v = bytes(d); done = True
+        out.append((k, v))
+    assert done, edid
+    fid = nid(); bptds.append(record('BPTD', fid, out)); return fid
+MIRELURK_BPTD = _bptd(0x354E3, 'PCMirelurkBodyPartData', 'Face', 'Bip01 Head')
+print('  mirelurk body part data %06X' % (MIRELURK_BPTD & 0xFFFFFF))
 F = 'PlayableCreatures\\Mirelurk\\IdleAnims'
 creature_idles('Mirelurk', F, *human_set(F + '\\'), (MLK + 'IdleAnims\\specialidle_getupfaceup.kf', MLK + 'IdleAnims\\specialidle_getupfacedown.kf'))
 
@@ -240,8 +256,8 @@ creature_idles('Mirelurk', F, *human_set(F + '\\'), (MLK + 'IdleAnims\\specialid
 F = 'PlayableCreatures\\SuperMutantDC\\IdleAnims'
 creature_idles('SuperMutantDC', F, *human_set(F + '\\'), (DC + 'IdleAnims\\specialidle_getupfaceup.kf', DC + 'IdleAnims\\specialidle_getupfacedown.kf'))
 
-groups = [group('HAIR', [hair]), group('EYES', [eyes]), group('RACE', races), group('SPEL', spels), group('ARMO', armors), group('NPC_', npcs), group('IDLE', idles)]
-nrec = 2 + len(races) + len(spels) + len(armors) + len(npcs) + len(idles) + len(groups)
+groups = [group('HAIR', [hair]), group('EYES', [eyes]), group('RACE', races), group('SPEL', spels), group('ARMO', armors), group('NPC_', npcs), group('IDLE', idles), group('BPTD', bptds)]
+nrec = 2 + len(races) + len(spels) + len(armors) + len(npcs) + len(idles) + len(bptds) + len(groups)
 tes4 = record('TES4', 0, [
     ('HEDR', struct.pack('<fII', 1.34, nrec, _next[0])), ('CNAM', z('i3ncore')),
     ('SNAM', z('Playable Creatures (TTW add-on): Swampfolk (Brawler, Scrapper, Creeper, Tracker, Bruiser), Trogs, Capital Wasteland super mutants (Super Mutant, Brute, Master) as playable races; idle trees. Needs Tale of Two Wastelands and PlayableCreatures.dll.')),

@@ -80,7 +80,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 76;
+static const UInt32 kPluginVersion = 77;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -1014,10 +1014,13 @@ static bool __fastcall Hook_RagEye(void* ctrl, void*, void* out) {
 	if (ctrl && ctrl == PlayerRagdoll()) {
 		UInt8* b = (UInt8*)ctrl;
 		// the pose reference at +0xF0 must be the controller's own pose (+0x54); the securitron's ends up holding
-		// an hkpConstraintInstance with init ok (log) -> logged once, the ragdoll offset skipped
-		if (!b[0x42] || *(void**)(b + 0xF0) != *(void**)(b + 0x54)) {
+		// an hkpConstraintInstance with init ok (log) -> logged once, the ragdoll offset skipped. With no pose at all
+		// (the body part data's headtracking IK node isn't a ragdoll bone: pose matching never set up) both can be null
+		// - equal, and the vanilla code then reads bone data through the null pose (lakelurk save load).
+		void* pose = *(void**)(b + 0x54);
+		if (!b[0x42] || !pose || *(void**)(b + 0xF0) != pose) {
 			static int n = 0;
-			if (n < 3) { n++; LogRagdoll(!b[0x42] ? "eye position skipped: controller not initialized" : "eye position skipped: pose reference (+0xF0) is not the controller's pose (+0x54)"); }
+			if (n < 3) { n++; LogRagdoll(!b[0x42] ? "eye position skipped: controller not initialized" : !pose ? "eye position skipped: no ragdoll pose (body part data headtracking node is no ragdoll bone)" : "eye position skipped: pose reference (+0xF0) is not the controller's pose (+0x54)"); }
 			return false;
 		}
 	}

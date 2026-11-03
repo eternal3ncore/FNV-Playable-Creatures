@@ -1036,9 +1036,15 @@ LAKELURK_SHRIEK = robot_weapon(0x14F449, 'PCLakelurkShriek', 0x121155, 3.0)     
 _lt, _lf, _lfid, _ls = RX.parse(weaps[-1]); assert _lfid == LAKELURK_SHRIEK
 weaps[-1] = record('WEAP', _lfid, [(k, (lambda d: (struct.pack_into('<i', d, 0, 0), struct.pack_into('<f', d, 8, 0.0), bytes(d))[-1])(bytearray(v))
                                     if k == 'DATA' else v) for k, v in _ls], _lf)       # worth nothing, weightless
+# The player's ragdoll sets up its pose matching from the body part data's headtracking part's IK node (see the ghost BPTD
+# above): MirelurkKingBodyPartData's Head part (node Bip01 Neck1, flags with headtracking) names the skeleton file as its
+# IK node, not a bone, so the pose was never set up - the eye-position code read an empty pose and the game crashed on a
+# save load. PCLakelurkBodyPartData = that BPTD with the Head part's IK node Bip01 Neck1 (its ragdoll head bone: Bip01
+# Head has no body); ini BodyPartData. Ids after everything else.
+LAKELURK_BPTD = robot_bptd(0x5362D, 'PCLakelurkBodyPartData', 'Head', 'Bip01 Neck1')
 for k, v in LAKELURKS.items():
     print('  lakelurk %s: race %06X child %06X ability %06X' % (k, v['race'] & 0xFFFFFF, v['child'] & 0xFFFFFF, v['ability'] & 0xFFFFFF))
-print('  young lakelurk ability %06X, shriek %06X' % (_lk_young_ab & 0xFFFFFF, LAKELURK_SHRIEK & 0xFFFFFF))
+print('  young lakelurk ability %06X, shriek %06X, body part data %06X' % (_lk_young_ab & 0xFFFFFF, LAKELURK_SHRIEK & 0xFFFFFF, LAKELURK_BPTD & 0xFFFFFF))
 
 groups = [group('HAIR', [hair]), group('EYES', [eyes] + eyes_extra), group('RACE', races), group('SOUN', souns), group('MGEF', mgefs), group('SCPT', scpts), group('ENCH', enchs), group('SPEL', spels), group('ARMO', armors), group('WEAP', weaps), group('NPC_', npcs), group('IDLE', idles)] + ([group('PROJ', projs)] if projs else []) + [group('ANIO', anios), group('BPTD', bptds), group('VTYP', vtyp), group('IPCT', ipcts), group('IPDS', ipdss)]   # vanilla group order
 nrec = 2 + len(ipcts) + len(ipdss) + len(enchs) + len(projs) + len(eyes_extra) + len(armors) + len(bptds) + len(races) + len(weaps) + len(npcs) + len(souns) + len(mgefs) + len(scpts) + len(spels) + len(vtyp) + len(idles) + len(anios) + len(groups)

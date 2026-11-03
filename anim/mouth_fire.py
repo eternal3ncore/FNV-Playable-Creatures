@@ -46,7 +46,11 @@ CREATURES = {
                      lower=r'^Bip01( NonAccum| Pelvis| [LR] (Thigh|Calf|Foot|Toe\d*))$'),
     # level_head: the attack's body motion with the aim's head orientation (the mirelurk's lunge rears the head 37 deg up:
     # the shots left that far above the crosshair line)
+    # claw_throw: grenades / mines (1GT / 1MD / 1LM) aim with claw_aim and throw / place with claw_attack, its own claw
+    # strike time-warped so its Hit lands on the file's Release; the grenade rides in the right pincer (Weapon as the strike
+    # keys it, or the skeleton's), shown
     'mirelurk': dict(cfg='mirelurk', aim='2hlaim.kf', attack='2hlattackspin.kf', mouth_fu=(8.0, -6.0), level_head=True,
+                     claw_aim='h2haim.kf', claw_attack='h2hattackright.kf',
                      pitch_bones=('Bip01 Neck', 'Bip01 Head'),
                      lower=r'^Bip01( NonAccum| Pelvis| [LR] (Thigh|Calf|Foot|Toe\d*)| Tail\d*| Ponytail\d+)$'),
 }
@@ -154,6 +158,42 @@ def mouth_file(path):
     scale_weapon_written(path)
 
 
+THROWN = ('1gt', '1md', '1lm')
+if 'claw_attack' in SPEC:
+    claw_aim = KFEval(os.path.join(SRC, SPEC['claw_aim'])); claw = KFEval(os.path.join(SRC, SPEC['claw_attack']))
+    C_HIT = [t for t, k in claw.textkeys if k == 'Hit'][0]
+    CPRIO = {'aim': {b[0]: b[2] for b in claw_aim.blocks}, 'attack': {b[0]: b[2] for b in claw.blocks}}
+
+
+def claw_file(path):
+    """a grenade / mine file: aims = the claw aim, throws / placements = the claw strike with its Hit on the Release"""
+    k = KFEval(path); name = k.name; L = k.stop; n_ = name.lower()
+    kind = 'attack' if n_.startswith('attackthrow') or n_.startswith('placemine') else 'aim' if n_.startswith('aim') else None
+    if kind is None: return False
+    keys = sorted([(t, s) for t, s in k.textkeys if not s.lower().startswith('prn')], key=lambda x: (x[0], x[1] != 'start', x[1] == 'end'))
+    pitch = pitch_of(name)
+    rel = next((t for t, s in keys if s == 'Release'), None)
+    src = claw if kind == 'attack' else claw_aim
+    n = max(2, int(round(L * 30)) + 1); frames = []
+    for i in range(n):
+        t = L * i / (n - 1)
+        if kind == 'attack':
+            h = rel if rel is not None else 0.5 * L
+            ts = C_HIT * (t / h) if t <= h else C_HIT + (claw.stop - C_HIT) * ((t - h) / max(L - h, 1e-6))
+            smp = claw.sample(min(ts, claw.stop))
+        else: smp = claw_aim.sample(t % claw_aim.stop)
+        loc = full(sk, smp); W = sk.fk(loc)
+        if pitch:
+            lat = W['Bip01 NonAccum'][1] @ (B0.T @ LEFT)
+            for nb in SPEC['pitch_bones']:
+                W = sk.fk(loc); set_world(loc, W, nb, rotm(lat, -pitch / 2) @ W[nb][1])
+        frames.append((t, loc))
+    pr = CPRIO[kind]; dflt = max(pr.values())
+    bones = [(b, min(pr.get(b, dflt), LEGS) if LOWER.match(b) else pr.get(b, dflt)) for b in pr if b != 'Bip01']
+    write_kf(cr, path, name, L, keys, frames, bones=bones, cycle=k.cycle)
+    return True
+
+
 def scale_weapon_written(path):
     f = NifFile(path)
     bi = [i for i, t in enumerate(f.btype) if f.types[t] == 'NiControllerSequence'][0]
@@ -199,7 +239,7 @@ def patch_skeleton(path):
 
 if __name__ == '__main__':
     D = sys.argv[2]; skel = sys.argv[3]; hide_only = '--hide' in sys.argv[4:]
-    nm = nh = 0
+    nm = nh = nt = 0
     npr = sum(prn_to_hand(os.path.join(d, f)) for d, _, fs in os.walk(D) for f in fs if f.lower().endswith('.kf'))
     for fn in sorted(os.listdir(D)):
         m = re.match(r'^(sneak)?(h2h|1hm|2hm|1hp|2hr|2ha|2hh|2hl|1gt|1md|1lm)(.*)\.kf$', fn, re.I)
@@ -208,10 +248,12 @@ if __name__ == '__main__':
         p = os.path.join(D, fn)
         if pre in GUNS and not re.match(r'^(sonnic)?(equip|unequip|holster)', rest):
             if not hide_only: mouth_file(p); nm += 1
+        elif pre in THROWN and 'claw_attack' in SPEC and not hide_only:
+            nt += claw_file(p)
         elif pre in HIDE:
             if scale_weapon(p): nh += 1
     if hide_only: sys.exit(print('weapon hidden in', nh, 'prn keys moved to the hand in', npr))
-    print('mouth-fire files', nm, 'weapon hidden in', nh, 'prn keys moved to the hand in', npr, 'skeleton ProjectileNode', patch_skeleton(skel))
+    print('mouth-fire files', nm, 'claw throws', nt, 'weapon hidden in', nh, 'prn keys moved to the hand in', npr, 'skeleton ProjectileNode', patch_skeleton(skel))
     s2 = Skeleton(skel)
     for fn in ('2hraim.kf', '2hrattackleft.kf', '2haattackloop.kf', '2hlattackright.kf', '1hpattackloop.kf'):
         if not os.path.exists(os.path.join(D, fn)): continue
