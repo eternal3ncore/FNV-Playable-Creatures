@@ -5,7 +5,7 @@ attacks of that type, chosen in the PLAN below: a non-lunging one (no root trave
 other than forward is filled. Sneak copies come from the sneak version of the same source.
 usage: python3 power_fill.py <PlayableCreatures meshes folder> [--apply]"""
 import os, re, struct, sys
-HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.insert(0, os.path.dirname(HERE))
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.append(os.path.dirname(HERE))   # parent last: it has a dis.py
 from nifedit import NifFile
 from kf import KF
 
@@ -21,6 +21,12 @@ PLAN = {
     'SuperMutant': {'h2h': {'AttackPower': 'h2hattackleftpower', 'AttackBackPower': 'h2hattackrightpower'}},
     'Trog': {T: {'AttackBackPower': f'{T}attackpower'} for T in ('h2h', '1hm', '2hm')},
     'Zetan': {'h2h': {g: 'h2hattackpower' for g in ('AttackForwardPower', 'AttackBackPower', 'AttackLeftPower', 'AttackRightPower')}},
+    # Deathclaw: own forward / left / right power attacks only; its side powers are in-place swings (no root travel)
+    'Deathclaw': {T: {'AttackPower': f'{T}attackrightpower', 'AttackBackPower': f'{T}attackleftpower'} for T in ('h2h', '1hm', '2hm')},
+    # Mirelurk: own standing / forward / left / right powers; the standing one (in place) fills the back power
+    'Mirelurk': {T: {'AttackBackPower': f'{T}attackpower'} for T in ('h2h', '1hm', '2hm')},
+    # Lakelurk: own standing and forward powers only; the standing one fills back / left / right
+    'Lakelurk': {T: {g: f'{T}attackpower' for g in ('AttackBackPower', 'AttackLeftPower', 'AttackRightPower')} for T in ('h2h', '1hm', '2hm')},
 }
 
 
@@ -44,7 +50,9 @@ def renamed(src, dst, seq):
 def run(root, apply=False):
     rep = []; n = 0
     for race, types in PLAN.items():
-        d = os.path.join(root, race); have = groups(d)
+        d = os.path.join(root, race)
+        if not os.path.isdir(d): continue            # race folder not in this tree (one pack built at a time)
+        have = groups(d)
         for T, fill in types.items():
             for g, stem in fill.items():
                 for sn in (False, True):

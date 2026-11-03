@@ -1,6 +1,6 @@
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt, numpy as np
-SKIP = ('Ponytail', 'Footsteps', 'Axe', 'raygun', 'Scene Root')
+SKIP = ('PCGhost', 'Gas', 'Ponytail', 'Footsteps', 'Axe', 'raygun', 'Scene Root')
 def draw(sk, Ws, titles, out, gun=None):
     """Ws: list of FK dicts; draws front (x,z), side (y,z), top (x,y)."""
     fig, axs = plt.subplots(len(Ws), 3, figsize=(12, 4*len(Ws)))

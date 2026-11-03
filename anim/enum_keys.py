@@ -42,6 +42,24 @@ MAPS = {
                      'auxiliary1': 'NPCSporeCarrierRise', 'auxiliary2': 'NPCSporeCarrierRiseVox', 'auxiliary3': 'NPCSporeCarrierAtkVox',
                      'auxiliary4': 'NPCSporeCarrierJump', 'auxiliary5': 'NPCSporeCarrierLand', 'auxiliary6': 'NPCSporeCarrierSwing',
                      'auxiliary7': 'NPCSporeCarrierAtkVox', 'auxiliary8': 'NPCSporeCarrierFlyVox'},
+    # FalloutNV.esm AudioTemplateDeathclaw (000A5D40). Idle (vox in its idle loop) and Auxiliary1 (chase vox in its run
+    # and strafes) dropped - on the player they would fire constantly.
+    'deathclaw': {'left': 'NPCDeathclawFootWalkL', 'right': 'NPCDeathclawFootWalkR',
+                  'backleft': 'NPCDeathclawFootRunL', 'backright': 'NPCDeathclawFootRunR', 'idle': None,
+                  'auxiliary1': None, 'auxiliary2': 'NPCDeathClawLand', 'auxiliary3': 'NPCDeathclawPowerAtkVox',
+                  'auxiliary4': 'NPCDeathClawArmSwing', 'auxiliary5': 'NPCDeathclawStrikeVox',
+                  'auxiliary6': 'NPCDeathclawStrikeVox', 'auxiliary7': 'NPCDeathclawPainVox'},
+    # FalloutNV.esm AudioTemplateMirelurkKing (000C3B2E; the lakelurks'). Idle (vox) and Auxiliary1 (attack vox in its run)
+    # dropped - on the player they would fire constantly; Auxiliary7 = the shriek's vox, Auxiliary6 / 8 = its equips.
+    'lakelurk': {'left': 'NPCMirelurkKingFootL', 'right': 'NPCMirelurkKingFootR', 'backleft': None, 'backright': None,
+                 'idle': None, 'aware': None, 'auxiliary1': None, 'auxiliary2': 'NPCMirelurkKingSwing',
+                 'auxiliary3': 'NPCMirelurkKingAttack', 'auxiliary4': 'NPCMirelurkKingAttack', 'auxiliary5': 'NPCMirelurkKingAttack',
+                 'auxiliary6': 'NPCMirelurkKingEquip', 'auxiliary7': 'NPCMirelurkKingSonicVox', 'auxiliary8': 'NPCMirelurkKingSonicEquip',
+                 'eight': None},
+    # (TTW) Fallout 3 AudioTemplateMirelurk (000710A3). Idle (vox in its idle loop) dropped.
+    'mirelurk': {'left': 'NPCMirelurkFootLeft', 'right': 'NPCMirelurkFootRight', 'backleft': 'NPCMirelurkRunFootLeft',
+                 'backright': 'NPCMirelurkRunFootRight', 'idle': None, 'aware': None, 'attack': 'NPCMirelurkAttack',
+                 'auxiliary1': None},
 }
 
 def convert(path, m):

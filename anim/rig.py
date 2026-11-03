@@ -82,6 +82,19 @@ class Rig:
             s.base[cr.cfg.ACCUM_ROOT] = (np.zeros(3), np.eye(3))
         s.W0 = s.fk(s.base)
         s.T0 = s.W0[cr.torso]
+        # cfg.WEAPON_OFFSET (weapon frame: +X barrel, +Y up, +Z right): the gun sits that far from where the hand's
+        # Weapon node would put it (deathclaw: its claws run along the barrel and swallowed the gun). The hold keeps the
+        # gun where W0 says; the hand moves the other way.
+        # (only on a pose sampled from a file: a base_pose made by pose() already carries them)
+        off = getattr(cr.cfg, 'WEAPON_OFFSET', None) if base_pose is None else None
+        if off is not None:
+            t, R = s.base[cr.weapon]; s.base[cr.weapon] = (t + R @ np.asarray(off, float), R)
+        # cfg.WEAPON_GRIP_ROT (deg about the weapon's Z, then Y, then X): the hand turned on the grip, so the gun keeps its
+        # aim and the hand / claws hold it at another angle (deathclaw: claws down and to the side, forearm behind)
+        gr = getattr(cr.cfg, 'WEAPON_GRIP_ROT', None) if base_pose is None else None
+        if gr is not None:
+            t, R = s.base[cr.weapon]
+            s.base[cr.weapon] = (t, R @ rotm([0, 0, 1.0], gr[0]) @ rotm([0, 1.0, 0], gr[1]) @ rotm([1.0, 0, 0], gr[2]))
     def fk(s, loc):
         sk = s.cr.sk; W = {}
         for nm in sk.order:

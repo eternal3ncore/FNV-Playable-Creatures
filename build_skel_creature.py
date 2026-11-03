@@ -18,6 +18,12 @@ f = NifFile(SRC); h = NifFile(HUM)
 added = []
 def local(nf, name):
     r = nf.node(nf.find(name)); return r['trans'], r['rot']
+def local_or(name, fallback):
+    """a joint the creature lacks (the mirelurk's pincer is one joint, Finger0): the given joint's offset instead"""
+    return local(f, name if f.find(name) is not None else fallback)
+def tip(finger):
+    """third joint of a finger chain; two-joint claws (deathclaw) repeat the second joint's offset"""
+    return local_or(finger + '2' if f.find(finger + '2') is not None else finger + '1', finger)
 def add(parent, name, trans=(0, 0, 0), rot=(1, 0, 0, 0, 1, 0, 0, 0, 1)):
     if f.find(name) is not None: return
     pi = f.find(parent); assert pi is not None, parent
@@ -32,13 +38,21 @@ if f.find('Bip01 Neck1') is None:
 for side in ('L', 'R'):
     if f.find(f'Bip01 {side} Finger0') is not None:
         t, r = local(f, f'Bip01 {side} Finger0'); add(f'Bip01 {side} Hand', f'Bip01 {side} Thumb1', t, r)
-        t, r = local(f, f'Bip01 {side} Finger01'); add(f'Bip01 {side} Thumb1', f'Bip01 {side} Thumb11', t, r)
-        t, r = local(f, f'Bip01 {side} Finger02'); add(f'Bip01 {side} Thumb11', f'Bip01 {side} Thumb12', t, r)
+        t, r = local_or(f'Bip01 {side} Finger01', f'Bip01 {side} Finger0'); add(f'Bip01 {side} Thumb1', f'Bip01 {side} Thumb11', t, r)
+        t, r = tip(f'Bip01 {side} Finger0'); add(f'Bip01 {side} Thumb11', f'Bip01 {side} Thumb12', t, r)
     for k in ('3', '4'):
         if f.find(f'Bip01 {side} Finger2') is not None:
             t, r = local(f, f'Bip01 {side} Finger2'); add(f'Bip01 {side} Hand', f'Bip01 {side} Finger{k}', t, r)
             t, r = local(f, f'Bip01 {side} Finger21'); add(f'Bip01 {side} Finger{k}', f'Bip01 {side} Finger{k}1', t, r)
-            t, r = local(f, f'Bip01 {side} Finger22'); add(f'Bip01 {side} Finger{k}1', f'Bip01 {side} Finger{k}2', t, r)
+            t, r = tip(f'Bip01 {side} Finger2'); add(f'Bip01 {side} Finger{k}1', f'Bip01 {side} Finger{k}2', t, r)
+    for k in '1234':                                  # pincer claws (mirelurk: Finger0 only): finger stand-ins on its joint
+        if f.find(f'Bip01 {side} Finger0') is not None and f.find(f'Bip01 {side} Finger{k}') is None:
+            t, r = local(f, f'Bip01 {side} Finger0'); add(f'Bip01 {side} Hand', f'Bip01 {side} Finger{k}', t, r)
+            add(f'Bip01 {side} Finger{k}', f'Bip01 {side} Finger{k}1', (2.0, 0, 0))
+            add(f'Bip01 {side} Finger{k}1', f'Bip01 {side} Finger{k}2', (2.0, 0, 0))
+    for k in '1234':                                  # two-joint claws: tip joint stand-ins
+        if f.find(f'Bip01 {side} Finger{k}1') is not None and f.find(f'Bip01 {side} Finger{k}2') is None:
+            t, r = local(f, f'Bip01 {side} Finger{k}1'); add(f'Bip01 {side} Finger{k}1', f'Bip01 {side} Finger{k}2', t, r)
     if f.find(f'Bip01 {side}UpArmTwist') is not None:
         t, r = local(f, f'Bip01 {side}UpArmTwist'); add(f'Bip01 {side} UpperArm', f'Bip01 {side}UpArmTwistBone', t, r)
     else:

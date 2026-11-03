@@ -981,12 +981,71 @@ for i, w in enumerate(weaps):
     if fid == GHOST_GAS: weaps[i] = record('WEAP', fid, [(k, u32(_GAS_IMPACT_SET) if k == 'INAM' else v) for k, v in subs], fl)
 print('  ghost gas impact %06X, set %06X' % (_GAS_IMPACT & 0xFFFFFF, _GAS_IMPACT_SET & 0xFFFFFF))
 
+# ---------------- Lakelurk ----------------
+# Creatures\MirelurkKing (FalloutNV NVCrLakelurk 14F44B lakelurk.NIF, NVCrLakelurkKing 14F44C "Alpha Male Lakelurk"
+# lakelurkking.NIF, both on Creatures\MirelurkKing\Skeleton.nif - the Mirelurk King's skeleton and animations; spell
+# LakelurkWaterBreathing 14F448; body part data MirelurkKingBodyPartData 05362D; no DT spell). Skeleton / animations in
+# PlayableCreatures\Lakelurk (build_skel_creature.py, anim/creatures/lakelurk.py + assemble_lakelurk.py): melee weapons
+# swing with its own claw attacks (weapon unseen), every gun fires as its own shriek from the mouth (gun unseen), thrown
+# weapons and mines in its claw; sits on chairs and stools. Races: Lakelurk (both sexes lakelurk.nif), Lakelurk Alpha
+# (both sexes lakelurkking.nif); each one's child race is the Young Lakelurk (lakelurk.nif, height 0.75).
+# Abilities: its water breathing. Weapon: its Shriek (LakelurkSonic2HL 14F449: 2HL, embedded, the sonic projectile from
+# ProjectileNode_Sonic on its head, LakelurkShriek enchantment - Perception -10 for 10 s and 50 damage), recharging like
+# the robots' weapons (AmmoMicroBreeder, nothing to carry; clip 1, 3 s per round), Can't Drop, weightless, worth nothing.
+# Given at race-menu close (ini GiveItems), not equipped.
+LKA = 'Creatures\\MirelurkKing\\'
+LAKELURKS = {}
+LK_YOUNG_H = 0.75
+_lk_young_ab = None
+def lakelurk_race(key, name, desc, body):
+    global races, npcs, _lk_young_ab
+    rf = _new()
+    r = make_race(rf, 'PC%sRace' % key, name, desc, LKA + body)
+    npcs += [preset(_new(), 'PC%sPresetMale' % key, False, rf), preset(_new(), 'PC%sPresetFemale' % key, True, rf)]
+    ab = _new(); spels.append(RX.ability(ab, 'PC%sPhysiology' % key, '%s Physiology' % name, _eff(0x14F448)))
+    if _lk_young_ab is None:
+        # a race height below 1 slows the player's root motion twice (see robot_race): SpeedMult + 1/height
+        _lk_young_ab = _new()
+        spels.append(RX.ability(_lk_young_ab, 'PCLakelurkYoungPhysiology', 'Young Lakelurk Physiology', _eff(0x14F448)
+                                + [('EFID', u32(0x31D7A)), ('EFIT', struct.pack('<IIIIi', int(round(100 / LK_YOUNG_H - 100)), 0, 0, 0, 21))]))
+    adult, child, ids = RX.add_extras([r], {'PC%sRace' % key: [ab]}, _new)
+    typ, fl, cf, subs = RX.parse(child[0])
+    young = []
+    for k, v in subs:
+        if k == 'FULL': v = z('Young ' + name)
+        elif k == 'MODL' and v.rstrip(b'\0').decode('latin1') == LKA + body: v = z(LKA + 'lakelurk.nif')
+        elif k == 'SPLO': v = u32(_lk_young_ab)
+        elif k == 'DATA':
+            d = bytearray(v); struct.pack_into('<ff', d, 16, LK_YOUNG_H, LK_YOUNG_H); v = bytes(d)
+        young.append((k, v))
+    races += adult + [record('RACE', cf, young, fl)]
+    LAKELURKS[key] = dict(race=rf, child=cf, ability=ab)
+    return rf
+lakelurk_race('Lakelurk', 'Lakelurk',
+              'Lakelurks: the Mojave\'s freshwater mirelurks, hulking shelled hunters of Lake Mead that stun their prey with a sonic shriek. Breathe underwater. Playable Creatures.',
+              'lakelurk.nif')
+lakelurk_race('LakelurkAlpha', 'Lakelurk Alpha',
+              'Lakelurk alpha males: the darker, tougher leaders of the lakelurk nests. Breathe underwater. Playable Creatures.',
+              'lakelurkking.nif')
+_idle_next[0] = _next_id
+LI = 'PlayableCreatures\\Lakelurk\\IdleAnims'
+creature_idles('Lakelurk', LI, *_human_set(LI + '\\'),
+               (LKA + 'IdleAnims\\specialidle_getupfaceup.kf', LKA + 'IdleAnims\\specialidle_getupfacedown.kf'))
+_next_id = _idle_next[0]
+LAKELURK_SHRIEK = robot_weapon(0x14F449, 'PCLakelurkShriek', 0x121155, 3.0)      # LakelurkSonic2HL
+_lt, _lf, _lfid, _ls = RX.parse(weaps[-1]); assert _lfid == LAKELURK_SHRIEK
+weaps[-1] = record('WEAP', _lfid, [(k, (lambda d: (struct.pack_into('<i', d, 0, 0), struct.pack_into('<f', d, 8, 0.0), bytes(d))[-1])(bytearray(v))
+                                    if k == 'DATA' else v) for k, v in _ls], _lf)       # worth nothing, weightless
+for k, v in LAKELURKS.items():
+    print('  lakelurk %s: race %06X child %06X ability %06X' % (k, v['race'] & 0xFFFFFF, v['child'] & 0xFFFFFF, v['ability'] & 0xFFFFFF))
+print('  young lakelurk ability %06X, shriek %06X' % (_lk_young_ab & 0xFFFFFF, LAKELURK_SHRIEK & 0xFFFFFF))
+
 groups = [group('HAIR', [hair]), group('EYES', [eyes] + eyes_extra), group('RACE', races), group('SOUN', souns), group('MGEF', mgefs), group('SCPT', scpts), group('ENCH', enchs), group('SPEL', spels), group('ARMO', armors), group('WEAP', weaps), group('NPC_', npcs), group('IDLE', idles)] + ([group('PROJ', projs)] if projs else []) + [group('ANIO', anios), group('BPTD', bptds), group('VTYP', vtyp), group('IPCT', ipcts), group('IPDS', ipdss)]   # vanilla group order
 nrec = 2 + len(ipcts) + len(ipdss) + len(enchs) + len(projs) + len(eyes_extra) + len(armors) + len(bptds) + len(races) + len(weaps) + len(npcs) + len(souns) + len(mgefs) + len(scpts) + len(spels) + len(vtyp) + len(idles) + len(anios) + len(groups)
 tes4 = record('TES4', 0, [
     ('HEDR', struct.pack('<fII', 1.34, nrec, _next_id)),
     ('CNAM', z('Claude (Playable Creatures project)')),
-    ('SNAM', z('Playable Creatures: Zetan (+ helmeted), Ghost People (hooded / unhooded), Feral Ghoul, Glowing One, Super Mutant, Nightkin, Tunneler, Spore Carrier, Eyebot, Securitron Mk I / II, robots, Deathclaws; creature voices, idle trees, radiation immunity')),
+    ('SNAM', z('Playable Creatures: Zetan (+ helmeted), Ghost People (hooded / unhooded), Feral Ghoul, Glowing One, Super Mutant, Nightkin, Tunneler, Spore Carrier, Eyebot, Securitron Mk I / II, robots, Deathclaws, Lakelurks; creature voices, idle trees, radiation immunity')),
     *[x for m in MASTERS for x in (('MAST', z(m)), ('DATA', struct.pack('<Q', 0)))]])
 open(OUT, 'wb').write(tes4 + b''.join(groups))
 print('wrote', OUT, len(races), 'races', len(npcs), 'presets')

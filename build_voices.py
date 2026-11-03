@@ -1,16 +1,22 @@
-"""Builds PlayableCreaturesVoices.esp: creature voice sets as ordinary combat dialogue (no DLL involvement).
+"""Builds one creature family's voice records (merged into the family plugin by build_plugins.py): the family's
+voice sets as ordinary combat dialogue (no DLL involvement).
 
-  QUST  PCVoice (start game enabled) owns every line.
-  DIAL  overrides of FalloutNV.esm's combat topics Attack / Hit / PowerAttack / Death. In FO3/FNV a topic's quest
-        list (QSTI) is taken from the last plugin that overrides the topic, so each override carries the union of
-        the quest lists of every plugin in the load order that touches the topic (voice_topics.json, scanned
-        on the game PC) plus PCVoice. Masters = every plugin those quests come from + PlayableCreatures.esp.
+  QUST  PCVoice<Family> (start game enabled, priority 110) owns the family's lines.
+  DIAL  overrides of FalloutNV.esm's combat topics Attack / Hit / PowerAttack / Death, listing only this quest. A topic
+        override does not replace the topic's quest list: the engine only adds (TESTopic load 0x618AA0, QSTI ->
+        find-or-add 0x6195D0, nothing removed), and each INFO adds its own quest when it is inserted (0x619820). So
+        several family plugins - and any other mod - can add lines to the same topics in any load order.
   INFO  one per voice file, "Random" flag (last one "Random End"), condition GetIsRace <race> == 1 on the subject,
-        blank subtitle. Quest priority 110 so it wins over FalloutNV's GenericPlayer (101, unconditioned player
-        grunts whose voice files were never shipped). Files go to PlayerVoiceMale/Female (the player's voice) and
-        to the race's own voice type folder (NPCs of the race). Voice files: sound\\voice\\<this esp>\\<voice type>\\<quest>_<topic>_<info id>_1.ogg
+        blank subtitle. Priority 110 wins over FalloutNV's GenericPlayer (101, unconditioned player grunts whose voice
+        files were never shipped). Files go to PlayerVoiceMale/Female (the player's voice) and to the race's own voice
+        type folder (NPCs of the race): sound\\voice\\<plugin>\\<voice type>\\<quest>_<topic>_<info id>_1.ogg
 usage: python3 build_voices.py <out.esp> <copy-plan.tsv>
-Re-run (after re-scanning voice_topics.json) whenever a mod that adds combat dialogue is added to the load order."""
+  PC_MASTERS        master list of the target plugin (its own forms are index len(masters))
+  PC_VOICE_PLUGIN   target plugin name (voice file folder sound\\voice\\<plugin>\\...)
+  PC_VOICE_RACES    races (hex local ids) whose sets go in; PC_VOICE_TTW 1 = the Tale of Two Wastelands sets of them
+  PC_RACE_PLUGIN    plugin holding those races (default: the target plugin; a master for an add-on)
+  PC_VOICE_QUEST / PC_VOICE_PRIORITY   quest EDID / priority
+  PC_VOICE_ID_BASE  first id; ids are allocated over ALL sets whatever the filter, so a line keeps its id"""
 import json, struct, sys
 sys.path.insert(0, '/home/claude/fnv')
 def z(s): return s.encode('latin1') + b'\0'
@@ -25,29 +31,25 @@ u32 = lambda v: struct.pack('<I', v)
 
 OUT = sys.argv[1] if len(sys.argv) > 1 else '/home/claude/fnv/build/PlayableCreaturesVoices.esp'
 PLAN = sys.argv[2] if len(sys.argv) > 2 else '/home/claude/fnv/build/voice_copy_plan.tsv'
-# merged mode: the voice records go into a race plugin instead of their own plugin.
-#   PC_MASTERS        master list of the target plugin -> its own forms (races, voice types, quest) are index len(masters);
-#                     topic quest lists keep only quests from those masters
-#   PC_VOICE_PLUGIN   target plugin name (voice file folder sound\\voice\\<plugin>\\...)
-#   PC_VOICE_SETS     'fnv' = sets for PlayableCreatures.esp's races only, 'all' = every set (TTW plugin)
-#   PC_VOICE_ID_BASE  first id (default 0x800); ids are allocated over ALL sets whatever the filter, so a line has
-#                     the same id (and file name) in both plugins
 import os
-MERGED = 'PC_MASTERS' in os.environ
-ESP_NAME = os.environ.get('PC_VOICE_PLUGIN', 'PlayableCreaturesVoices.esp')
-SETS = os.environ.get('PC_VOICE_SETS', 'all')
+MASTERS = os.environ['PC_MASTERS'].split(',')
+ESP_NAME = os.environ['PC_VOICE_PLUGIN']
+RACES = {int(x, 16) for x in os.environ['PC_VOICE_RACES'].split(',')}
+TTW = os.environ.get('PC_VOICE_TTW', '0') == '1'
+RACE_PLUGIN = os.environ.get('PC_RACE_PLUGIN', ESP_NAME)
+QUEST_EDID = os.environ['PC_VOICE_QUEST']
+PRIORITY = int(os.environ.get('PC_VOICE_PRIORITY', '110'))
 ID_BASE = int(os.environ.get('PC_VOICE_ID_BASE', '0x800'), 16)
 T = json.load(open('/home/claude/fnv/voice_topics.json'))
 TOPICS = {'Attack': 0xDC, 'Hit': 0xDD, 'PowerAttack': 0xE6, 'Death': 0xEF}
-QUEST_EDID = 'PCVoice'
 GET_IS_VOICE_TYPE = 427
 GET_IS_RACE = 69
 GET_IS_SEX = 70                                    # param 0 male / 1 female
 
-# ---- voice sets: voice type (in PlayableCreatures.esp) -> topic -> source files (relative to _PCWork\sound_src\sound)
+# ---- voice sets: voice type (in the family plugin) -> topic -> source files (relative to _PCWork\sound_src\sound)
 ZD = 'voice\\zeta.esm\\dlc05creaturealien\\dlc05aliendialogue_'
 ZATK = [ZD + f'attack_{i}_1' for i in ('000036fc', '000036fd', '000036fe', '000036ff', '00003700', '000076b9')]
-# races: every race (local id in PlayableCreatures.esp) that uses the set (conditions OR'ed); npc_folder: voice type
+# races: every race (local id in its family plugin) that uses the set (conditions OR'ed); npc_folder: voice type
 # folder for NPCs of the race (None = player folders only); ext: file extension of the sources (.ogg voice / .wav fx)
 GD = 'fx\\npc\\ghostpeople\\'
 FG = 'fx\\npc\\feralghoul\\'
@@ -57,6 +59,9 @@ YK = 'voice\\pointlookout.esm\\'                                                
 TV = 'voice\\thepitt.esm\\dlc01uniquetrogvoice\\'                                  # ThePitt - Main.bsa
 SDC = 'voice\\fallout3.esm\\creaturesupermutantdc\\'                              # TTW Fallout3 - Voices.bsa
 ED = 'fx\\npc\\ed_e\\'                                                               # ED-E beeps
+DCL = 'fx\\npc\\deathclaw\\'                                                     # deathclaw vocals
+MKV = 'fx\\npc\\mirelurkking\\'                                               # mirelurk king / lakelurk vocals
+MLV = 'fx\\npc\\mirelurk\\'                                                   # mirelurk vocals
 RV = 'voice\\falloutnv.esm\\robotvictor\\'                                      # securitron lines
 def GR(folder, topic, iid): return f'voice\\falloutnv.esm\\{folder}\\genericrobot_{topic}_{iid}_1'   # robots
 SM_PWR = ['0015cd8f', '0015cd90', '0015cd91', '0015cd92', '0015cd93']                 # CreatureLowIntSM VDialogueS PowerAttack lines
@@ -104,10 +109,9 @@ VOICES = [
     dict(races=[0x858], npc_folder=None, ext='.ogg', topics={
         'PowerAttack': [NKV + f'vdialoguenightkin_attack_00152b{i:02x}_1' for i in range(0x67, 0x6A)]}),
 ] + [
-    # TTW add-on races (PlayableCreaturesTTW.esp). Conditioned on a voice type defined HERE (GetIsVoiceType), not
-    # on the race, so this plugin does not need PlayableCreaturesTTW.esp as a master; PlayableCreatures.dll gives the
-    # player that voice type while in the race (ini VoiceType=PlayableCreaturesVoices.esp|<id>). Lines = the creatures'
-    # own combat dialogue: Point Lookout's yokel voices (swampfolk), The Pitt's trog voice.
+    # Tale of Two Wastelands races (Swampfolk, Trogs). Their voice types are the NPC voice of the race (the DLL gives
+    # the player that voice type while in the race, ini VoiceType=); the lines are conditioned on the races. Lines = the
+    # creatures' own combat dialogue: Point Lookout's yokel voices (swampfolk), The Pitt's trog voice.
     dict(ttw=True, vtype=vt, races=rc, npc_folder=vt.lower(), ext='.ogg', topics={
         'Hit': [YK + vt_dir + f'dlc04genericswampfolk_hit_0000d9{i:02x}_1' for i in range(0x49, 0x5B)],
         'Death': [YK + vt_dir + f'dlc04gener_death_0000d8{i:02x}_1' for i in range(0xF5, 0xFD)],
@@ -125,7 +129,7 @@ VOICES = [
     }),
 
 ] + [
-    # Lonesome Road tunneler (PlayableCreatures.esp PCTunnelerRace): its CREA audio template (AudioTemplateSporeCarrier)
+    # Lonesome Road tunneler (PCTunnelerRace): its CREA audio template (AudioTemplateSporeCarrier)
     # Hit / Death = the feral ghoul's injured / death sounds; PowerAttack = the spore carrier attack vocal
     dict(gen=7, vtype='PCTunnelerVoice', races=[0x8AC, 0x8CE], npc_folder='pctunnelervoice', ext='.wav', topics={
         'Hit': [FG + f'injured\\npc_feralghoul_injured_0{i}' for i in (1, 2, 3)],
@@ -133,7 +137,7 @@ VOICES = [
         'PowerAttack': [f'fx\\npc\\sporecarrier\\atk_vox\\npc_sporecarrier_atkvox_0{i}' for i in range(1, 8)],
     }),
 ] + [
-    # Capital Wasteland super mutants (PlayableCreaturesTTW.esp): Fallout 3's own generic super mutant combat
+    # Capital Wasteland super mutants (SuperMutantsTTW add-on): Fallout 3's own generic super mutant combat
     # lines (voice CreatureSuperMutantDC, TTW Fallout3 - Voices.bsa); Fawkes' companion lines left out
     dict(gen=8, ttw=True, vtype='PCSuperMutantDCVoice', races=[0x8877, 0x887A, 0x887D], npc_folder='pcsupermutantdcvoice', ext='.ogg', topics={
         'Hit': [SDC + 'genericsupermutant_hit_' + n + '_1' for n in ('0001f932', '0001f933', '0001f934', '0001f935', '0001f936', '000217f1', '000217f2',
@@ -145,7 +149,7 @@ VOICES = [
                                                                           '000217f7', '000217f8', '000217f9', '00029585', '00029586', '00029587', '00029588')],
     }),
 ] + [
-    # Eyebot (PlayableCreatures.esp PCEyebotRace 0x8E4): ED-E's beeps (vDialogueEDE's own combat lines use these
+    # Eyebot (PCEyebotRace 0x8E4): ED-E's beeps (vDialogueEDE's own combat lines use these
     # sounds: Attack = NPCRobotEdEAlertThreat, Hit = NPCRobotEdEAlertLowHealth); FalloutNV Fallout - Sound.bsa
     dict(gen=9, races=[0x8E4], npc_folder=None, ext='.wav', topics={
         'Hit': [ED + 'alert_lowhealth\\npc_ede_alert_lowhealth', ED + 'denied\\npc_ede_denied', ED + 'anger\\npc_ede_anger_01'],
@@ -165,7 +169,7 @@ VOICES = [
     # robots: FalloutNV's GenericRobot combat lines of each robot's voice type (Fallout - Voices1.bsa).
     # Hit = the shared "Bzzt" / "Vvvvzzz" lines (the protectron's own folder has no copy: the eyebot folder's); PowerAttack =
     # a few of its Attack lines (the engine voices the player's power attacks, not ordinary attacks).
-    dict(gen=11, races=[race], npc_folder=None, ext='.ogg', **({'sex_ttw': 0} if race == 0x954 else {}), topics={
+    dict(gen=11, races=[race], npc_folder=None, ext='.ogg', topics={
         'Hit': [GR(hit_folder, 'hit', i) for i in ('00080dde', '00080ddf', '00080de0', '00080de1', '00080de2', '00080de3')],
         'Death': [GR(folder, 'death', i) for i in death] + ([GR('roboteyebot', 'death', '00080dae')] if folder == 'robotprotectron' else []),
         'PowerAttack': [GR(folder, 'attack', i) for i in power],
@@ -189,7 +193,7 @@ VOICES = [
 ] + [
     # Fallout 3's robobrain lines (voice RobotRoboBrainDC: the same
     # GenericRobot INFOs, other recordings - all 32 combat files differ from New Vegas'), TTW's Fallout3 - Voices.bsa
-    # (sound\voice\falloutnv.esm\robotrobobraindc). TTW plugin only, female; the New Vegas set is male-only there.
+    # (sound\voice\falloutnv.esm\robotrobobraindc). RobobrainTTW add-on, female; its quest has priority 111, so a female robobrain gets these lines before the New Vegas set.
     dict(gen=12, ttw=True, races=[0x954], sex=1, npc_folder=None, ext='.ogg', topics={
         'Hit': [GR('robotrobobraindc', 'hit', i) for i in ('00080dde', '00080ddf', '00080de0', '00080de1', '00080de2', '00080de3')],
         'Death': [GR('robotrobobraindc', 'death', i) for i in ('0008195a', '0008195b', '0008195c', '00080dae')],
@@ -197,27 +201,52 @@ VOICES = [
         'Attack': [GR('robotrobobraindc', 'attack', i) for i in ('00081965', '00081966', '00081967', '00081969', '0008196a',
                                                                   '0008196b', '0008196d', '00081971', '00081973', '00081977')],
     })
+] + [
+    # Deathclaws (PlayableCreatures_Deathclaw.esp): their CREA audio templates' vocals (Fallout - Sound.bsa,
+    # fx\npc\deathclaw): Hit = pain vox, Death = death, PowerAttack = power-attack vox, Attack = strike vox.
+    # Deathclaw 980 + Legendary 98B (AudioTemplateDeathclaw); Alpha 986 male = AudioTemplateDeathclawSm (its own strike vox),
+    # female = the mother's AudioTemplateDeathclawGiant; the Young Deathclaw child races 985 / 98A / 98F = AudioTemplateDeathclawBaby.
+    dict(gen=13, races=races, sex=sex, npc_folder=None, ext='.wav', topics={
+        'Hit': [DCL + f'{d}npc_deathclaw{t}_pain_vox_0{i}' for i in (1, 2)],
+        'Death': [DCL + death + f'_0{i}' for i in (1, 2)],
+        'PowerAttack': [DCL + f'{pa}_0{i}' for i in (1, 2, 3)],
+        'Attack': [DCL + f'{st}_0{i}' for i in (1, 2, 3, 4)],
+    }) for races, sex, d, t, death, pa, st in (
+        ([0x980, 0x98B], None, 'pain_vox\\', '', 'death\\npc_deathclaw_death', 'poweratk_vox\\npc_deathclaw_poweratk_vox',
+         'strike_vox\\npc_deathclaw_strikevox'),
+        ([0x986], 0, 'pain_vox\\', '', 'death\\npc_deathclaw_death', 'poweratk_vox\\npc_deathclaw_poweratk_vox',
+         'sm_strike_vox\\npc_deathclaw_sm_strikevox'),
+        ([0x986], 1, 'giant\\pain_voxgt\\', 'gt', 'giant\\death_gt\\npc_deathclaw_deathgt',
+         'giant\\poweratk_voxgt\\npc_deathclawgt_poweratk_vox', 'giant\\strike_voxgt\\npc_deathclawgt_strike_vox'),
+        ([0x985, 0x98A, 0x98F], None, 'small\\pain_voxsm\\', 'sm', 'small\\deathsm\\npc_deathclawsm_death',
+         'small\\poweratkvoxsm\\npc_deathclawsm_poweratk_vox', 'small\\strikevox_sm\\npc_deathclawsm_strikevox'))
+] + [
+    # Lakelurks (PlayableCreatures_Lakelurks.esp): AudioTemplateMirelurkKing's vocals (Fallout - Sound.bsa,
+    # fx\npc\mirelurkking): Hit = injured, Death = death, Attack / PowerAttack = attack vox. Lakelurk 9F1, Alpha 9F7,
+    # their Young child races 9F6 / 9FB.
+    dict(gen=14, races=[0x9F1, 0x9F6, 0x9F7, 0x9FB], npc_folder=None, ext='.wav', topics={
+        'Hit': [MKV + f'injured\\npc_mirelurkking_injured_0{i}' for i in (1, 2)],
+        'Death': [MKV + f'death\\npc_mirelurkking_death_0{i}' for i in (1, 2)],
+        'PowerAttack': [MKV + f'attack\\npc_mirelurkking_attack_0{i}' for i in (1, 2, 3)],
+        'Attack': [MKV + f'attack\\npc_mirelurkking_attack_0{i}' for i in (1, 2, 3)],
+    }),
+    # (TTW) Mirelurks (PlayableCreatures_Mirelurks.esp): AudioTemplateMirelurk's vocals (fx\npc\mirelurk): Hit = injured,
+    # Death = death, Attack = attack, PowerAttack = its power-attack vox. Mirelurk 8893, Hunter 8896, Nukalurk 8899 + child races.
+    dict(gen=15, ttw=True, races=[0x8893, 0x8896, 0x8899, 0x889C, 0x889D, 0x889E], npc_folder=None, ext='.wav', topics={
+        'Hit': [MLV + f'injured\\npc_mirelurk_injured_0{i}' for i in (1, 2)],
+        'Death': [MLV + f'death\\npc_mirelurk_death_0{i}' for i in (1, 2)],
+        'PowerAttack': [MLV + f'attack\\npc_mirelurk_{x}_01' for x in ('attackpower', 'attackpowerforward', 'attackpowerrun')],
+        'Attack': [MLV + f'attack\\npc_mirelurk_attack_0{i}' for i in (1, 2)],
+    })
 ]
 
-# ---- masters: every plugin that owns a quest in the merged topic lists, in load order, + PlayableCreatures.esp
-order = T['order']
-if MERGED:
-    masters = os.environ['PC_MASTERS'].split(',')
-    assert masters[0] == 'FalloutNV.esm', masters
-    MIDX = {m.lower(): i for i, m in enumerate(masters)}
-    for t in T['topics'].values():                       # quests of plugins that aren't masters are left out
-        t['quests'] = [q for q in t['quests'] if q[0].lower() in MIDX]
-    SELF = len(masters) << 24
-    PC = SELF                                            # the races are in the same plugin
-else:
-    need = {'falloutnv.esm'} | {q[0].lower() for t in T['topics'].values() for q in t['quests']}
-    masters = [p for p in order if p.lower() in need] + ['PlayableCreatures.esp']
-    assert masters[0].lower() == 'falloutnv.esm' and 'PlayableCreatures.esp' in order
-    MIDX = {m.lower(): i for i, m in enumerate(masters)}
-    SELF = len(masters) << 24
-    PC = MIDX['playablecreatures.esp'] << 24
-def gfid(plugin, local): return (MIDX[plugin.lower()] << 24) | local
-def wanted(v): return SETS == 'all' or not v.get('ttw')
+# ---- masters
+masters = MASTERS
+assert masters[0] == 'FalloutNV.esm', masters
+MIDX = {m.lower(): i for i, m in enumerate(masters)}
+SELF = len(masters) << 24
+PC = SELF if RACE_PLUGIN.lower() == ESP_NAME.lower() else MIDX[RACE_PLUGIN.lower()] << 24
+def wanted(v): return bool(set(v['races']) & RACES) and bool(v.get('ttw')) == TTW
 
 next_id = [ID_BASE]
 def new_id():
@@ -225,7 +254,7 @@ def new_id():
 
 quest_fid = new_id()
 quest = record('QUST', quest_fid, [('EDID', z(QUEST_EDID)), ('FULL', z('Playable Creatures Voices')),
-                                   ('DATA', struct.pack('<BBHf', 0x11, 110, 0, 0.0))])   # start game enabled, priority 110 (> GenericPlayer 101)
+                                   ('DATA', struct.pack('<BBHf', 0x11, PRIORITY, 0, 0.0))])   # start game enabled; 110 > GenericPlayer 101
 
 def ctda(func, form, OR=False):
     return struct.pack('<B3sfHHIIII', 0x01 if OR else 0, b'\0\0\0', 1.0, func, 0, form, 0, 0, 0)
@@ -251,8 +280,7 @@ dial_groups = []; plan = []; n_info = 0
 for topic, tfid in TOPICS.items():
     t = T['topics'][topic]
     last = {k: bytes.fromhex(v) for k, v in t['last'].items()}
-    quests = [gfid(p, l) for p, l in t['quests']] + [quest_fid]
-    subs = [('EDID', last['EDID'])] + [('QSTI', u32(q)) for q in quests]
+    subs = [('EDID', last['EDID']), ('QSTI', u32(quest_fid))]
     for k in ('FULL', 'PNAM', 'TDUM', 'DATA'):
         if k in last: subs.append((k, last[k]))
     dial = record('DIAL', tfid, subs)                     # FalloutNV.esm is master 0, so the id stays 000000xx
@@ -270,9 +298,8 @@ for topic, tfid in TOPICS.items():
                 # mutants / swampfolk / trogs / tunneler silent; the NPC voice type given by the DLL doesn't count)
                 *([('CTDA', ctda(GET_IS_RACE, PC | r, OR=(k < len(v['races']) - 1))) for k, r in enumerate(v['races'])] if v.get('races') else
                   [('CTDA', ctda_voice(vtypes[v['vtype']]))]),
-                # GetIsSex: a set for one sex (in the TTW plugin, where the Robobrain has a female set too)
-                *([('CTDA', ctda(GET_IS_SEX, v['sex']))] if v.get('sex') is not None else
-                  [('CTDA', ctda(GET_IS_SEX, v['sex_ttw']))] if v.get('sex_ttw') is not None and SETS == 'all' else []),
+                # GetIsSex: a set for one sex (the Fallout 3 robobrain voice of the TTW add-on: female)
+                *([('CTDA', ctda(GET_IS_SEX, v['sex']))] if v.get('sex') is not None else []),
                 ('SCHR', SCHR), ('NEXT', b''), ('SCHR', SCHR)]))
             # the player speaks with PlayerVoiceMale / PlayerVoiceFemale whatever its NPC voice type says (Actor::Say
             # looks in ...\\PlayerVoiceMale\\...), NPCs of the race with the race's voice type
@@ -288,7 +315,7 @@ dial_top = b''.join(dial_groups)
 groups.append(b'GRUP' + struct.pack('<I4sIIHH', 24 + len(dial_top), b'DIAL', 0, 0, 0, 0) + dial_top)
 nrec = 1 + len(vtyp_recs) + len(TOPICS) + n_info + len(groups) + len(TOPICS)   # quest + vtyps + dials + infos + groups + child groups
 hdr = [('HEDR', struct.pack('<fII', 1.34, nrec, next_id[0])), ('CNAM', z('Claude (Playable Creatures project)')),
-       ('SNAM', z('Playable Creatures: creature voice sets as combat dialogue (merged topic quest lists for this load order)'))]
+       ('SNAM', z('Playable Creatures: creature voice sets as combat dialogue'))]
 for m in masters: hdr += [('MAST', z(m)), ('DATA', struct.pack('<Q', 0))]
 open(OUT, 'wb').write(record('TES4', 0, hdr) + b''.join(groups))
 open(PLAN, 'w').write(''.join(f'{a}\t{b}\n' for a, b in plan))

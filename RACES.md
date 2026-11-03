@@ -125,6 +125,19 @@ add-ons need their base pack too.
 - Damage threshold +15 (the deathclaw's own).
 - **Young Deathclaw:** the child race (smaller, damage threshold +5).
 
+## Lakelurks
+`PlayableCreatures_Lakelurks.esp`
+*Lakelurk, Lakelurk Alpha*
+- All weapon types.
+- Starts with its **Shriek**: the lakelurk's sonic blast from the mouth (Perception -10 for 10 s on the target, 50 extra
+  damage). It recharges by itself (one shot every 3 s, nothing to carry), can't be dropped, weighs nothing.
+- Fights with its claws: left and right swipes, standing and forward power attacks, and sneak attacks (crouched).
+- Melee weapons swing with its own claw attacks; the weapon isn't drawn.
+- Guns aren't drawn: every gun fires as its shriek, from the mouth.
+- Grenades and mines are thrown and placed with its claws.
+- Breathes underwater.
+- **Young Lakelurk:** the child race (smaller).
+
 ## TTW-only packs
 
 ### Swampfolk
@@ -139,5 +152,13 @@ add-ons need their base pack too.
 *Trog, Trog Brute, Trog Savage*
 - Unarmed and melee only.
 - Brute and Savage are hidden from the race menu by default.
+
+### Mirelurks
+`PlayableCreatures_Mirelurks.esp`
+*Mirelurk, Mirelurk Hunter, Nukalurk*
+- Unarmed and melee only: claw strikes and four power attacks; melee weapons strike with its claws (weapon not drawn).
+- Damage threshold +5, breathes underwater.
+- Nukalurk: its claws carry radiation (Rad Poisoning, 10 rads a second for 3 s, unless the target resists radiation).
+- Sneaks in its normal gait; on chairs and stools it climbs onto the seat.
 
 A hidden race can be shown by setting `ShowInRaceMenu=1` in its section of the pack's settings file.

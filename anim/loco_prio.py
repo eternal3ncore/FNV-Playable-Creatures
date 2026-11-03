@@ -10,7 +10,7 @@ import os, re, struct, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from nifedit import NifFile
 
-LOWER = re.compile(r'^Bip01( NonAccum| Pelvis| [LR] (Thigh|Calf|Foot|Toe0))?$')
+LOWER = re.compile(r'^Bip01( NonAccum| Pelvis| [LR] (Thigh|Calf|Foot|Toe\d*))?$')
 MOVE = re.compile(r'(forward|backward|left|right|turnleft|turnright)\.kf$|jump', re.I)
 SKIP = re.compile(r'dodge|attack|block|aim|equip|holster|reload|jam|idle', re.I)
 
