@@ -80,7 +80,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 80;
+static const UInt32 kPluginVersion = 79;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -1758,26 +1758,6 @@ static void InstallGhostLimbHook() {                                 // at load,
 	g_origPlayerModAV = (PlayerModAV_t)cur;
 	PatchPtr(kSlot_PlayerModAV, (UInt32)Hook_PlayerModAV, cur, cur == kAddr_PlayerModAV ? "PlayerCharacter damage ModAV (vtbl 0x3AC)" : "PlayerCharacter damage ModAV (chained)");
 }
-// Actor::IsChild (Character / PlayerCharacter vtbl 0x1A0 = 0x8D40E0, thiscall(bool noHeight), ret 4): the race's Child
-// flag (+0x70 & 4), else a body / hand model path containing "child", else (noHeight 0) an actor shorter than 110 units
-// for its scale. The short creatures (Tunneler / Spore Carrier ~72, Trogs) were children by that height: furniture
-// refused ("Children cannot use that.", 0x5732B7), and everything else the engine keeps from children. For the player
-// in one of our races only the race's Child flag counts (the child races of Tranquility Lane stay children).
-static const UInt32 kSlot_PlayerIsChild = 0x0108AA3C + 0x1A0, kAddr_ActorIsChild = 0x008D40E0;
-typedef bool (__fastcall* IsChild_t)(void*, void*, UInt8);
-static IsChild_t g_origIsChild = (IsChild_t)kAddr_ActorIsChild;
-static bool __fastcall Hook_PlayerIsChild(void* actor, void* edx, UInt8 noHeight) {
-	if (actor && actor == Player()) {
-		void* npc = PlayerNPC(); void* race = npc ? NPCRace(npc) : nullptr;
-		if (race && ProfileForRace(race)) return (*(UInt32*)((UInt8*)race + 0x70) & 4) != 0;
-	}
-	return g_origIsChild(actor, edx, noHeight);
-}
-static void InstallIsChild() {
-	UInt32 cur = *(UInt32*)kSlot_PlayerIsChild;
-	g_origIsChild = (IsChild_t)cur;
-	PatchPtr(kSlot_PlayerIsChild, (UInt32)Hook_PlayerIsChild, cur, cur == kAddr_ActorIsChild ? "PlayerCharacter IsChild (vtbl 0x1A0)" : "PlayerCharacter IsChild (chained)");
-}
 static void PEFMessage(NVSEMessage* msg) {
 	if (msg->type == 1) { Log("ghost: PlayerEssentialFix -> downed"); GhostDowned(); }
 	else if (msg->type == 2) { Log("ghost: PlayerEssentialFix -> revived"); GhostRevived(); }
@@ -2047,7 +2027,6 @@ __declspec(dllexport) bool NVSEPlugin_Load(const NVSEInterface* nvse) {
 	InstallCameraPivot(); InstallFirstPersonBody();
 	InstallFallDamage();
 	InstallGhostLimbHook();
-	InstallIsChild();
 	InstallRagdollDiag();
 
 	PatchPtr(kVtbl_TESNPC_TESModel + 5 * 4, (UInt32)Hook_NPCGetModelPath, kAddr_TESNPC_GetModelPath, "TESNPC::GetModelPath");
