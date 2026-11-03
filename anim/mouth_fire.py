@@ -21,7 +21,10 @@ added). Every melee / unarmed file's Weapon channel (equips and holsters include
 hidden - the claws are the weapons); thrown weapons / mines keep theirs.
 The skeleton gets ProjectileNode on the head at the mouth (+Y = level forward in the aim): the engine's shot leaves it
 when the hidden gun has none.
-usage: python3 mouth_fire.py <creature> <folder> <Skeleton.nif to patch> [--hide]     creature = lakelurk | mirelurk"""
+Grenades / mines (claw_attack): every 1GT / 1MD / 1LM aim = the claw aim, every throw / placement = the claw strike with
+its Hit on the file's Release, the grenade in the right claw (shown); their equips hold it at the Weapon bind.
+usage: python3 mouth_fire.py <creature> <folder> <Skeleton.nif to patch> [--hide | --throws]     creature = lakelurk | mirelurk
+  --throws: only the grenade / mine files"""
 import os, re, sys, struct
 import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.append(os.path.dirname(HERE))
@@ -41,7 +44,10 @@ LEGS = 25
 # mouth: a node of the skeleton (the lakelurk's shriek node) or a point in the head frame, given as (forward, up) from
 # the head node in the aim pose (the mirelurk's mouth, under the front of its head)
 CREATURES = {
+    # (claw_weapon_bind: its own files key Weapon under Dummy01, the vanilla parent - the grenade is put at the skeleton's
+    # Weapon bind under the hand instead)
     'lakelurk': dict(cfg='lakelurk', aim='2hlaim.kf', attack='2hlattackright.kf', mouth_node='ProjectileNode_Sonic',
+                     claw_aim='h2haim.kf', claw_attack='h2hattackright_jab.kf', claw_weapon_bind=True,
                      pitch_bones=('Bip01 Neck1', 'Bip01 Head'),
                      lower=r'^Bip01( NonAccum| Pelvis| [LR] (Thigh|Calf|Foot|Toe\d*))$'),
     # level_head: the attack's body motion with the aim's head orientation (the mirelurk's lunge rears the head 37 deg up:
@@ -174,6 +180,7 @@ def claw_file(path):
     pitch = pitch_of(name)
     rel = next((t for t, s in keys if s == 'Release'), None)
     src = claw if kind == 'attack' else claw_aim
+    bind_weapon = SPEC.get('claw_weapon_bind') or 'Weapon' not in CPRIO[kind]
     n = max(2, int(round(L * 30)) + 1); frames = []
     for i in range(n):
         t = L * i / (n - 1)
@@ -187,11 +194,22 @@ def claw_file(path):
             lat = W['Bip01 NonAccum'][1] @ (B0.T @ LEFT)
             for nb in SPEC['pitch_bones']:
                 W = sk.fk(loc); set_world(loc, W, nb, rotm(lat, -pitch / 2) @ W[nb][1])
+        if bind_weapon: loc['Weapon'] = (np.array(sk.local['Weapon'][0], float), np.array(sk.local['Weapon'][1], float))
         frames.append((t, loc))
     pr = CPRIO[kind]; dflt = max(pr.values())
-    bones = [(b, min(pr.get(b, dflt), LEGS) if LOWER.match(b) else pr.get(b, dflt)) for b in pr if b != 'Bip01']
+    bones = [(b, min(pr.get(b, dflt), LEGS) if LOWER.match(b) else pr.get(b, dflt)) for b in pr if b not in ('Bip01', 'Weapon')]
+    bones.append(('Weapon', 55))           # always keyed, scale 1: a gun file left it hidden at the mouth
     write_kf(cr, path, name, L, keys, frames, bones=bones, cycle=k.cycle)
     return True
+
+
+def weapon_bind(path):
+    """a grenade / mine equip / unequip / holster: Weapon held at the skeleton's bind under the hand, scale 1"""
+    from holster_fix import KFFile
+    kf = KFFile(path)
+    if not any(n == 'Weapon' for _, n in kf.cb): return False
+    kf.set_channel('Weapon', [(0.0, np.asarray(sk.local['Weapon'][0], float), np.asarray(sk.local['Weapon'][1], float))])
+    kf.save(path); return True
 
 
 def scale_weapon_written(path):
@@ -238,7 +256,7 @@ def patch_skeleton(path):
 
 
 if __name__ == '__main__':
-    D = sys.argv[2]; skel = sys.argv[3]; hide_only = '--hide' in sys.argv[4:]
+    D = sys.argv[2]; skel = sys.argv[3]; hide_only = '--hide' in sys.argv[4:]; throws_only = '--throws' in sys.argv[4:]
     nm = nh = nt = 0
     npr = sum(prn_to_hand(os.path.join(d, f)) for d, _, fs in os.walk(D) for f in fs if f.lower().endswith('.kf'))
     for fn in sorted(os.listdir(D)):
@@ -247,9 +265,10 @@ if __name__ == '__main__':
         pre = m.group(2).lower(); rest = m.group(3).lower()
         p = os.path.join(D, fn)
         if pre in GUNS and not re.match(r'^(sonnic)?(equip|unequip|holster)', rest):
-            if not hide_only: mouth_file(p); nm += 1
+            if not hide_only and not throws_only: mouth_file(p); nm += 1
         elif pre in THROWN and 'claw_attack' in SPEC and not hide_only:
-            nt += claw_file(p)
+            if re.match(r'^(equip|unequip|holster)', rest): weapon_bind(p)
+            else: nt += claw_file(p)
         elif pre in HIDE:
             if scale_weapon(p): nh += 1
     if hide_only: sys.exit(print('weapon hidden in', nh, 'prn keys moved to the hand in', npr))
