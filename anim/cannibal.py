@@ -1,6 +1,5 @@
 """Cannibal.kf per skeleton folder (StartCannibal: the player's feeding idle; the engine's Cannibal package ends with it).
   vanilla feeding idle of the same skeleton (re-baked, clamped, the human cannibal gore sound added where it has none):
-      Ghoul / GlowingOne   creatures\\ghoul\\idleanims\\specialidle_corpsecheck.kf        (feral ghouls at a corpse)
       Mirelurk             creatures\\mirelurk\\idleanims\\specialidle_feed.kf
       Lakelurk             creatures\\mirelurkking\\idleanims\\specialidle_feed.kf       (its skeleton)
       Tunneler             creatures\\nvsporecarrier\\idleanims\\specialidle_cannibal.kf  (Lonesome Road STCannibal)
@@ -8,7 +7,10 @@
       SuperMutant / Nightkin / SuperMutantDC   creatures\\smspinebreaker\\idleanims\\nvdlc01specialidle_devour.kf (Dead Money)
   Ghost                    the human 3rdP_Cannibal.kf, copied as is (the Ghost skeleton is the human one)
   Zetan / Swampfolk / Hillfolk   the human 3rdP_Cannibal.kf retargeted (retarget.Retarget: world-space deltas from
-                           the human bind onto the creature's bind, legs by IK to the scaled human ankles)
+                           the human bind onto the creature's bind, legs by IK to the scaled human ankles), hands put
+                           on the human's path to the mouth by arm IK (hand_xfer.py)
+  Ghoul / GlowingOne       the spore carrier's cannibal (Lonesome Road STCannibal) on the ghoul's own crouch (the
+                           ghoul's corpse check only looks down) - see ghoul()
   Deathclaw                its own crouch (specialidle_crouchloop: down / loop / up, the loop played twice) with a
                            feeding overlay: the neck dips to the corpse once a second, the jaw (Bip01 Ponytail3)
                            opens on the way down and snaps shut at the bottom, the head tugs sideways coming up
@@ -27,8 +29,9 @@ HUMAN_CANNIBAL = os.path.join(REF, '3rdp_cannibal.kf')
 HUMAN_SKEL = '/home/claude/fnv/ref_weap/skeleton.nif'
 GORE = 'Sound: NPCHumanPerkCannibal'
 PRIO = 45
-VANILLA = {'Ghoul': 'creatures/ghoul/idleanims/specialidle_corpsecheck.kf', 'GlowingOne': 'creatures/ghoul/idleanims/specialidle_corpsecheck.kf',
-           'Mirelurk': 'creatures/mirelurk/idleanims/specialidle_feed.kf', 'Lakelurk': 'creatures/mirelurkking/idleanims/specialidle_feed.kf',
+SPORE_CANNIBAL = 'creatures/nvsporecarrier/idleanims/specialidle_cannibal.kf'
+GHOUL_BEND = 0.6        # share of the spore carrier's trunk / neck bend: the ghoul's crouch already leans forward (full: head between its knees)
+VANILLA = {'Mirelurk': 'creatures/mirelurk/idleanims/specialidle_feed.kf', 'Lakelurk': 'creatures/mirelurkking/idleanims/specialidle_feed.kf',
            'Tunneler': 'creatures/nvsporecarrier/idleanims/specialidle_cannibal.kf', 'Trog': 'dlcpitt/creatures/streettrog/idleanims/specialidle_cannibal.kf',
            'SuperMutant': 'creatures/smspinebreaker/idleanims/nvdlc01specialidle_devour.kf',
            'Nightkin': 'creatures/smspinebreaker/idleanims/nvdlc01specialidle_devour.kf',
@@ -64,23 +67,69 @@ def rebake(src, folder, skel, out, add_gore=True):
     rig.write_kf(cr, out, 'SpecialIdle_Cannibal', L, tk, frames, bones=[(b, PRIO) for b in keyed], cycle=2)
 
 
-def retargeted(folder, skel, out):
+def retargeted(folder, skel, out, name, src_kf=HUMAN_CANNIBAL, src_skel=HUMAN_SKEL, src_mouth='human', gore=False):
+    """the source animation retargeted (body, legs by IK), then both hands put back on the source's path relative to
+    its mouth (hand_xfer: arm IK with the source elbows as poles, source hand rotation and fingers) - retargeted arms
+    alone went into the torso and the hands missed / faced away from the face (Swampfolk / Hillfolk)"""
     from retarget import Retarget
+    from hand_xfer import HandXfer, MOUTH, local_pose, HUMAN_STAND
     cr = Shim(skel, os.path.join(folder, 'mtidle.kf'))
     legs = [(f'Bip01 {s} Thigh', f'Bip01 {s} Calf', f'Bip01 {s} Foot') for s in 'LR']
-    rt = Retarget(HUMAN_SKEL, skel, legs); rt.clean_root = False
+    rt = Retarget(src_skel, skel, legs); rt.clean_root = False
     sp = rt.src_pose
-    def src_pose(k, t):                     # the human file doesn't key Bip01: in game it carries the locomotion's
-        loc = sp(k, t)                      # heading (identity), not the skeleton's bind turn
-        if k.sample(t).get('Bip01') is None: loc['Bip01'] = (loc['Bip01'][0], np.eye(3))
+    def src_pose(k, t):                     # a source file that doesn't key Bip01: in game it carries the
+        loc = sp(k, t)                      # locomotion's heading (identity), not the skeleton's bind turn
+        if k.sample(t).get('Bip01') is None or k.sample(t)['Bip01'][1] is None: loc['Bip01'] = (loc['Bip01'][0], np.eye(3))
         return loc
     rt.src_pose = src_pose
-    k = KF(HUMAN_CANNIBAL); ev = KFEval(HUMAN_CANNIBAL); L = k.stop; n = int(round(L * 30)) + 1
+    hx = HandXfer(src_skel, MOUTH[src_mouth], skel, name, local_pose(rt.hs, KFEval(os.path.join(folder, 'mtidle.kf')).sample(0)), src_kf, src_ref=HUMAN_STAND)
+    k = KF(src_kf); ev = KFEval(src_kf); L = k.stop; n = int(round(L * 30)) + 1
     frames = []
     for i in range(n):
-        loc, _ = rt.frame(ev, L * i / (n - 1)); frames.append((L * i / (n - 1), loc))
+        t = L * i / (n - 1); loc, _ = rt.frame(ev, t)
+        gl = rt.src_pose(ev, t)
+        for r in rt.ROOTS:                   # root moves relative to each rig's own bind (the spore carrier keys Bip01
+            loc[r] = (np.array(rt.hs.local[r][0], float) + (gl[r][0] - np.array(rt.gs.local[r][0], float)) * rt.ratio, loc[r][1])
+        hx.apply(loc, ev, t)
+        frames.append((t, loc))
     bones = [(b, PRIO) for b in rt.hs.order if b in rt.map or b in rt.ROOTS]
-    rig.write_kf(cr, out, k.name, L, [(t, v.strip()) for t, v in k.textkeys], frames, bones=bones, cycle=2)
+    tk = [(t, v.strip()) for t, v in k.textkeys if not v.strip().startswith('-Global')]
+    if gore: tk = with_gore(tk)
+    rig.write_kf(cr, out, 'SpecialIdle_Cannibal', L, tk, frames, bones=bones, cycle=2)
+
+
+def ghoul(folder, skel, out, name):
+    """the spore carrier's cannibal on the feral ghoul: the ghoul's own crouch (specialidle_crouchrandom: down by
+    StartLoop 1.17, crouched 4.0 s, back up - the loop is exactly the spore carrier file's length) with the spore
+    carrier's trunk / neck / head motion on top (each bone's world rotation change from the spore carrier's first frame;
+    the ghoul's Spine2, which it lacks, follows Spine1) and its hands on the spore carrier's path relative to the mouth
+    (hand_xfer). A straight retarget kept the ghoul standing: the spore carrier is a crouched rig with another root."""
+    from hand_xfer import HandXfer, MOUTH, local_pose, fk, SPORE_SKEL
+    from kf import Skeleton
+    gs = Skeleton(SPORE_SKEL); cr = Shim(skel, os.path.join(folder, 'mtidle.kf')); ds = cr.sk
+    src = FEED + SPORE_CANNIBAL; ev = KFEval(src); ks = KF(src)
+    cb = FEED + 'creatures/ghoul/idleanims/specialidle_crouchrandom.kf'; ec = KFEval(cb); kc = KF(cb)
+    a = {v.strip().lower(): t for t, v in kc.textkeys}['startloop']; L = kc.stop; n = int(round(L * 30)) + 1
+    G0 = fk(gs, local_pose(gs, ev.sample(0.0)))
+    upper = [b for b in ('Bip01 Spine', 'Bip01 Spine1', 'Bip01 Neck', 'Bip01 Head') if b in gs.local and b in ds.local]
+    hx = HandXfer(SPORE_SKEL, MOUTH['spore'], skel, name, local_pose(ds, KFEval(os.path.join(folder, 'mtidle.kf')).sample(0.0)), src)
+    frames = []
+    for i in range(n):
+        t = L * i / (n - 1); loc = local_pose(ds, ec.sample(t))
+        ts = min(max(t - a, 0.0), ks.stop); w = ease((t - a) / 0.3) * (1 - ease((t - (a + ks.stop - 0.3)) / 0.3))
+        if w > 0:
+            G = fk(gs, local_pose(gs, ev.sample(ts)))
+            for b in upper:
+                W = fk(ds, loc); D = G[b][1] @ G0[b][1].T
+                from kf import m2q, q2m, slerp
+                Dw = q2m(slerp(np.array([1.0, 0, 0, 0]), m2q(D), w * GHOUL_BEND))
+                loc[b] = (loc[b][0], W[ds.parent[b]][1].T @ Dw @ W[b][1])
+            hx.apply(loc, ev, ts, w)
+        frames.append((t, loc))
+    keyed = list(dict.fromkeys([bb[0] for bb in ec.blocks if bb[0] in ds.local] + upper +
+                               [x for sd in 'LR' for x in hx.arm[sd]] + hx.fingers['L'] + hx.fingers['R']))
+    tk = [(0.0, 'start')] + [(t + a, v.strip()) for t, v in ks.textkeys if v.lower().startswith('sound:')] + [(L, 'end')]
+    rig.write_kf(cr, out, 'SpecialIdle_Cannibal', L, with_gore(tk), frames, bones=[(b, PRIO) for b in keyed], cycle=2)
 
 
 def deathclaw(folder, skel, out):
@@ -141,7 +190,10 @@ def build(name, folder, out_dir):
     os.makedirs(out_dir, exist_ok=True); out = os.path.join(out_dir, 'Cannibal.kf'); skel = os.path.join(folder, 'Skeleton.nif')
     if name == 'Ghost': shutil.copyfile(HUMAN_CANNIBAL, out); return 'human copy'
     if name in VANILLA: rebake(FEED + VANILLA[name], folder, skel, out); return 'vanilla ' + VANILLA[name].split('/')[-1]
-    if name in RETARGET: retargeted(folder, skel, out); return 'human retargeted'
+    if name in RETARGET: retargeted(folder, skel, out, name); return 'human retargeted + hands to the mouth'
+    if name in ('Ghoul', 'GlowingOne'):      # the ghoul's corpse check only looks down: the spore carrier's feeding
+        ghoul(folder, skel, out, name)
+        return 'spore carrier cannibal on its crouch'
     if name == 'Deathclaw': deathclaw(folder, skel, out); return 'crouch + bites'
     if name in ROBOTS: robot(folder, skel, out); return 'placeholder'
     raise SystemExit('no cannibal rule for ' + name)
