@@ -259,11 +259,11 @@ creature_idles('SuperMutantDC', F, *human_set(F + '\\'), (DC + 'IdleAnims\\speci
 
 # The same head pose fix for The Pitt's trogs (DLCPittTrogBodyPartDataDC: Head flags 0x09, IK node = the skeleton file;
 # tools/bptd_audit.py), copied from its own master, form ids moved to our master list (BPND debris / explosions / impact
-# data sets, RAGA). Ids after everything else. (Point Lookout's Tracker / Bruiser keep their vanilla data: its Head IK
-# node Bip01 Head has no ragdoll body, the DLL sets the head pose up from its ragdoll ancestor Bip01 Neck1 - naming
-# Neck1 here instead made the head tracking turn the neck: they looked up.)
+# data sets, RAGA). Point Lookout's Tracker / Bruiser (DLC04Hillfolk1BodyPartData): head tracking off - its Head part
+# without 'IK Data' / 'IK Data - Headtracking' (0x3B -> 0x19). Their ragdoll has no body on the head, and their neck
+# juts forward: tracking on the neck (the only ragdoll bone it could use) tipped the head up. Ids after everything else.
 BPND_FORMS = (12, 16, 32, 36, 68, 72)
-def _bptd_from(path, src_fid, edid, part, node):
+def _bptd_from(path, src_fid, edid, part, node, clear=0):
     p = Plugin(path)
     pm = [v.rstrip(b'\0').decode('latin1') for k, v in p.recs[0].subs() if k == 'MAST']
     own = os.path.basename(path)
@@ -282,14 +282,15 @@ def _bptd_from(path, src_fid, edid, part, node):
             d = bytearray(v)
             for o in BPND_FORMS:
                 if o + 4 <= len(d): struct.pack_into('<I', d, o, remap(struct.unpack_from('<I', d, o)[0]))
-            if cur: d[4] |= 0x22; done = True
+            if cur: d[4] = (d[4] & ~clear) if clear else (d[4] | 0x22); done = True
             v = bytes(d)
         out.append((k, v))
     assert done, edid
     fid = nid(); bptds.append(record('BPTD', fid, out)); return fid
 if 'ThePitt.esm' in MASTERS:            # the TTW master list (build_plugins.py); a plain build has FalloutNV.esm only
     TROG_BPTD = _bptd_from('/home/claude/fnv/ttw/ThePitt.esm', 0x003CEA, 'PCTrogBodyPartData', 'Head', 'Bip01 Head')
-    print('  body part data: trog %06X' % (TROG_BPTD & 0xFFFFFF))
+    HILLFOLK_BPTD = _bptd_from('/home/claude/fnv/ttw/PointLookout.esm', 0x010C37, 'PCHillfolkBodyPartData', 'Head', 'Bip01 Head', clear=0x22)
+    print('  body part data: trog %06X, hillfolk (tracker / bruiser, no head tracking) %06X' % (TROG_BPTD & 0xFFFFFF, HILLFOLK_BPTD & 0xFFFFFF))
 
 groups = [group('HAIR', [hair]), group('EYES', [eyes]), group('RACE', races), group('SPEL', spels), group('ARMO', armors), group('NPC_', npcs), group('IDLE', idles), group('BPTD', bptds)]
 nrec = 2 + len(races) + len(spels) + len(armors) + len(npcs) + len(idles) + len(bptds) + len(groups)
