@@ -80,7 +80,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 70;
+static const UInt32 kPluginVersion = 71;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -831,6 +831,47 @@ static void InstallAnimLookupGuards() {
 	Log("animguard: %d/%d lookup sites guarded (frame-transparent thunks)", n, kNumLookupSites);
 }
 
+
+// AnimLog=1 diagnostic: the player's projectile aim. A new projectile (0x9BD860) asks the player (0x965620) to turn
+// its heading / pitch toward the crosshair from its start point, given the node it left from; logged before / after
+// with the node, the player and the camera globals, 40 shots per game session
+static const UInt32 kSite_ProjAim = 0x9BD9E2, kAddr_PlayerAim = 0x965620;
+static UInt32 g_projAimPrev = 0;
+typedef void (__thiscall *PlayerAim_t)(void*, void*, void*, float*, float*, float*, float, float);
+static void __fastcall ProjAimHook(void* player, void*, void* proj, void* node, float* rotZ, float* rotX, float* pos, float f1, float f2) {
+	static int shots = 0;
+	Profile* p = PlayerProfile();
+	bool log = p && p->animLog && shots < 40 && proj && Readable(proj, 0x40);
+	float z0 = 0, x0 = 0;
+	if (log) {
+		shots++; z0 = rotZ ? *rotZ : 0; x0 = rotX ? *rotX : 0;
+		const char* nm = node && Readable(node, 0xA0) ? *(const char**)((UInt8*)node + 0x08) : nullptr;
+		const float* pp = (const float*)((UInt8*)player + 0x30);
+		const float* wp = node ? (const float*)((UInt8*)node + 0x8C) : nullptr;   // NiAVObject world translate
+		const float* wr = node ? (const float*)((UInt8*)node + 0x68) : nullptr;   // world rotate (row-major)
+		const float* cam = (const float*)0x11F426C;
+		Log("aim: shot %d node '%s' %p world (%.1f %.1f %.1f) +Y (%.3f %.3f %.3f) | proj pos (%.1f %.1f %.1f) heading %.2f pitch %.2f deg",
+			shots, nm && Readable(nm, 1) ? nm : "?", node,
+			wp ? wp[0] : 0, wp ? wp[1] : 0, wp ? wp[2] : 0, wr ? wr[1] : 0, wr ? wr[4] : 0, wr ? wr[7] : 0,
+			pos ? pos[0] : 0, pos ? pos[1] : 0, pos ? pos[2] : 0, z0 * 57.29578f, x0 * 57.29578f);
+		Log("aim:   player pos (%.1f %.1f %.1f) heading %.2f pitch %.2f deg; 3rd person %d; global 11F426C (%.1f %.1f %.1f); args %.3f %.3f",
+			pp[0], pp[1], pp[2], *(float*)((UInt8*)player + 0x2C) * 57.29578f, *(float*)((UInt8*)player + 0x24) * 57.29578f,
+			*((UInt8*)player + 0x64B), cam[0], cam[1], cam[2], f1, f2);
+	}
+	((PlayerAim_t)g_projAimPrev)(player, proj, node, rotZ, rotX, pos, f1, f2);
+	if (log) Log("aim:   after: heading %.2f (%+.2f) pitch %.2f (%+.2f) deg", rotZ ? *rotZ * 57.29578f : 0, rotZ ? (*rotZ - z0) * 57.29578f : 0,
+		rotX ? *rotX * 57.29578f : 0, rotX ? (*rotX - x0) * 57.29578f : 0);
+}
+static void InstallProjAimDiag() {
+	UInt8* site = (UInt8*)kSite_ProjAim;
+	if (site[0] != 0xE8) { Log("aimdiag: site %08X is not a call (%02X) - skipped", kSite_ProjAim, site[0]); return; }
+	g_projAimPrev = (UInt32)site + 5 + *(SInt32*)(site + 1);
+	DWORD old; VirtualProtect(site, 5, PAGE_EXECUTE_READWRITE, &old);
+	*(SInt32*)(site + 1) = (SInt32)((UInt32)ProjAimHook - ((UInt32)site + 5));
+	VirtualProtect(site, 5, old, &old);
+	FlushInstructionCache(GetCurrentProcess(), nullptr, 0);
+	Log("aimdiag: site %08X previously -> %08X%s", kSite_ProjAim, g_projAimPrev, g_projAimPrev == kAddr_PlayerAim ? " (vanilla)" : " (another plugin, chained)");
+}
 
 // ---------------- 3rd-person camera height ----------------
 // The engine's 3rd-person camera pivot (PlayerCharacter camera update, non-vanity path) is
@@ -1857,7 +1898,7 @@ static void MessageHandler(NVSEMessage* msg) {
 	case kMessage_PostLoad:
 		if (g_msgIF) Log("ghost: PlayerEssentialFix listener %s", g_msgIF->RegisterListener(g_handle, "PlayerEssentialFix", PEFMessage) ? "registered" : "NOT registered");
 		break;
-	case kMessage_PostPostLoad: InstallAnimLookupGuards(); InstallAnimPlayGuards(); InstallMenuRequestDiag(); break;
+	case kMessage_PostPostLoad: InstallAnimLookupGuards(); InstallAnimPlayGuards(); InstallMenuRequestDiag(); InstallProjAimDiag(); break;
 	case kMessage_DeferredInit: {
 		if (FindModIndex("PlayableCreatures.esp") != 0xFF || FindModIndex("PlayableCreaturesTTW.esp") != 0xFF) {
 			Log("deps: ** the old combined plugin PlayableCreatures.esp / PlayableCreaturesTTW.esp is active - it is replaced by the family plugins (PlayableCreatures_<Family>.esp); disable it **");
