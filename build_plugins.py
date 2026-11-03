@@ -42,6 +42,10 @@ def run(script, out, env, *extra):
     return r.stdout
 
 
+BPND_FORMS = (12, 16, 32, 36, 68, 72)      # the form ids in a body part's BPND (debris, explosions, impact data sets); the
+                                           # rest is floats / bytes that can read like one of our ids
+
+
 def refs_at(data, own):
     """offsets of every 4-byte value in data that is one of our own form ids"""
     return [i for i in range(len(data) - 3) if struct.unpack_from('<I', data, i)[0] in own]
@@ -56,7 +60,8 @@ class Src:
         self.masters = [v.rstrip(b'\0').decode('latin1') for k, v in hdr.subs() if k == 'MAST']
         self.own_idx = len(self.masters)
         self.own = {r.fid for r in self.recs if r.fid >> 24 == self.own_idx}
-        self.refs = {r.fid: {struct.unpack_from('<I', v, i)[0] for k, v in r.subs() if k != 'EDID' for i in refs_at(v, self.own)}
+        self.refs = {r.fid: {struct.unpack_from('<I', v, i)[0] for k, v in r.subs() if k != 'EDID' for i in refs_at(v, self.own)
+                             if k != 'BPND' or i in BPND_FORMS}
                      for r in self.recs}
 
 

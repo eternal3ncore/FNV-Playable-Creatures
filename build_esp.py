@@ -665,10 +665,10 @@ def robot_weapon(src_fid, edid, ammo, regen=None, ammo_use=None, attack_mult=Non
     return fid
 
 def robot_bptd(src_fid, edid, head_part, head_node, headtrack=True):
-    """headtrack=False: the head part keeps its vanilla flags (no 'IK Data - Headtracking'), only its IK node is
-    set (Mister Handy / Gutsy: the head-tracking chain from Bip01 Head runs up the neck through Bip01 Spine - the
-    body sphere - and Pelvis - the jets; the player's look-at bent the whole body over while a 2HH flamer was out
-    (its animations don't key those bones), and it stayed bent until a plasma shot keyed them again)"""
+    """the head part's IK node = head_node (a ragdoll bone) and, with headtrack, flags 'IK Data' + 'IK Data -
+    Headtracking': the player's ragdoll sets up its head pose from that part (0x87E130). headtrack=False keeps the
+    vanilla flags (unused now: the Mister Handy / Gutsy body bending blamed on head tracking was the unkeyed Spine /
+    Pelvis / Neck1, pinned in every file since robot anims v5)"""
     out = []; part = None; done = False
     for k, v in SRC.byfid[src_fid].subs():
         if k == 'EDID': v = z(edid)
@@ -676,7 +676,7 @@ def robot_bptd(src_fid, edid, head_part, head_node, headtrack=True):
         elif k == 'BPNI' and cur: v = z(head_node)
         elif k == 'BPND' and cur:
             d = bytearray(v)
-            if headtrack: d[4] |= 0x20
+            if headtrack: d[4] |= 0x22                  # IK data + headtracking: the ragdoll's head pose needs both
             v = bytes(d); done = True
         out.append((k, v))
     assert done, edid
@@ -758,13 +758,13 @@ robot_race('MisterHandy', 'Mister Handy',
 # EnhancedAnimations_TTW folder (GetCreatureType == -1) does the same) the flamers' Attack Animation AttackSpin (the
 # creature flamers') -> AttackLoop, the vanilla Incinerator's / Gatling Laser's (the sentry bot's laser gatling fires so)
 ROBOTS['MisterHandy']['weapons'] = [robot_weapon(0xA0C02, 'PCMisterHandyFlamer', 0x121155, 1.0, anim=8, attack_anim=74)]   # MisterHandyFlamer2HL
-ROBOTS['MisterHandy']['bptd'] = robot_bptd(0x36C18, 'PCMisterHandyBodyPartData', 'Tracking Sensor', 'Bip01 Head', headtrack=False)
+ROBOTS['MisterHandy']['bptd'] = robot_bptd(0x36C18, 'PCMisterHandyBodyPartData', 'Tracking Sensor', 'Bip01 Head')
 robot_race('MisterGutsy', 'Mister Gutsy',
            'Mister Gutsy: the military Mister Handy, a flamer and a plasma gun for arms. Immune to radiation and poison. Playable Creatures.',
            MGA + 'MisterGutsy.NIF', (MGA + 'GutsyFrontClaw.NIF', None), 0x12B88C,
            (MGA + 'IdleAnims\\SpecialIdle_KnockDownGetUp.kf', MGA + 'IdleAnims\\SpecialIdle_KnockDownGetUp.kf'), folder='MisterHandy')
 ROBOTS['MisterGutsy']['weapons'] = [robot_weapon(0x39550, 'PCMisterGutsyFlamer', 0x121155, 1.5, anim=8, attack_anim=74)]   # MisterGutsyFlamer2HL
-ROBOTS['MisterGutsy']['bptd'] = robot_bptd(0x36C17, 'PCMisterGutsyBodyPartData', 'Tracking Sensor', 'Bip01 Head', headtrack=False)
+ROBOTS['MisterGutsy']['bptd'] = robot_bptd(0x36C17, 'PCMisterGutsyBodyPartData', 'Tracking Sensor', 'Bip01 Head')
 
 # Sentry Bot (CrSentryBotGL 01CF8A: SentryBotLaserGatling.NIF (the gatling-laser arm) + missile pod on
 # Creatures\SentryBot\Skeleton.nif; SentryBotDT 12B88D; get-ups SpecialIdle_GetUpLeft / Right). Weapons: its Laser
@@ -1042,6 +1042,14 @@ weaps[-1] = record('WEAP', _lfid, [(k, (lambda d: (struct.pack_into('<i', d, 0, 
 # save load. PCLakelurkBodyPartData = that BPTD with the Head part's IK node Bip01 Neck1 (its ragdoll head bone: Bip01
 # Head has no body); ini BodyPartData. Ids after everything else.
 LAKELURK_BPTD = robot_bptd(0x5362D, 'PCLakelurkBodyPartData', 'Head', 'Bip01 Neck1')
+# The same ragdoll head pose for every other robot / creature whose vanilla body part data has no part with both 'IK Data'
+# (0x02) and 'IK Data - Headtracking' (0x20) on a ragdoll bone (tools/bptd_audit.py): Securitron (Head flags 0x49, IK node
+# = the skeleton file), Eyebot (no head part: its Combat Inhibitor - the brain, Bip01 Spine Brain - takes the flags),
+# Tunneler / Spore Carrier (DLCPittTrogBodyPartData: Head 0x09). Ids after everything else.
+SECURITRON_BPTD = robot_bptd(0x10699E, 'PCSecuritronBodyPartData', 'Head', 'Bip01 Screen01')
+EYEBOT_BPTD = robot_bptd(0x2F870, 'PCEyebotBodyPartData', 'Combat Inhibitor', 'Bip01 Spine Brain')
+TUNNELER_BPTD = robot_bptd(0x945BB, 'PCTunnelerBodyPartData', 'Head', 'Bip01 Head')
+print('  body part data: securitron %06X, eyebot %06X, tunneler %06X' % (SECURITRON_BPTD & 0xFFFFFF, EYEBOT_BPTD & 0xFFFFFF, TUNNELER_BPTD & 0xFFFFFF))
 for k, v in LAKELURKS.items():
     print('  lakelurk %s: race %06X child %06X ability %06X' % (k, v['race'] & 0xFFFFFF, v['child'] & 0xFFFFFF, v['ability'] & 0xFFFFFF))
 print('  young lakelurk ability %06X, shriek %06X, body part data %06X' % (_lk_young_ab & 0xFFFFFF, LAKELURK_SHRIEK & 0xFFFFFF, LAKELURK_BPTD & 0xFFFFFF))

@@ -257,6 +257,41 @@ creature_idles('Mirelurk', F, *human_set(F + '\\'), (MLK + 'IdleAnims\\specialid
 F = 'PlayableCreatures\\SuperMutantDC\\IdleAnims'
 creature_idles('SuperMutantDC', F, *human_set(F + '\\'), (DC + 'IdleAnims\\specialidle_getupfaceup.kf', DC + 'IdleAnims\\specialidle_getupfacedown.kf'))
 
+# The same head pose fix for the Fallout 3 creatures whose body part data fails it (tools/bptd_audit.py): The Pitt's trogs
+# (DLCPittTrogBodyPartDataDC: Head flags 0x09, IK node = the skeleton file) and Point Lookout's Tracker / Bruiser
+# (DLC04Hillfolk1BodyPartData: Head IK node Bip01 Head - no body in the Hillfolk1 ragdoll; Bip01 Neck1 is its head bone).
+# Copied from their own master, form ids moved to our master list (BPND debris / explosions / impact data sets, RAGA).
+# Ids after everything else.
+BPND_FORMS = (12, 16, 32, 36, 68, 72)
+def _bptd_from(path, src_fid, edid, part, node):
+    p = Plugin(path)
+    pm = [v.rstrip(b'\0').decode('latin1') for k, v in p.recs[0].subs() if k == 'MAST']
+    own = os.path.basename(path)
+    lower = [m.lower() for m in MASTERS]
+    def remap(f):
+        if f == 0: return 0
+        i = f >> 24; name = pm[i] if i < len(pm) else own
+        return (lower.index(name.lower()) << 24) | (f & 0xFFFFFF)
+    out = []; cur = None; done = False
+    for k, v in p.byfid[(len(pm) << 24) | src_fid].subs():
+        if k == 'EDID': v = z(edid)
+        elif k == 'BPTN': cur = v.rstrip(b'\0').decode('latin1') == part and not done
+        elif k == 'BPNI' and cur: v = z(node)
+        elif k == 'RAGA': v = u32(remap(struct.unpack('<I', v)[0]))
+        elif k == 'BPND':
+            d = bytearray(v)
+            for o in BPND_FORMS:
+                if o + 4 <= len(d): struct.pack_into('<I', d, o, remap(struct.unpack_from('<I', d, o)[0]))
+            if cur: d[4] |= 0x22; done = True
+            v = bytes(d)
+        out.append((k, v))
+    assert done, edid
+    fid = nid(); bptds.append(record('BPTD', fid, out)); return fid
+if 'ThePitt.esm' in MASTERS:            # the TTW master list (build_plugins.py); a plain build has FalloutNV.esm only
+    TROG_BPTD = _bptd_from('/home/claude/fnv/ttw/ThePitt.esm', 0x003CEA, 'PCTrogBodyPartData', 'Head', 'Bip01 Head')
+    HILLFOLK_BPTD = _bptd_from('/home/claude/fnv/ttw/PointLookout.esm', 0x010C37, 'PCHillfolkBodyPartData', 'Head', 'Bip01 Neck1')
+    print('  body part data: trog %06X, hillfolk (tracker / bruiser) %06X' % (TROG_BPTD & 0xFFFFFF, HILLFOLK_BPTD & 0xFFFFFF))
+
 groups = [group('HAIR', [hair]), group('EYES', [eyes]), group('RACE', races), group('SPEL', spels), group('ARMO', armors), group('NPC_', npcs), group('IDLE', idles), group('BPTD', bptds)]
 nrec = 2 + len(races) + len(spels) + len(armors) + len(npcs) + len(idles) + len(bptds) + len(groups)
 tes4 = record('TES4', 0, [
