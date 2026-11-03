@@ -15,6 +15,8 @@ add-ons need their base pack too.
 - Its own hit, death and attack voices, footsteps and blood type.
 - Block animations for unarmed and melee.
 - Furniture use (chairs, stools, the Vault 112 pods) and getting up after a knockdown.
+- Its own animations for drinking from water, Cannibal, Mister Sandman kills and stimpaks (robots: a placeholder
+  for Cannibal; robots without a seated pose float onto chairs and stools).
 - The creature's own body parts for gore, dismemberment and VATS.
 - Armor can be worn for its stats but isn't drawn (except where noted).
 - Human animation overrides from kNVSE animation mods don't apply to creature races.
