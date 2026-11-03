@@ -231,9 +231,10 @@ for edid, full, body, h, ab in (('PCMirelurkRace', 'Mirelurk', 'hatchling.nif', 
 _mla, _mlc, _mlids = RX.add_extras([r for r, _, _ in _ml], {e: [a] for _, e, a in _ml}, nid)
 races += _mla + _mlc
 for e, c in _mlids.items(): print('  child race', e, '%06X' % (c & 0xFFFFFF))
-# body part data: MirelurkBodyPartData's Face part (Bip01 Head) without the headtracking flag - the player's ragdoll pose
-# matching needs a headtracking part with a ragdoll bone as IK node (build_esp.py, ghost / lakelurk BPTD):
-# PCMirelurkBodyPartData = it with the Face part flagged and its IK node Bip01 Head (ini BodyPartData).
+# body part data: MirelurkBodyPartData's Face part (Bip01 Head) has neither the IK data nor the headtracking flag (0x49) -
+# the player's ragdoll sets up its head pose only from a part with both, its IK start node a ragdoll bone (diagnostic
+# log: the lakelurk's part, flags 0x2F, reached the setup; the mirelurk's never did): PCMirelurkBodyPartData = it with
+# the Face part's flags | 0x22 and its IK node Bip01 Head, a bone of its ragdoll (ini BodyPartData).
 bptds = []
 def _bptd(src_fid, edid, part, node):
     out = []; cur = None; done = False
@@ -241,7 +242,7 @@ def _bptd(src_fid, edid, part, node):
         if k == 'EDID': v = z(edid)
         elif k == 'BPTN': cur = v.rstrip(b'\0').decode('latin1') == part and not done
         elif k == 'BPNI' and cur: v = z(node)
-        elif k == 'BPND' and cur: d = bytearray(v); d[4] |= 0x20; v = bytes(d); done = True
+        elif k == 'BPND' and cur: d = bytearray(v); d[4] |= 0x22; v = bytes(d); done = True      # IK data + headtracking
         out.append((k, v))
     assert done, edid
     fid = nid(); bptds.append(record('BPTD', fid, out)); return fid
