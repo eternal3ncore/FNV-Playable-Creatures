@@ -1,14 +1,14 @@
-# PlayableCreatures.ini keys
+# Playable Creatures race settings
 
-Reference for the race sections read by PlayableCreatures.dll. The shipped ini only carries keys that change something - anything left out takes its default.
+Each creature pack carries its own settings file, `Data\NVSE\Plugins\PlayableCreatures\PlayableCreatures_<Pack>.ini`,
+read by PlayableCreatures.dll (Playable Creatures Core) at startup: one section per race of that pack. Installing or
+removing a pack adds or removes its file; nothing is shared between packs. The single PlayableCreatures.ini of older
+releases is still read after the pack files (a race a pack file already sets up is skipped there), so it can be deleted
+once every pack is updated. The shipped files only carry keys that change something - anything left out takes its
+default.
 
 ```
-Playable Creatures — creature race registry (read by PlayableCreatures.dll at startup)
-One section per playable creature race.
-Two plugins, use ONE of them: PlayableCreatures.esp (Fallout: New Vegas) or PlayableCreaturesTTW.esp (Tale of Two
-  Wastelands: every race below, including the PlayableCreatures.esp ones under the same ids). A reference to
-  PlayableCreatures.esp|<id> resolves to PlayableCreaturesTTW.esp|<id> when only the TTW plugin is loaded, so the
-  sections below serve both. Sections whose plugin isn't loaded are skipped (logged "NOT FOUND (plugin inactive?)").
+Sections whose plugin isn't loaded are skipped (logged "NOT FOUND (plugin inactive?)").
   Plugin/Race       : plugin file + race FormID (local hex, without the load-order byte)
   Skeleton          : path under Data\Meshes; every .kf in that folder (+Locomotion\, Locomotion\Hurt\) is the anim set
   Marker            : node name inside that skeleton identifying it (detects when a rebuild is needed)
@@ -43,7 +43,23 @@ Two plugins, use ONE of them: PlayableCreatures.esp (Fallout: New Vegas) or Play
   Faction           : the species' in-game factions, Plugin|FormID[,Plugin|FormID...] (up to 4); a plugin that
                       isn't loaded is skipped (one ini serves New Vegas and TTW)
   HideWeapon        : 1 = the equipped weapon is never drawn on the 3rd-person body (still equipped and used; the
-                      1st-person view still shows it). Set for the races on all fours. Default 0
+                      1st-person view still shows it). Set for the races on all fours. A weapon-type list (as
+                      WeaponAnims, e.g. H2H,1HM,2HM) hides only those types. Default 0
+  BodyPartData      : Plugin|FormID of the body part data (BPTD: gore, dismemberment, VATS parts) the race uses;
+                      empty = the player's default
+  LockedItems       : Plugin|FormID[,...] (up to 8): items refused, and unequipped at load, until UnlockGlobal= is 1 or
+                      more (Securitrons: the Mk II grenade launcher and missiles until the Securitron upgrade)
+  UnlockGlobal      : Plugin|FormID of the GLOB that unlocks LockedItems
+  LockedMessage     : message shown when a locked item is refused. Default "You can't use that yet."
+  FaceEyes          : Plugin|FormID[,...] (up to 16): eyes forms picked in the race menu; the n-th one shows the n-th
+                      FaceNodes node and hides the others (Securitrons: the face screens)
+  FaceNodes         : skeleton node names, comma separated, in the FaceEyes order
+  UnarmedEffect     : Plugin|FormID of an enchantment the player's unarmed attacks carry while in the race (as a
+                      creature's EITM), fired on UnarmedEffectAnim (Glowing One: its radiation burst)
+  UnarmedEffectAnim : the attack animation group the effect fires on (as a creature's EAMT, e.g. 0x5E = AttackBackPower)
+  GhostMoveForms    : the GhostMoves forms: hop spell, search spell, search idle, hop-left idle, hop-right idle
+  AnimLog           : 1 = diagnostic: each animation the player's 3rd-person body starts, and the start / aim of
+                      the player's projectiles, is written to PlayableCreatures.log (capped per session). Default 0
   JoinFaction       : 1 = the player joins those factions (rank 0) while in the race and leaves them on a race
                       change, so the species treats you as its own; 0 (default) = the factions are never touched
   GiveItems         : Plugin|FormID[,...] (up to 4): items given to the player, one each and not equipped, when

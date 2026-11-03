@@ -1,4 +1,4 @@
-"""Builds PlayableCreatures.esp: Zetan race (phase 1) + Ghost People races (hooded / unhooded) + creature sound set
+"""Builds the New Vegas creature races (split into family plugins by build_plugins.py): Zetan race (phase 1) + Ghost People races (hooded / unhooded) + creature sound set
 + Zetan voice type (its combat dialogue lives in PlayableCreaturesVoices.esp, build_voices.py)
 + per-skeleton idle trees (Ghost get-ups = Dead Money revive + emerge vocal): furniture sit / stand / seated idles and knock-down get-ups for each creature skeleton.
 + SPEL PCRadImmunityAbility 0x854: ability, +100 Rad Resistance, given by PlayableCreatures.dll while the player is a
@@ -35,11 +35,9 @@ from esm import Plugin, zstr
 SRC = Plugin('/home/claude/fnv/FalloutNV.esm')
 OUT = sys.argv[1] if len(sys.argv) > 1 else '/home/claude/fnv/build/PlayableCreatures.esp'
 
-# masters FalloutNV.esm + DeadMoney.esm -> our own forms are index 02 inside this file (in game every form keeps
-# its plugin-relative id, so saves, the ini and PlayableCreaturesVoices.esp are unaffected)
-# the master list is a parameter: PC_MASTERS (comma separated). Default = this plugin's own masters (standalone
-# PlayableCreatures.esp: FalloutNV + the DLC whose quests its voice topics carry). build_esp_ttw.py runs this builder
-# with the TTW plugin's masters, so the same records (same local ids) go into PlayableCreaturesTTW.esp.
+# the master list is a parameter: PC_MASTERS (comma separated); build_plugins.py passes the New Vegas family plugins'
+# list, and our own forms are index len(masters). Local ids are kept by the family plugins, so the ini and the DLL
+# refer to <family plugin>|<local id>.
 import os
 MASTERS = os.environ.get('PC_MASTERS', 'FalloutNV.esm,DeadMoney.esm').split(',')
 assert MASTERS[0] == 'FalloutNV.esm' and MASTERS[1] == 'DeadMoney.esm', MASTERS
@@ -78,8 +76,9 @@ eyes = record('EYES', FID['EYES'], [
 
 # ---------------- RACE (from Caucasian) ----------------
 cauc = SRC.byfid[0x19]
-def make_race(fid, edid, full, desc, body, hands=(None, None), voice=None):
-    out = []; section = None
+def make_race(fid, edid, full, desc, body, hands=(None, None), voice=None, body_f=None):
+    """body_f: the female body model when it differs (deathclaw alpha male / mother)"""
+    out = []; section = None; female = False
     subs = cauc.subs(); i = 0
     while i < len(subs):
         k, v = subs[i]
@@ -96,7 +95,7 @@ def make_race(fid, edid, full, desc, body, hands=(None, None), voice=None):
         elif k == 'DNAM': out.append((k, u32(FID['HAIR']) * 2))
         elif k == 'NAM0': section = 'head'; out.append((k, v))
         elif k == 'NAM1': section = 'body'; out.append((k, v))
-        elif k in ('MNAM', 'FNAM') and section: out.append((k, v))
+        elif k in ('MNAM', 'FNAM') and section: female = k == 'FNAM'; out.append((k, v))
         elif k == 'INDX' and section == 'body':
             idx = struct.unpack('<I', v)[0]
             j = i + 1; part = []
@@ -107,7 +106,7 @@ def make_race(fid, edid, full, desc, body, hands=(None, None), voice=None):
             out.append((k, v))
             for pk, pv in part:
                 if pk == 'MODL':
-                    m = body if idx == 0 else (hands[idx - 1] if idx in (1, 2) and hands[idx - 1] else EMPTY)
+                    m = (body_f if female and body_f else body) if idx == 0 else (hands[idx - 1] if idx in (1, 2) and hands[idx - 1] else EMPTY)
                     out.append(('MODL', z(m)))
                 elif pk in ('MODT', 'MODD'): pass
                 else: out.append((pk, pv))
@@ -264,6 +263,7 @@ def creature_idles(tag, folder, chair_enter, chair_exit, chair_loop, stool_enter
     chain(c_idle, [(f'PC{tag}ChairDynamicIdle1stPerson', HUMAN + '1stP_ChairDynamicIdle.kf', IS_1ST_PERSON, '000000cd00000000'),
                    (f'PC{tag}ChairDynamicIdle', chair_loop, [], '000000cd00000000')])
     # knock-down get-ups (vanilla KnockedDownIdles conditions: GetHitLocation == -1 AND GetKnockedState != 0)
+    if get_up is None: return                # the race's get-up tree is built on its own (Eyebot, Protectron)
     knocked, = chain(0, [(f'PC{tag}KnockedDownIdles', G, [ctda(F_HITLOC, -1), ctda(F_KNOCKED, 0, 1)], '040000cd0000000d')])
     chain(knocked, [(f'PC{tag}GetUpFaceUp', get_up[0], [ctda(F_FACEUP, 1)], '070000cd00000000'),
                     (f'PC{tag}GetUpFaceDown', get_up[1], [], '070000cd00000000')])
@@ -500,7 +500,7 @@ def robot_weapon(src_fid, edid, ammo, regen=None, ammo_use=None, attack_mult=Non
             v = bytes(d)
         out.append((k, v))
     fid = _new(); weaps.append(record('WEAP', fid, out)); return fid
-EYEBOT_ZAP = robot_weapon(0x22FF1, 'PCEyebotZap', 0x158319)       # EyeBot1HP "Electrical Zap"; AmmoListSmallEnergyCell
+EYEBOT_ZAP = robot_weapon(0x22FF1, 'PCEyebotZap', 0x121155, 1.0)  # EyeBot1HP; recharging (AmmoMicroBreeder, 1 s per round); renamed Eyebot Laser + damage: see the end
 print('  weapon PCEyebotZap %06X' % (EYEBOT_ZAP & 0xFFFFFF))
 
 # ---------------- Securitron Mk I / Mk II ----------------
@@ -799,12 +799,181 @@ for k, v in ROBOTS.items():
     print('  robot %s: race %06X child %06X ability %06X weapons %s bptd %06X' % (k, v['race'] & 0xFFFFFF, v['child'] & 0xFFFFFF, v['ability'] & 0xFFFFFF,
           ', '.join('%06X' % (w & 0xFFFFFF) for w in v['weapons']), v['bptd'] & 0xFFFFFF))
 
-groups = [group('HAIR', [hair]), group('EYES', [eyes] + eyes_extra), group('RACE', races), group('SOUN', souns), group('MGEF', mgefs), group('SCPT', scpts), group('SPEL', spels), group('ARMO', armors), group('WEAP', weaps), group('NPC_', npcs), group('IDLE', idles), group('ANIO', anios), group('BPTD', bptds), group('VTYP', vtyp)]   # vanilla group order
-nrec = 2 + len(eyes_extra) + len(armors) + len(bptds) + len(races) + len(weaps) + len(npcs) + len(souns) + len(mgefs) + len(scpts) + len(spels) + len(vtyp) + len(idles) + len(anios) + len(groups)
+# ---------------- Deathclaw ----------------
+# Creatures\DeathClaw (FalloutNV CrDeathClaw 01CF9A deathclaw.nif, CrDeathClawAlpha 0E584F deathclaw_AlphaMale.nif,
+# CrDeathClawMother 0E5851 deathclaw_Mother.nif, the Legendary Deathclaw / dark alpha males deathclaw_AM_G.nif
+# (CrDeathClawAlphaVariant 0E62FB), CrDeathClawBaby 0E5850 "Young Deathclaw" = deathclaw.nif at base scale 0.75 - all on
+# Creatures\DeathClaw\Skeleton.nif). Skeleton / animations in PlayableCreatures\Deathclaw (build_skel_creature.py,
+# anim/creatures/deathclaw.py + assemble_deathclaw.py): it holds and uses every weapon (melee weapons swing with its own
+# claw attacks), sits on chairs and stools. Races: Deathclaw (both sexes deathclaw.nif), Deathclaw Alpha (male: alpha
+# male, female: mother), Legendary Deathclaw; each one's child race is the Young Deathclaw (deathclaw.nif, height 0.75).
+# Abilities = their vanilla DT spells (DeathclawDT 12B892, AlphaMotherDeathclawDT 12B894, young: BabyDeathclawDT
+# 12B893). Body part data = their CREA PNAM SupermutantrBodyPartData 02026E (ini BodyPartData=).
+DCA = 'Creatures\\DeathClaw\\'
+DEATHCLAWS = {}
+DC_YOUNG_H = 0.75
+_dc_young_ab = None
+def deathclaw_race(key, name, desc, body, body_f, dt_spell):
+    """race + presets + physiology + the Young Deathclaw child race"""
+    global races, npcs, _dc_young_ab
+    rf = _new()
+    r = make_race(rf, 'PC%sRace' % key, name, desc, DCA + body, body_f=DCA + body_f if body_f else None)
+    npcs += [preset(_new(), 'PC%sPresetMale' % key, False, rf), preset(_new(), 'PC%sPresetFemale' % key, True, rf)]
+    ab = _new(); spels.append(RX.ability(ab, 'PC%sPhysiology' % key, '%s Physiology' % name, _eff(dt_spell)))
+    if _dc_young_ab is None:
+        # a race height below 1 slows the player's root motion twice (see robot_race): SpeedMult + 1/height
+        _dc_young_ab = _new()
+        spels.append(RX.ability(_dc_young_ab, 'PCDeathclawYoungPhysiology', 'Young Deathclaw Physiology', _eff(0x12B893)
+                                + [('EFID', u32(0x31D7A)), ('EFIT', struct.pack('<IIIIi', int(round(100 / DC_YOUNG_H - 100)), 0, 0, 0, 21))]))
+    adult, child, ids = RX.add_extras([r], {'PC%sRace' % key: [ab]}, _new)
+    typ, fl, cf, subs = RX.parse(child[0])
+    young = []
+    for k, v in subs:
+        if k == 'FULL': v = z('Young ' + name)
+        elif k == 'MODL' and v.rstrip(b'\0').decode('latin1') in (DCA + body, DCA + (body_f or body)): v = z(DCA + 'deathclaw.nif')
+        elif k == 'SPLO': v = u32(_dc_young_ab)
+        elif k == 'DATA':
+            d = bytearray(v); struct.pack_into('<ff', d, 16, DC_YOUNG_H, DC_YOUNG_H); v = bytes(d)
+        young.append((k, v))
+    races += adult + [record('RACE', cf, young, fl)]
+    DEATHCLAWS[key] = dict(race=rf, child=cf, ability=ab)
+    return rf
+deathclaw_race('Deathclaw', 'Deathclaw',
+               'Deathclaws: towering, horned predators bred from chameleons, the deadliest animals of the Mojave. Playable Creatures.',
+               'deathclaw.nif', None, 0x12B892)
+deathclaw_race('DeathclawAlpha', 'Deathclaw Alpha',
+               'Deathclaw alpha males and mothers: the largest and most savage of the pack. Playable Creatures.',
+               'deathclaw_AlphaMale.nif', 'deathclaw_Mother.nif', 0x12B894)
+deathclaw_race('DeathclawLegendary', 'Legendary Deathclaw',
+               'The Legendary Deathclaw: a dark, scarred alpha male, the pack leader of the Mojave. Playable Creatures.',
+               'deathclaw_AM_G.nif', None, 0x12B894)
+_idle_next[0] = _next_id
+DI = 'PlayableCreatures\\Deathclaw\\IdleAnims'
+creature_idles('Deathclaw', DI, *_human_set(DI + '\\'),
+               (DCA + 'IdleAnims\\specialidle_getupfaceup.kf', DCA + 'IdleAnims\\specialidle_getupfacedown.kf'))
+_next_id = _idle_next[0]
+for k, v in DEATHCLAWS.items():
+    print('  deathclaw %s: race %06X child %06X ability %06X' % (k, v['race'] & 0xFFFFFF, v['child'] & 0xFFFFFF, v['ability'] & 0xFFFFFF))
+print('  young deathclaw ability %06X' % (_dc_young_ab & 0xFFFFFF))
+
+# ---------------- Eyebot / Protectron furniture ----------------
+# Their chairs and stools: the Eyebot settles onto the seat and rests there unanimated (anim/eyebot_furniture.py: the
+# human entry path and heading, its hover height mapped onto the seat), the Protectron sits like a toddler on its short
+# legs (retarget_idle_creature.py, creatures/protectron_sit.py). Furniture trees only - their get-up trees stay as built
+# above. Ids after everything else.
+_idle_next[0] = _next_id
+creature_idles('Eyebot', EI, *_human_set(EI + '\\'), None)
+_PI = 'PlayableCreatures\\Protectron\\IdleAnims'
+creature_idles('Protectron', _PI, *_human_set(_PI + '\\'), None)
+_next_id = _idle_next[0]
+
+# ---------------- Eyebot laser ----------------
+# (user: eyebots attack with a laser; ED-E's zapper is only its commissary trick; the vanilla eyebot's 5 damage is too
+# little.) PCEyebotZap keeps its form id: vanilla EyeBot1HP's red laser beam (BeamLaserProjectile 014B0F, its own impact
+# / muzzle flash), named "Eyebot Laser", ED-E's damage (EDEZapGun: 25), recharging as before (1 s per round, clip 12).
+projs = []
+EYEBOT_LASER_DAMAGE = 25
+for i, w in enumerate(weaps):
+    typ, fl, fid, subs = RX.parse(w)
+    if fid != EYEBOT_ZAP: continue
+    def _w(k, v):
+        if k == 'EDID': return z('PCEyebotLaser')
+        if k == 'FULL': return z('Eyebot Laser')
+        if k == 'DATA': d = bytearray(v); struct.pack_into('<h', d, 12, EYEBOT_LASER_DAMAGE); return bytes(d)
+        return v
+    weaps[i] = record('WEAP', fid, [(k, _w(k, v)) for k, v in subs], fl)
+print('  eyebot laser %06X, damage %d' % (EYEBOT_ZAP & 0xFFFFFF, EYEBOT_LASER_DAMAGE))
+
+# ---------------- Ghost Gas ----------------
+# Ghost People's own heavy weapon: the vanilla Flamer (WeapFlamer 00432D: 2HH, AttackLoop, flame-type projectile) spraying
+# the Sierra Madre gas from the palm (their 2HH animations cast from the open hand, the gun model hidden there). Changes
+# from the Flamer: projectile PCGhostGasProjectile (FlameProjectile's flight, model = the ghost leg gas spray as a flame
+# projectile, tools/build_ghost_gas_nif.py; no muzzle flash, no fire light), enchantment PCGhostGasEnch (the vanilla
+# Poison effect 031851 - Damage Health over time, resisted by Poison Resistance - 2 pts for 5 s, as the Flamer's burn),
+# no burn critical spell, no scorch impacts (NoImpactSet), the Sierra Madre toxic-cloud loop as its spray sound (own
+# SOUN on the Flamer's fire-loop settings), no pilot-light idle loop; recharging like the robots' weapons
+# (AmmoMicroBreeder, nothing to carry; clip 60, 0.5 s per round = 30 s), Can't Drop, weightless, worth nothing, no
+# weapon mods. Given at race-menu close (ini GiveItems), not equipped.
+GHOST_GAS_MODEL = 'PlayableCreatures\\Ghost\\GhostGasProjectile.nif'
+GHOST_GAS_SOUND = 'fx\\emt\\~dlc01\\toxiccloud\\emt_dlc01_toxiccloud_lp.wav'
+gas_snd = _new()
+souns.append(record('SOUN', gas_snd, [(k, z('PCGhostGasSprayLP') if k == 'EDID' else z(GHOST_GAS_SOUND) if k == 'FNAM' else v)
+                                      for k, v in SRC.byfid[0x50F8E].subs()]))          # WPNFlamerFire3DLPM
+gas_ench = _new()
+enchs = [record('ENCH', gas_ench, [('EDID', z('PCGhostGasEnch')), ('FULL', z('Ghost Gas')),
+                                   ('ENIT', bytes.fromhex('02000000000000000000000002cdcdcd')),     # weapon enchantment (as EnchFlamerEffect)
+                                   ('EFID', u32(0x31851)), ('EFIT', struct.pack('<IIIIi', 2, 0, 5, 1, 16))])]   # Poison 2 / 5 s
+gas_proj = _new()
+def _gp(k, v):
+    if k == 'EDID': return z('PCGhostGasProjectile')
+    if k == 'FULL': return z('Ghost Gas')
+    if k == 'MODL': return z(GHOST_GAS_MODEL)
+    if k == 'DATA':
+        d = bytearray(v); struct.pack_into('<H', d, 0, struct.unpack_from('<H', d, 0)[0] & ~0x08)  # no muzzle flash
+        struct.pack_into('<II', d, 16, 0, 0); return bytes(d)                                      # no light, no muzzle flash light
+    return v
+projs.append(record('PROJ', gas_proj, [(k, _gp(k, v)) for k, v in SRC.byfid[0x3BF0B].subs() if k not in ('MODT', 'NAM1', 'NAM2')]))
+_NO_IMPACT = [r for r in SRC.recs if r.type == 'IPDS' and r.edid() == 'NoImpactSet'][0].fid
+GHOST_GAS = _new()
+def _gw(k, v):
+    if k == 'EDID': return z('PCGhostGas')
+    if k == 'FULL': return z('Ghost Gas')
+    if k == 'EITM': return u32(gas_ench)
+    if k == 'NAM0': return u32(0x121155)                                        # AmmoMicroBreeder
+    if k == 'INAM': return u32(_NO_IMPACT)                                     # no flame scorch decals
+    if k == 'NAM7': return u32(gas_snd)
+    if k == 'DATA': d = bytearray(v); struct.pack_into('<iif', d, 0, 0, 200, 0.0); return bytes(d)    # value 0, health, weight 0
+    if k == 'DNAM':
+        d = bytearray(v); d[12] |= 0x08                                         # Can't Drop
+        struct.pack_into('<I', d, 36, gas_proj); struct.pack_into('<f', d, 176, 0.5); return bytes(d)
+    if k == 'CRDT': d = bytearray(v); struct.pack_into('<I', d, 12, 0); return bytes(d)   # no FlamerCritEffect02
+    return v
+weaps.append(record('WEAP', GHOST_GAS, [(k, _gw(k, v)) for k, v in SRC.byfid[0x432D].subs()
+                                        if k not in ('UNAM', 'MOD4', 'MWD1', 'WNM1', 'WMI1')]))        # no idle loop, no mods
+print('  ghost gas %06X (projectile %06X, enchantment %06X, sound %06X)' % (GHOST_GAS & 0xFFFFFF, gas_proj & 0xFFFFFF, gas_ench & 0xFFFFFF, gas_snd & 0xFFFFFF))
+
+# ---------------- Ghost knife spear ----------------
+# Ghost People's thrown knife spear: Dead Money's best one, NVDLC01WeapThrowingSpearGhost50 (0117FC: the level-50 ghost's
+# Throwing Knife Spear, damage 145), made playable (non-playable flag cleared), Can't Drop, worth nothing, weightless,
+# and bottomless the way Ghostification's zNVDLC01WeapThrowingSpearGhost50 is: Ammo Use 0, so a throw never uses the
+# spear up (no script). Its critical hits knock the target down: PCGhostSpearKnockdownSpell (on every critical hit, not
+# only killing ones) -> PCGhostSpearKnockdownEffect (script effect, as the vanilla MaulerKnockdownEffect) ->
+# PCGhostSpearKnockdownScript = the vanilla knockdown scripts' compiled code (VictoryRifle / Mauler / MissFortune:
+# "if the target lacks Stonewall, player.PushActorAway target <force>, else ShowMessage StonewallMessage") with its own
+# force. Given at race-menu close (ini GiveItems), not equipped.
+SPEAR_KNOCK_FORCE = 15
+_mauler_scpt = SRC.byfid[0x10F0A1]                          # MaulerKnockdownScript (force 15 at the 6E int literal)
+scro_ok(_mauler_scpt)
+_sk_scpt, _sk_mgef, _sk_spel = _new(), _new(), _new()
+def _sks(k, v):
+    if k == 'SCDA':
+        i = v.index(bytes.fromhex('6e0f000000')); v = v[:i + 1] + struct.pack('<i', SPEAR_KNOCK_FORCE) + v[i + 5:]
+    if k == 'SCTX':
+        v = (b'scn PCGhostSpearKnockdownScript\r\n\r\nref myself\r\n\r\nBegin ScriptEffectStart\r\n\r\nIf myself.HasPerk Stonewall != 1\r\n'
+             b'\tset myself to GetSelf\r\n\tplayer.pushactoraway myself %d\r\nElse\r\n\tShowMessage StonewallMessage\r\nEndIf\r\n\r\nEnd\r\n' % SPEAR_KNOCK_FORCE)
+    return v
+scpts.append(copy_rec(_mauler_scpt, _sk_scpt, 'PCGhostSpearKnockdownScript', patch=_sks))
+mgefs.append(copy_rec(SRC.byfid[0x10F0A0], _sk_mgef, 'PCGhostSpearKnockdownEffect', full='Knife Spear Knockdown', patch=assoc(_sk_scpt)))   # MaulerKnockdownEffect
+spels.append(record('SPEL', _sk_spel, [('EDID', z('PCGhostSpearKnockdownSpell')), ('FULL', z('Knife Spear Knockdown')),
+    ('SPIT', SRC.byfid[0x10F09F].get('SPIT')), ('EFID', u32(_sk_mgef)), ('EFIT', SRC.byfid[0x10F09F].get('EFIT'))]))   # as MaulerKnockdownSpell
+GHOST_SPEAR = _new()
+def _gs(k, v):
+    if k == 'EDID': return z('PCGhostKnifeSpear')
+    if k == 'DATA': d = bytearray(v); struct.pack_into('<i', d, 0, 0); struct.pack_into('<f', d, 8, 0.0); return bytes(d)   # value 0, weight 0
+    if k == 'DNAM':
+        d = bytearray(v); d[12] = (d[12] & ~0x80 & 0xFF) | 0x08                   # playable, Can't Drop
+        d[14] = 0; return bytes(d)                                             # Ammo Use 0: bottomless
+    if k == 'CRDT': d = bytearray(v); d[8] = 0; struct.pack_into('<I', d, 12, _sk_spel); return bytes(d)   # knockdown on every crit
+    return v
+weaps.append(record('WEAP', GHOST_SPEAR, [(k, _gs(k, v)) for k, v in DMP.byfid[0x010117FC].subs()]))
+print('  ghost knife spear %06X (knockdown spell %06X, effect %06X, script %06X)' % (GHOST_SPEAR & 0xFFFFFF, _sk_spel & 0xFFFFFF, _sk_mgef & 0xFFFFFF, _sk_scpt & 0xFFFFFF))
+
+groups = [group('HAIR', [hair]), group('EYES', [eyes] + eyes_extra), group('RACE', races), group('SOUN', souns), group('MGEF', mgefs), group('SCPT', scpts), group('ENCH', enchs), group('SPEL', spels), group('ARMO', armors), group('WEAP', weaps), group('NPC_', npcs), group('IDLE', idles)] + ([group('PROJ', projs)] if projs else []) + [group('ANIO', anios), group('BPTD', bptds), group('VTYP', vtyp)]   # vanilla group order
+nrec = 2 + len(enchs) + len(projs) + len(eyes_extra) + len(armors) + len(bptds) + len(races) + len(weaps) + len(npcs) + len(souns) + len(mgefs) + len(scpts) + len(spels) + len(vtyp) + len(idles) + len(anios) + len(groups)
 tes4 = record('TES4', 0, [
     ('HEDR', struct.pack('<fII', 1.34, nrec, _next_id)),
     ('CNAM', z('Claude (Playable Creatures project)')),
-    ('SNAM', z('Playable Creatures: Zetan (+ helmeted), Ghost People (hooded / unhooded), Feral Ghoul, Glowing One, Super Mutant, Nightkin, Tunneler, Spore Carrier, Eyebot, Securitron Mk I / II; creature voices, idle trees, radiation immunity')),
+    ('SNAM', z('Playable Creatures: Zetan (+ helmeted), Ghost People (hooded / unhooded), Feral Ghoul, Glowing One, Super Mutant, Nightkin, Tunneler, Spore Carrier, Eyebot, Securitron Mk I / II, robots, Deathclaws; creature voices, idle trees, radiation immunity')),
     *[x for m in MASTERS for x in (('MAST', z(m)), ('DATA', struct.pack('<Q', 0)))]])
 open(OUT, 'wb').write(tes4 + b''.join(groups))
 print('wrote', OUT, len(races), 'races', len(npcs), 'presets')
