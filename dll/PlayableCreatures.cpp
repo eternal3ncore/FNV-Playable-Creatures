@@ -80,7 +80,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 73;
+static const UInt32 kPluginVersion = 76;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -628,6 +628,35 @@ static void* Detour(UInt32 addr, UInt8 frameSize, void* hook, const char* what) 
 	VirtualProtect(fn, 6, old, &old);
 	FlushInstructionCache(GetCurrentProcess(), fn, 6);
 	Log("patch: %s detour installed (trampoline %p)", what, tramp);
+	return tramp;
+}
+// Entry hook that leaves the function's bytes after "push ebp; mov ebp, esp" untouched: a 2-byte short jump at the entry
+// into the 5 int3 padding bytes before the function, which hold the jump to the hook; the trampoline re-runs the
+// two instructions and continues at entry + 3. Other plugins hook Actor::EquipItem right after the frame setup
+// (ShowOff NVSE at 0x88C653, checking those bytes are vanilla; Stewie's Tweaks at 0x88C659): a full 5-byte entry jump
+// overwrote ShowOff's site, so it refused its hook. With this one both chain behind ours in any load order.
+static void* DetourPadded(UInt32 addr, UInt8 frameSize, void* hook, const char* what) {
+	UInt8* fn = (UInt8*)addr; UInt8* pad = fn - 5;
+	const UInt8 frame[3] = {0x55, 0x8B, 0xEC};
+	bool padFree = pad[0] == 0xCC && pad[1] == 0xCC && pad[2] == 0xCC && pad[3] == 0xCC && pad[4] == 0xCC;
+	bool shortHooked = fn[0] == 0xEB && fn[1] == 0xF9 && pad[0] == 0xE9;        // another plugin used this same scheme
+	if (!(padFree && !memcmp(fn, frame, 3)) && !shortHooked) return Detour(addr, frameSize, hook, what);
+	UInt8* tramp = (UInt8*)VirtualAlloc(nullptr, 32, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	if (!tramp) return nullptr;
+	if (shortHooked) {
+		UInt32 prev = (UInt32)pad + 5 + *(SInt32*)(pad + 1);
+		tramp[0] = 0xE9; *(SInt32*)(tramp + 1) = (SInt32)(prev - ((UInt32)tramp + 5));
+		Log("patch: %s entry already short-jumped by another plugin -> chaining to %08X", what, prev);
+	} else {
+		memcpy(tramp, frame, 3);
+		tramp[3] = 0xE9; *(SInt32*)(tramp + 4) = (SInt32)((UInt32)fn + 3 - ((UInt32)tramp + 8));
+	}
+	DWORD old; VirtualProtect(pad, 7, PAGE_EXECUTE_READWRITE, &old);
+	pad[0] = 0xE9; *(SInt32*)(pad + 1) = (SInt32)((UInt32)hook - ((UInt32)pad + 5));
+	fn[0] = 0xEB; fn[1] = 0xF9;                                                  // jmp short entry - 5
+	VirtualProtect(pad, 7, old, &old);
+	FlushInstructionCache(GetCurrentProcess(), pad, 7);
+	Log("patch: %s detour installed through its padding (entry + 3 left vanilla; trampoline %p)", what, tramp);
 	return tramp;
 }
 
@@ -1965,7 +1994,7 @@ __declspec(dllexport) bool NVSEPlugin_Load(const NVSEInterface* nvse) {
 		g_prevMenuDtor = (MenuDtor_t)cur;
 		PatchPtr(kVtbl_RaceSexMenu, (UInt32)Hook_RaceSexMenuDtor, cur, cur == kAddr_RaceSexMenu_Dtor ? "RaceSexMenu::~RaceSexMenu" : "RaceSexMenu::~RaceSexMenu (chained to another plugin)");
 	}
-	g_equipTramp = (EquipItem_t)Detour(kAddr_EquipItem, 0x08, (void*)Hook_EquipItem, "Actor::EquipItem");
+	g_equipTramp = (EquipItem_t)DetourPadded(kAddr_EquipItem, 0x08, (void*)Hook_EquipItem, "Actor::EquipItem");
 	g_addBipedTramp = (AddItemToBiped_t)Detour(kAddr_AddItemToBiped, 0x1C, (void*)Hook_AddItemToBiped, "TESNPC::AddItemToBiped");
 	return true;
 }

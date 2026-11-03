@@ -5,9 +5,9 @@ crouched sneak (gen_loco_ttw ... crouch, its root-level strafes / turns as the s
 (retarget_idle_creature.py), Skeleton.nif (build_skel_creature.py). Its two power files are renamed to the regular
 pattern (h2h_attackpower -> h2hattackpower) and copied to 1HM / 2HM; its idle loop's own vox keys are dropped (on the
 player they sounded every ~4.6 s). Then Enum text keys -> Sound keys (enum_keys 'lakelurk'), then the post passes:
-lakelurk_shriek (guns = its shriek from the mouth, gun and melee weapons hidden, ProjectileNode added to the skeleton),
+mouth_fire lakelurk (guns = its shriek from the mouth, gun and melee weapons hidden, ProjectileNode added to the skeleton),
 post_build (blocks: own guard; fist / melee aims raised to 23; priorities), fill_updown, sneak_fix, the forward power
-lunge's sneak copies back to the standing lunge, power_fill, power_legs, lakelurk_shriek --hide again.
+lunge's sneak copies back to the standing lunge, power_fill, power_legs, mouth_fire --hide again.
 usage: python3 assemble_lakelurk.py <deploy root>"""
 import sys, os, shutil, glob, struct, subprocess
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -60,7 +60,7 @@ def py(*a):
     r = subprocess.run([sys.executable, *a], capture_output=True, text=True, cwd=H)
     if r.returncode: sys.exit(r.stderr)
     print(' ', os.path.basename(a[0]), ' | '.join(r.stdout.strip().splitlines()[-6:]))
-py(os.path.join(H, 'lakelurk_shriek.py'), D, os.path.join(D, 'Skeleton.nif'))
+py(os.path.join(H, 'mouth_fire.py'), 'lakelurk', D, os.path.join(D, 'Skeleton.nif'))
 py(os.path.join(H, 'post_build.py'), D, 'Lakelurk')
 py(os.path.join(H, 'fill_updown.py'), D)
 # its own standing power has no sneak file (sneak_fix only adds sneak copies of the groups it lists): copied, then crouched
@@ -69,5 +69,5 @@ py(os.path.join(H, 'sneak_fix.py'), D, '--apply')
 for T in ('h2h', '1hm', '2hm'): shutil.copyfile(os.path.join(D, T + 'attackforwardpower.kf'), os.path.join(D, 'sneak' + T + 'attackforwardpower.kf'))
 py(os.path.join(H, 'power_fill.py'), os.path.dirname(D), '--apply')
 py(os.path.join(H, 'power_legs.py'), D, '--apply')
-py(os.path.join(H, 'lakelurk_shriek.py'), D, os.path.join(D, 'Skeleton.nif'), '--hide')
+py(os.path.join(H, 'mouth_fire.py'), 'lakelurk', D, os.path.join(D, 'Skeleton.nif'), '--hide')
 print('files', sum(len(fs) for _, _, fs in os.walk(D)))

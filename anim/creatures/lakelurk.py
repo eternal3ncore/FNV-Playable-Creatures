@@ -4,12 +4,13 @@ crouched aims, digitigrade legs (four toes), four three-joint fingers per hand, 
 (Dummy01) and ProjectileNode_Sonic on the head (Dummy01_HeadSonic: the shriek). Own set: H2H (aim, five left / right
 swings, two power attacks, equips, side steps), 2HL (the shriek: aim, AttackRight, equip / unequip) + walk / run /
 backward / turn locomotion (+ hurt). Melee weapons swing with its own claw attacks (weapon hidden, as the deathclaw);
-guns are built here only for their names / timing - lakelurk_shriek.py replaces every gun file with its own shriek
+guns are built here only for their names / timing - mouth_fire.py replaces every gun file with its own shriek
 (gun hidden, shot from the mouth); thrown weapons and mines are synthetic holds in its claw."""
 from creatures._ttw import bones, variants, families, LAUNCHER_ROT
 NAME = 'Lakelurk'
 ANIM_SRC = '/home/claude/fnv/creature_src_lurk/meshes/creatures/mirelurkking'
-SKELETON = ANIM_SRC + '/skeleton.nif'
+SKELETON = ANIM_SRC + '/skeleton_pc.nif'     # the vanilla skeleton with Weapon re-parented from Dummy01 to Bip01 R Hand
+                                             # (tools/lurk_weapon_parent.py: its equips' prn keys name the hand)
 TEMPLATE_KF = 'mtidle.kf'
 ACCUM_ROOT = 'Bip01'
 BASE_MODE = 'sample'

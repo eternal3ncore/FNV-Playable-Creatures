@@ -156,7 +156,9 @@ add-ons need their base pack too.
 ### Mirelurks
 `PlayableCreatures_Mirelurks.esp`
 *Mirelurk, Mirelurk Hunter, Nukalurk*
-- Unarmed and melee only: claw strikes and four power attacks; melee weapons strike with its claws (weapon not drawn).
+- Unarmed, melee and firearms: claw strikes and four power attacks; melee weapons strike with its claws (weapon not
+  drawn); guns aren't drawn - every gun fires from its mouth, with its own lunge, claws raised.
+- Blocks with both pincers raised before its face.
 - Damage threshold +5, breathes underwater.
 - Nukalurk: its claws carry radiation (Rad Poisoning, 10 rads a second for 3 s, unless the target resists radiation).
 - Sneaks in its normal gait; on chairs and stools it climbs onto the seat.

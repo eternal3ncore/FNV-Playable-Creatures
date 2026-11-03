@@ -1,7 +1,8 @@
 """Eyebot furniture idles: the human chair (4 sides) / stool enter + exit, seated loop and relax specials, turned into
 the eyebot settling onto the seat. It follows the human's entry path (Bip01) and heading, its hover height mapped from
 the human's hip height (standing -> its own hover, chair seat -> resting on a chair seat, stool seat -> resting on a
-stool); every other bone holds its idle pose at t=0, so it sits unanimated (no bob, no antenna sway).
+stool); every other bone holds its idle pose at t=0, so it sits unanimated (no bob, no antenna sway) - or, with
+cfg.SIT_ANIMATED, plays its idle loop there (the mirelurk).
 usage: python3 eyebot_furniture.py <out dir> [creature cfg]   (default eyebot_sit; the mirelurk uses it too: its
 SPHERE_LOW = its own head height, so it climbs up and stands on the seat in its idle pose)"""
 import sys, os, importlib, numpy as np
@@ -41,12 +42,19 @@ def build(out_dir, fps=30):
     hi = KFEval('/home/claude/fnv/ref_male/1hmidle.kf').sample(0.0)
     h_ref = heading(np.array(hi['Bip01 NonAccum'][1], float))
     os.makedirs(out_dir, exist_ok=True); rep = []
+    anim = KFEval(os.path.join(cfg.ANIM_SRC, cfg.IDLE_KF)) if getattr(cfg, 'SIT_ANIMATED', False) else None
     for out, src, _ in RC.JOBS:
         k = KFEval(RC.HUMAN_SIT + src); L = k.stop; n = int(round(L * fps)) + 1
         keyed = {b[0] for b in k.blocks}; prio = max(b[2] for b in k.blocks)
         frames = []
         for i in range(n):
             t = L * i / (n - 1); s = k.sample(t); loc = dict(loc0)
+            if anim is not None:                       # cfg.SIT_ANIMATED: its idle keeps playing (the mirelurk)
+                a = anim.sample(t % anim.stop)
+                for nm in idle_keyed:
+                    if nm in a:
+                        at, aR = a[nm]
+                        loc[nm] = (np.array(at, float) if at is not None else loc0[nm][0], np.array(aR, float) if aR is not None else loc0[nm][1])
             if 'Bip01' in keyed and 'Bip01' in s:
                 bt, bR = s['Bip01']; loc['Bip01'] = (np.array(bt if bt is not None else loc0['Bip01'][0], float),
                                                      np.array(bR if bR is not None else loc0['Bip01'][1], float))

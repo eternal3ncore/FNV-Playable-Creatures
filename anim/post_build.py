@@ -31,7 +31,7 @@ AIM_RAISE = {'Hillfolk': (r'^(sneak)?(h2h|1hm|2hm)aim(up|down)?\.kf$', 20, 23),
 BLOCK_HUMAN = {'Ghost': 'ghost', 'Ghoul': 'ghoul', 'GlowingOne': 'ghoul', 'Hillfolk': 'hillfolk1',
                'SuperMutant': 'supermutant', 'Nightkin': 'supermutant', 'Swampfolk': 'swampfolk', 'Zetan': 'zetan'}
 BLOCK_OWN = {'Eyebot': 'h2h,mt', 'Securitron': 'h2h,mt', 'Protectron': 'h2h,mt', 'Robobrain': 'h2h,mt',
-             'SentryBot': 'h2h,mt', 'Lakelurk': 'h2h,mt,1hm,2hm', 'Mirelurk': 'h2h,mt,1hm,2hm', 'Trog': 'h2h,mt,1hm,2hm', 'Deathclaw': 'h2h,mt,1hm,2hm', 'Tunneler': 'h2h,mt,1hm,2hm',
+             'SentryBot': 'h2h,mt', 'Lakelurk': 'h2h,mt,1hm,2hm', 'Mirelurk': 'h2h,mt,1hm,2hm --src _guard', 'Trog': 'h2h,mt,1hm,2hm', 'Deathclaw': 'h2h,mt,1hm,2hm', 'Tunneler': 'h2h,mt,1hm,2hm',
              'MisterHandy': 'h2h,mt --keep-1hm', 'MisterGutsy': 'h2h,mt --keep-1hm'}
 
 def py(*a):

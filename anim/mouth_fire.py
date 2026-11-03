@@ -1,43 +1,58 @@
-"""Lakelurk guns fire as its own shriek, from its mouth (as the deathclaw's mouth fire, but with the lakelurk's own
-2HL shriek instead of a borrowed breath). Rewrites every gun-type file (1HP, 2HR, 2HA, 2HH, 2HL and their sneak copies;
-equip / unequip / holster excepted - those stay its own claw equips) in an assembled Lakelurk folder, keeping each
-file's sequence name, length, cycle and text keys (vanilla timing and weapon events):
-  aims       its own shriek aim (2hlaim: crouched, head forward), looped over the file; Aim*Up / Down = the head chain
-             (Neck1 + Head) pitched +-PITCH so the mouth follows the look
-  attacks    its own shriek (2hlattackright: rear up, head thrust at 'Hit') time-warped so its Hit lands on the file's
-             Hit / Fire key; the wind-up before it is shortened to what the file leaves (at least WIND seconds of the
-             rear-up are kept when the file's Hit is early); sustained fire (AttackLoop, short files) holds the thrust
-             with a small sway around the Hit
+"""Guns fire from the mouth, with the creature's own ranged attack (as the deathclaw's mouth fire, but each creature
+uses its own animation): the Lakelurk's shriek (2hlaim / 2hlattackright), the Mirelurk's lunge (2hlaim / 2hlattackspin,
+claws raised in its fighting stance). Rewrites every gun-type file (1HP, 2HR, 2HA, 2HH, 2HL and their sneak copies;
+equip / unequip / holster excepted - those stay its own claw equips) in an assembled folder, keeping each file's
+sequence name, length, cycle and text keys (vanilla timing and weapon events):
+  aims       its own ranged aim, looped over the file; Aim*Up / Down = the neck / head pitched +-PITCH so the mouth
+             follows the look
+  attacks    its own ranged attack time-warped so its Hit / Fire lands on the file's Hit / Fire key; the wind-up before it
+             is shortened to what the file leaves (at least WIND seconds of it are kept when the file's Hit is early);
+             sustained fire (AttackLoop, short files) holds the attack with a small sway around its Hit
   reloads / jams / recoil / still files: the aim (their gun Sound: keys dropped)
-  Weapon     the skeleton's Weapon node (under the right claw) keyed every frame onto the mouth (ProjectileNode_Sonic),
-             +X level forward, scale 0.001: the gun model stays attached there unseen, so its own ProjectileNode and
-             any node a script adds to it (3rd Person Aim Fix) are at the mouth
-  priorities upper body ABOVE (aims 31 / attacks 40, as its own files), legs / pelvis / toes LEGS (25: under the
-             walk's 30, so it walks while shrieking; over the idle's 20)
-Its own 2hlaim.kf / 2hlattackright.kf are the sources (read from the vanilla folder) and are rewritten too (same motion,
-Weapon channel added). Every melee / unarmed file's Weapon channel (equips and holsters included) gets scale 0.001
-(melee weapons hidden - its claws are its weapons); thrown weapons / mines keep theirs.
-The skeleton gets ProjectileNode on the head at the shriek's node (+Y = level forward in its shriek aim): the engine's
-shot leaves it (found before the hidden gun's).
-usage: python3 lakelurk_shriek.py <Lakelurk folder> <Skeleton.nif to patch> [--hide]"""
+  Weapon     the skeleton's Weapon node (under the right hand / claw) keyed every frame onto the mouth, +X level forward,
+             scale 0.001: the gun model stays attached there unseen, so its own ProjectileNode and any node a script adds
+             to it (3rd Person Aim Fix) are at the mouth
+  priorities each bone keeps its source file's priority; legs / pelvis / tail / side legs (LEGS) at most 25, under the
+             walk's 30, so it walks while firing
+  prn keys   every 'prn:' text key in the folder names Bip01 R Hand (the Weapon node's parent; the lakelurk's own
+             holster named Dummy01)
+The sources are read from the vanilla folder; its own aim / attack files are rewritten too (same motion, Weapon channel
+added). Every melee / unarmed file's Weapon channel (equips and holsters included) gets scale 0.001 (melee weapons
+hidden - the claws are the weapons); thrown weapons / mines keep theirs.
+The skeleton gets ProjectileNode on the head at the mouth (+Y = level forward in the aim): the engine's shot leaves it
+when the hidden gun has none.
+usage: python3 mouth_fire.py <creature> <folder> <Skeleton.nif to patch> [--hide]     creature = lakelurk | mirelurk"""
 import os, re, sys, struct
 import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.append(os.path.dirname(HERE))
 from kf import Skeleton, KFEval
 from rig import Creature, write_kf, rotm
 from nifedit import NifFile
+from sound_keys import text_keys
 import importlib
 
 GUNS = ('1hp', '2hr', '2ha', '2hh', '2hl')
 HIDE = ('h2h', '1hm', '2hm') + GUNS
 PITCH = 30.0
-WIND = 0.45                       # seconds of the rear-up kept before an early Hit
-SWAY = 0.12                       # sustained fire: +- seconds around the shriek's Hit
+WIND = 0.45                       # seconds of the wind-up kept before an early Hit
+SWAY = 0.12                       # sustained fire: +- seconds around the attack's Hit
 HIDE_SCALE = 0.001
-AIM_UPPER, ATTACK_UPPER, LEGS = 31, 40, 25
-LOWER = re.compile(r'^Bip01( NonAccum| Pelvis| [LR] (Thigh|Calf|Foot|Toe\d*))$')
-
-cfg = importlib.import_module('creatures.lakelurk')
+LEGS = 25
+# mouth: a node of the skeleton (the lakelurk's shriek node) or a point in the head frame, given as (forward, up) from
+# the head node in the aim pose (the mirelurk's mouth, under the front of its head)
+CREATURES = {
+    'lakelurk': dict(cfg='lakelurk', aim='2hlaim.kf', attack='2hlattackright.kf', mouth_node='ProjectileNode_Sonic',
+                     pitch_bones=('Bip01 Neck1', 'Bip01 Head'),
+                     lower=r'^Bip01( NonAccum| Pelvis| [LR] (Thigh|Calf|Foot|Toe\d*))$'),
+    # level_head: the attack's body motion with the aim's head orientation (the mirelurk's lunge rears the head 37 deg up:
+    # the shots left that far above the crosshair line)
+    'mirelurk': dict(cfg='mirelurk', aim='2hlaim.kf', attack='2hlattackspin.kf', mouth_fu=(8.0, -6.0), level_head=True,
+                     pitch_bones=('Bip01 Neck', 'Bip01 Head'),
+                     lower=r'^Bip01( NonAccum| Pelvis| [LR] (Thigh|Calf|Foot|Toe\d*)| Tail\d*| Ponytail\d+)$'),
+}
+SPEC = CREATURES[sys.argv[1]]
+LOWER = re.compile(SPEC['lower'])
+cfg = importlib.import_module('creatures.' + SPEC['cfg'])
 cr = Creature(cfg); sk = cr.sk
 SRC = cfg.ANIM_SRC
 
@@ -54,10 +69,11 @@ def full(skel, sample):
     return out
 
 
-aim = KFEval(os.path.join(SRC, '2hlaim.kf'))
-shriek = KFEval(os.path.join(SRC, '2hlattackright.kf'))
-S_HIT = [t for t, k in shriek.textkeys if k == 'Hit'][0]
+aim = KFEval(os.path.join(SRC, SPEC['aim']))
+shriek = KFEval(os.path.join(SRC, SPEC['attack']))
+S_HIT = [t for t, k in shriek.textkeys if k in ('Hit', 'Fire')][0]
 S_END = shriek.stop
+PRIO = {'aim': {b[0]: b[2] for b in aim.blocks}, 'attack': {b[0]: b[2] for b in shriek.blocks}}
 BONES = [b[0] for b in shriek.blocks if b[0] not in ('Bip01', 'Weapon')]
 for b in aim.blocks:
     if b[0] not in BONES and b[0] not in ('Bip01', 'Weapon'): BONES.append(b[0])
@@ -67,7 +83,9 @@ B0 = W0['Bip01 NonAccum'][1]
 fwd = W0['Bip01 Head'][0] - W0['Bip01 Pelvis'][0]; fwd[2] = 0; fwd /= np.linalg.norm(fwd)
 UP = np.array([0, 0, 1.0]); LEFT = np.cross(UP, fwd)
 # mouth point / frame in the head frame
-ph0, Rh0 = W0['Bip01 Head']; ps0 = W0['ProjectileNode_Sonic'][0]
+ph0, Rh0 = W0['Bip01 Head']
+if 'mouth_node' in SPEC: ps0 = W0[SPEC['mouth_node']][0]
+else: ps0 = ph0 + SPEC['mouth_fu'][0] * fwd + SPEC['mouth_fu'][1] * UP
 MOUTH = Rh0.T @ (ps0 - ph0)
 X = Rh0.T @ fwd; Y = Rh0.T @ UP; Y -= X * np.dot(X, Y); Y /= np.linalg.norm(Y)
 MOUTH_R = np.column_stack([X, Y, np.cross(X, Y)])
@@ -79,12 +97,14 @@ def set_world(loc, W, n, Rw):
     p = sk.parent[n]; loc[n] = (loc[n][0], W[p][1].T @ Rw)
 
 
-def pose(sample, pitch=0.0):
+def pose(sample, pitch=0.0, head_from=None):
     loc = full(sk, sample)
     W = sk.fk(loc)
+    if head_from is not None:                      # the aim's head orientation (world) on the attack's body
+        Wa = sk.fk(full(sk, head_from)); set_world(loc, W, 'Bip01 Head', Wa['Bip01 Head'][1]); W = sk.fk(loc)
     if pitch:
         lat = W['Bip01 NonAccum'][1] @ (B0.T @ LEFT)
-        for n in ('Bip01 Neck1', 'Bip01 Head'):
+        for n in SPEC['pitch_bones']:
             W = sk.fk(loc); set_world(loc, W, n, rotm(lat, -pitch / 2) @ W[n][1])
     W = sk.fk(loc); ph, Rh = W['Bip01 Head']; pw, Rw = W[sk.parent['Weapon']]
     loc['Weapon'] = (Rw.T @ (ph + Rh @ MOUTH - pw), Rw.T @ Rh @ MOUTH_R)
@@ -111,7 +131,7 @@ def shriek_time(t, L, hit, sustained):
     return S_HIT + (S_END - S_HIT) * ((t - h) / max(L - h, 1e-6))
 
 
-def shriek_file(path):
+def mouth_file(path):
     k = KFEval(path); name = k.name; L = k.stop; kind = kind_of(name)
     keys = [(t, s) for t, s in k.textkeys if not s.lower().startswith('prn')]
     if kind == 'still': keys = [(t, s) for t, s in keys if not s.lower().startswith('sound')]
@@ -122,11 +142,14 @@ def shriek_file(path):
     n = max(2, int(round(L * 30)) + 1); frames = []
     for i in range(n):
         t = L * i / (n - 1)
-        if kind == 'attack': smp = shriek.sample(min(shriek_time(t, L, hit, sustained), S_END))
+        hf = None
+        if kind == 'attack':
+            smp = shriek.sample(min(shriek_time(t, L, hit, sustained), S_END))
+            if SPEC.get('level_head'): hf = aim.sample(t % aim.stop)
         else: smp = aim.sample(t % aim.stop)
-        frames.append((t, pose(smp, pitch)))
-    up = ATTACK_UPPER if kind == 'attack' else AIM_UPPER
-    bones = [(b, LEGS if LOWER.match(b) else up) for b in BONES] + [('Weapon', 55)]
+        frames.append((t, pose(smp, pitch, hf)))
+    src = PRIO['attack' if kind == 'attack' else 'aim']; dflt = max(src.values())
+    bones = [(b, min(src.get(b, dflt), LEGS) if LOWER.match(b) else src.get(b, dflt)) for b in BONES] + [('Weapon', 55)]
     write_kf(cr, path, name, L, keys, frames, bones=bones, cycle=k.cycle)
     scale_weapon_written(path)
 
@@ -158,6 +181,14 @@ def scale_weapon(path):
     kf.save(path); return True
 
 
+def prn_to_hand(path):
+    f = NifFile(path); i, name, keys = text_keys(f)
+    if i is None or not any(s.strip().lower().startswith('prn') and 'r hand' not in s.lower() for _, s in keys): return False
+    out = [(t, 'prn: Bip01 R Hand' if s.strip().lower().startswith('prn') else s) for t, s in keys]
+    f.blocks[i] = struct.pack('<iI', name, len(out)) + b''.join(struct.pack('<fi', t, f.str_index(s)) for t, s in out)
+    open(path, 'wb').write(f.to_bytes()); return True
+
+
 def patch_skeleton(path):
     f = NifFile(path)
     if f.find('ProjectileNode') is not None: return 'present'
@@ -167,21 +198,22 @@ def patch_skeleton(path):
 
 
 if __name__ == '__main__':
-    D = sys.argv[1]; skel = sys.argv[2]; hide_only = '--hide' in sys.argv[3:]
+    D = sys.argv[2]; skel = sys.argv[3]; hide_only = '--hide' in sys.argv[4:]
     nm = nh = 0
+    npr = sum(prn_to_hand(os.path.join(d, f)) for d, _, fs in os.walk(D) for f in fs if f.lower().endswith('.kf'))
     for fn in sorted(os.listdir(D)):
         m = re.match(r'^(sneak)?(h2h|1hm|2hm|1hp|2hr|2ha|2hh|2hl|1gt|1md|1lm)(.*)\.kf$', fn, re.I)
         if not m: continue
         pre = m.group(2).lower(); rest = m.group(3).lower()
         p = os.path.join(D, fn)
         if pre in GUNS and not re.match(r'^(sonnic)?(equip|unequip|holster)', rest):
-            if not hide_only: shriek_file(p); nm += 1
+            if not hide_only: mouth_file(p); nm += 1
         elif pre in HIDE:
             if scale_weapon(p): nh += 1
-    if hide_only: sys.exit(print('weapon hidden in', nh))
-    print('shriek files', nm, 'weapon hidden in', nh, 'skeleton ProjectileNode', patch_skeleton(skel))
+    if hide_only: sys.exit(print('weapon hidden in', nh, 'prn keys moved to the hand in', npr))
+    print('mouth-fire files', nm, 'weapon hidden in', nh, 'prn keys moved to the hand in', npr, 'skeleton ProjectileNode', patch_skeleton(skel))
     s2 = Skeleton(skel)
-    for fn in ('2hraim.kf', '2hrattackleft.kf', '2hlattackright.kf', '1hpattackloop.kf'):
+    for fn in ('2hraim.kf', '2hrattackleft.kf', '2haattackloop.kf', '2hlattackright.kf', '1hpattackloop.kf'):
         if not os.path.exists(os.path.join(D, fn)): continue
         k = KFEval(os.path.join(D, fn)); t = next((t for t, x in k.textkeys if x in ('Hit', 'Fire')), 0.0)
         W = s2.fk(full(s2, k.sample(t))); d = W['ProjectileNode'][1][:, 1]

@@ -6,7 +6,9 @@ arms to transfer onto (robots, Eyebot, Securitron, Trog / Tunneler): the race's 
   for every prefix in TYPES (h2h, mt + the melee types the race can hold); standing from h2haim, sneak from sneakh2haim
   (the Eyebot's sneak hover is lower). With --keep-1hm the race's existing 1hmblock* (Mister Handy / Gutsy claw sets) are
   the source instead and copied to the other prefixes.
-usage: python3 -P own_block.py <folder> <out dir> <types e.g. h2h,mt,1hm,2hm> [--keep-1hm]"""
+  With --src <stem> the guard pose is (sneak)<stem>.kf in the folder instead of h2haim (Mirelurk: _guard.kf, both pincers
+  raised before its face - mirelurk_guard.py).
+usage: python3 -P own_block.py <folder> <out dir> <types e.g. h2h,mt,1hm,2hm> [--keep-1hm] [--src <stem>]"""
 import os, sys, shutil, struct
 sys.path.append(os.path.dirname(os.path.abspath(__file__))); sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import numpy as np
@@ -46,13 +48,14 @@ def block_hit(src, dst, skel):
 
 if __name__ == '__main__':
     d, out, types = sys.argv[1], sys.argv[2], sys.argv[3].split(','); keep = '--keep-1hm' in sys.argv
+    stem = sys.argv[sys.argv.index('--src') + 1] if '--src' in sys.argv else 'h2haim'
     os.makedirs(out, exist_ok=True)
     skel = os.path.join(d, 'Skeleton.nif'); n = 0
     for sn in ('', 'sneak'):
         if keep:
             src_i, src_h = os.path.join(d, sn + '1hmblockidle.kf'), os.path.join(d, sn + '1hmblockhit.kf')
         else:
-            aim = os.path.join(d, sn + 'h2haim.kf')
+            aim = os.path.join(d, sn + stem + '.kf')
             src_i, src_h = os.path.join(out, sn + '_bi.kf'), os.path.join(out, sn + '_bh.kf')
             block_idle(aim, src_i); block_hit(aim, src_h, skel)
         for T in types:

@@ -2,10 +2,12 @@
 Locomotion\\Hurt; its own IdleAnims stay in the vanilla Creatures\\Mirelurk folder the get-up idles point at),
 DeathPoses.psa, the generated melee sets (build_creature.py: 1HM / 2HM = its claw attacks), the backward / side runs
 (loco_mirelurk.py), furniture IdleAnims (eyebot_furniture.py ... mirelurk: it climbs onto the seat), Skeleton.nif
-(build_skel_creature.py). Sneak = its standing gait: every standing movement file is copied as the sneak one (a crouch
+(build_skel_creature.py). Guns fire from its mouth with its own 2HL lunge, claws raised (mouth_fire.py mirelurk: gun
+and melee weapons hidden, ProjectileNode added to the skeleton). Blocks = both pincers raised before its face
+(mirelurk_guard.py -> own_block via post_build). Sneak = its standing gait: every standing movement file is copied as the sneak one (a crouch
 would sink the body onto its four side legs). Its idle loop's own vox key (Enum: Idle) is dropped by the enum map.
-Then Enum text keys -> Sound keys (enum_keys 'mirelurk'), then post_build (blocks: own guard), fill_updown, sneak_fix
-(sneak copies of the groups without one), power_fill (the back power), power_legs.
+Then Enum text keys -> Sound keys (enum_keys 'mirelurk'), then mouth_fire, mirelurk_guard + post_build (blocks), fill_updown,
+sneak_fix (sneak copies of the groups without one), power_fill (the back power), power_legs, mouth_fire --hide.
 usage: python3 assemble_mirelurk.py <deploy root>"""
 import sys, os, shutil, glob, subprocess
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -49,9 +51,13 @@ def py(*a):
     r = subprocess.run([sys.executable, *a], capture_output=True, text=True, cwd=H)
     if r.returncode: sys.exit(r.stderr)
     print(' ', os.path.basename(a[0]), ' | '.join(r.stdout.strip().splitlines()[-4:]))
+py(os.path.join(H, 'mouth_fire.py'), 'mirelurk', D, os.path.join(D, 'Skeleton.nif'))
+py(os.path.join(H, 'mirelurk_guard.py'), D)
 py(os.path.join(H, 'post_build.py'), D, 'Mirelurk')
+for f in ('_guard.kf', 'sneak_guard.kf'): os.remove(os.path.join(D, f))
 py(os.path.join(H, 'fill_updown.py'), D)
 py(os.path.join(H, 'sneak_fix.py'), D, '--apply')
 py(os.path.join(H, 'power_fill.py'), os.path.dirname(D), '--apply')
 py(os.path.join(H, 'power_legs.py'), D, '--apply')
+py(os.path.join(H, 'mouth_fire.py'), 'mirelurk', D, os.path.join(D, 'Skeleton.nif'), '--hide')
 print('files', sum(len(fs) for _, _, fs in os.walk(D)))
