@@ -43,7 +43,28 @@ def human_local(sk, smp, base, nm):
             if src[nm][1] is not None: R = src[nm][1]
     return np.array(t, float), np.array(R, float)
 
-def transfer(cr, hpath, base_path, fps=30, head_is=6.0, free_left=None, twist=False):
+_HIP_IS = {}
+def hip_from_is(cr, ref, pre):
+    """XFER_HIP_FROM_IS (cfg, world units at the level aim: x right, y forward, z up): the two-handed hip hold is the
+    creature's own iron-sight hold moved by that much (a hunched creature's human-placed hip rifle hung out to the right
+    of its chest; its iron-sight hold sits right). Returns the right hand's offset and turn from the hip aim to that
+    hold, both in Spine2's frame, so up / down variants carry them with the bent chest."""
+    key = (cr.cfg.__name__, pre)
+    if key not in _HIP_IS:
+        sp = cr.cfg.BONES['torso']; hand = cr.arm['R'][3]
+        res = []
+        for f, base in ((f'{pre}aim.kf', f'{pre}aim.kf'), (f'{pre}aimis.kf', f'{pre}aimis.kf')):
+            fr = transfer(cr, os.path.join(ref, f), os.path.join(ref, base), twist=True, _hip_is=False)[0]
+            res.append(Rig(cr, base_kf=cr.cfg.IDLE_KF).fk(fr[0][1]))
+        Wh_, Wi = res; S0 = Wh_[sp][1]; wp = cr.weapon
+        # the turn that brings the hip gun onto the sight gun, and the hand offset that then puts the gun where the
+        # sight gun is (the Weapon node's own local transform differs between the hip and the sight files)
+        Rc = Wi[wp][1] @ Wh_[wp][1].T
+        off = (Wi[wp][0] + np.array(cr.cfg.XFER_HIP_FROM_IS, float)) - Rc @ (Wh_[wp][0] - Wh_[hand][0]) - Wh_[hand][0]
+        _HIP_IS[key] = (S0.T @ off, S0.T @ Rc @ S0)
+    return _HIP_IS[key]
+
+def transfer(cr, hpath, base_path, fps=30, head_is=6.0, free_left=None, twist=False, _hip_is=True):
     """free_left: path of a human file whose left arm (t=0) replaces the file's own in aims / attacks (one-handed
     pistol aim - the creature's left hand doesn't take the two-handed iron-sight grip; reloads / jams / equips keep it)"""
     hs = Skeleton(HUMAN_SKEL)
@@ -60,6 +81,11 @@ def transfer(cr, hpath, base_path, fps=30, head_is=6.0, free_left=None, twist=Fa
         kf_ = KFEval(free_left); Wfree = human_fk(hs, kf_.sample(0), None); smp_free = kf_.sample(0)
     rig = Rig(cr, base_kf=cr.cfg.IDLE_KF)
     b = cr.cfg.BONES
+    hip = None
+    if (_hip_is and twist and not iron and hasattr(cr.cfg, 'XFER_HIP_FROM_IS') and Wfree is None
+            and not re.search(r'equip|holster|death', name)
+            and os.path.exists(os.path.join(os.path.dirname(hpath), name[:3] + 'aimis.kf'))):   # (heavy weapons: no sights)
+        hip = hip_from_is(cr, os.path.dirname(hpath), name[:3])
     L = k.stop; n = max(2, int(round(L * fps)) + 1)
     frames = []
     for i in range(n):
@@ -130,14 +156,19 @@ def transfer(cr, hpath, base_path, fps=30, head_is=6.0, free_left=None, twist=Fa
                 tgt = W[cr.head][0] + (Wh[hand][0] - Wh[cr.head][0]) + np.array(getattr(cr.cfg, 'XFER_IS_SHIFT', (0, 0, 0)), float)
             else:
                 tgt = Sg + (Wh[hand][0] - Sh)
-                if twist and not iron and not re.search(r'equip|holster|death', name):
+                if twist and not iron and hip is None and _hip_is and not re.search(r'equip|holster|death', name):
                     # XFER_HIP_SHIFT (cfg, world units): the hip hold moved toward the middle (a hunched trunk that
-                    # stays over the hips leaves a human-placed hip rifle hanging out to the right of the chest)
+                    # stays over the hips leaves a human-placed hip rifle hanging out to the right of the chest);
+                    # types with iron sights use XFER_HIP_FROM_IS instead when the cfg has it
                     tgt = tgt + np.array(getattr(cr.cfg, 'XFER_HIP_SHIFT', (0, 0, 0)), float)
             pole = Sg + (Wh[fa][0] - Sh) * 2.0
+            Rhand = Wh[hand][1]
+            if hip is not None:                                    # hip hold = the creature's iron-sight hold, moved
+                S = W[b['torso']][1]; off = S @ hip[0]; Rc = S @ hip[1] @ S.T
+                tgt = tgt + off; pole = pole + off; Rhand = Rc @ Rhand
             loc = rig.ik(loc, side, tgt, loc[hand][0], pole)
             W = rig.fk(loc)
-            rig.set_world_rot(loc, W, hand, Wh[hand][1])
+            rig.set_world_rot(loc, W, hand, Rhand)
             W = rig.fk(loc)
         # the left hand follows the weapon when the human's does (two-handed grips): re-solve it in the weapon frame
         for nm in cr.fingers['R'] + cr.fingers['L'] + [cr.weapon]:

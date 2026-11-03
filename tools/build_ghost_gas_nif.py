@@ -5,6 +5,7 @@ the emitter node turned as the flamer's (emits along the projectile's +Y), world
 from the leg's slow puff to a spray that carries over the flamer's reach, and the emitter switched on as the flamer's:
 the leg's emitter-active track only puffs from 0.25 to 0.37 s of a 1.75 s loop, longer than a projectile lives (nothing
 was drawn), so its controller timing and on / off keys are the flamer's (on from 0 to 0.33 s).
+The leg spray's material alpha (0.5) is raised to ALPHA so the stream reads as solid gas (user: too faint).
 --impact builds the hit effect instead (Ghost Gas impact data set): one slow puff of the same gas billowing out in
 every direction from the hit point - the emitter on for its first 0.12 s, bigger, longer-lived particles.
 usage: python3 -P build_ghost_gas_nif.py <flamerflame01.nif> <nvdlc01_ghostlegrhtfx.nif> <out.nif> [--impact]"""
@@ -19,6 +20,7 @@ RADIUS, RADIUS_VAR = 40.0, 12.0        # particle radius (leg 20)
 LIFE, LIFE_VAR = 0.40, 0.08            # s (flamer 0.37 +- 0.07)
 BIRTH = 40.0                           # particles / s per projectile (leg 60, flamer 30)
 MAXP = 32                              # particle pool per projectile (leg 3000, flamer 12)
+ALPHA = 1.0                            # material alpha (leg 0.5, flamer 1.0)
 GROW, FADE, BASE = 0.12, 0.20, 0.30    # grow-from / fade-out times, start size (leg 0.33 / 0.33 / 0.25)
 
 IMPACT = dict(SPEED=45.0, SPEED_VAR=30.0, DECL_VAR=3.14159, RADIUS=26.0, RADIUS_VAR=8.0, LIFE=1.2, LIFE_VAR=0.3,
@@ -51,6 +53,8 @@ for i in blocks_of('NiPSysBoxEmitter'):
 for i in blocks_of('NiPSysGrowFadeModifier'):
     b = bytearray(dst.blocks[i]); struct.pack_into('<f', b, 13, GROW); struct.pack_into('<f', b, 19, FADE); struct.pack_into('<f', b, 25, BASE)
     dst.blocks[i] = bytes(b)
+for i in blocks_of('NiMaterialProperty'):              # bsver 34: name, extras, ctrl, specular, emissive, glossiness, alpha, emissive mult
+    b = bytearray(dst.blocks[i]); assert len(b) == 48; struct.pack_into('<f', b, 40, ALPHA); dst.blocks[i] = bytes(b)
 for i in blocks_of('NiPSysData'):
     b = bytearray(dst.blocks[i]); struct.pack_into('<H', b, 4, MAXP); dst.blocks[i] = bytes(b)
 if impact:                                       # loop flags as the flamer's; one burst at the start of a 1.6 s cycle
