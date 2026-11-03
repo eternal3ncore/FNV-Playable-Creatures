@@ -12,7 +12,7 @@ sequence name, length, cycle and text keys (vanilla timing and weapon events):
   Weapon     the skeleton's Weapon node (under the right hand / claw) keyed every frame onto the mouth, +X level forward,
              scale 0.001: the gun model stays attached there unseen, so its own ProjectileNode and any node a script adds
              to it (3rd Person Aim Fix) are at the mouth
-  priorities each bone keeps its source file's priority; legs / pelvis / tail / side legs (LEGS) at most 25, under the
+  priorities each bone keeps its source file's priority; legs / pelvis / tail (LEGS) at most 25, under the
              walk's 30, so it walks while firing
   prn keys   every 'prn:' text key in the folder names Bip01 R Hand (the Weapon node's parent; the lakelurk's own
              holster named Dummy01)
@@ -58,7 +58,7 @@ CREATURES = {
     'mirelurk': dict(cfg='mirelurk', aim='2hlaim.kf', attack='2hlattackspin.kf', mouth_fu=(8.0, -6.0), level_head=True,
                      claw_aim='h2haim.kf', claw_attack='h2hattackright.kf',
                      pitch_bones=('Bip01 Neck', 'Bip01 Head'),
-                     lower=r'^Bip01( NonAccum| Pelvis| [LR] (Thigh|Calf|Foot|Toe\d*)| Tail\d*| Ponytail\d+)$'),
+                     lower=r'^Bip01( NonAccum| Pelvis| [LR] (Thigh|Calf|Foot|Toe\d*)| Tail\d*)$'),
 }
 SPEC = CREATURES[sys.argv[1]]
 LOWER = re.compile(SPEC['lower'])

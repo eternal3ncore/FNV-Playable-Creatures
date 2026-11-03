@@ -165,6 +165,6 @@ add-ons need their base pack too.
 - Blocks with both pincers raised before its face.
 - Damage threshold +5, breathes underwater.
 - Nukalurk: its claws carry radiation (Rad Poisoning, 10 rads a second for 3 s, unless the target resists radiation).
-- Sneaks in its normal gait; on chairs and stools it climbs onto the seat.
+- Sneaks crouched; on chairs and stools it settles its shell onto the seat.
 
 A hidden race can be shown by setting `ShowInRaceMenu=1` in its section of the pack's settings file.

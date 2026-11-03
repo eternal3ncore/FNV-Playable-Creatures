@@ -1,7 +1,7 @@
 """Mirelurk (Tale of Two Wastelands: Mirelurk, Mirelurk Hunter, Nukalurk) - creature config for the weapon-set builder.
-Vanilla Creatures\\Mirelurk\\skeleton.nif: a crab - Bip01 biped body carried low on two digitigrade legs (Thigh..Toe1)
-plus four side legs (Bip01 Ponytail1-4 / 5-8 / 9-12 / 13-16 under Spine1), a tail, pincer claws (Hand + Finger0 = the
-moving jaw), a Weapon node under the right claw. Own set: H2H (aim, left / right claw strikes, four power attacks,
+Vanilla Creatures\\Mirelurk\\skeleton.nif: a crab - Bip01 biped body on two digitigrade legs (Thigh..Toe1), four
+mouthpart / feeler chains around the face (Bip01 Ponytail1-4 / 5-8 / 9-12 / 13-16 under Spine1), a tail, pincer claws
+(Hand + Finger0 = the moving jaw), a Weapon node under the right claw. Own set: H2H (aim, left / right claw strikes, four power attacks,
 equips, recoil), 2HL (aim, its lunge AttackSpin, equips) + walk / run / backward / strafe / turn locomotion (+ hurt).
 One- and two-handed melee weapons strike with its own claw attacks (weapon unseen, as the deathclaw); guns are built
 here only for their names / timing - mouth_fire.py replaces every gun file with its own 2HL lunge, claws raised, the
@@ -24,6 +24,8 @@ POLE_R = (2, -6, -30)
 POLE_L = (0, -40, -30)
 POUCH = (-10, 6, -30)
 JUMP_SCALE = 0.5
+SNEAK_DROP = 0.25                # crouched sneak (gen_loco_ttw crouch): its two legs fold
+SNEAK_LEAN = 10.0
 NATIVE = {'h2h': ['h2haim.kf'] * 6, '1hm': ['h2haim.kf'] * 6, '2hm': ['h2haim.kf'] * 6}
 HOLD = dict(wpos=(-8, -16, -6), pitch=30)
 GUN1, GUN2, HEAVY, LAUNCHER = families()

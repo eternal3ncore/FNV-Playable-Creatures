@@ -1,11 +1,10 @@
 """Assembles the Mirelurk skeleton folder (meshes\\PlayableCreatures\\Mirelurk\\): its own KFs (root + Locomotion +
 Locomotion\\Hurt; its own IdleAnims stay in the vanilla Creatures\\Mirelurk folder the get-up idles point at),
-DeathPoses.psa, the generated melee sets (build_creature.py: 1HM / 2HM = its claw attacks), the backward / side runs
-(loco_mirelurk.py), furniture IdleAnims (eyebot_furniture.py ... mirelurk: it climbs onto the seat), Skeleton.nif
+DeathPoses.psa, the generated weapon sets (build_creature.py), the backward / side runs + crouched sneak movement
+(gen_loco_ttw.py mirelurk ... crouch), furniture IdleAnims (mirelurk_sit.py: it settles its shell onto the seat), Skeleton.nif
 (build_skel_creature.py). Guns fire from its mouth with its own 2HL lunge, claws raised (mouth_fire.py mirelurk: gun
 and melee weapons hidden, ProjectileNode added to the skeleton). Blocks = both pincers raised before its face
-(mirelurk_guard.py -> own_block via post_build). Sneak = its standing gait: every standing movement file is copied as the sneak one (a crouch
-would sink the body onto its four side legs). Its idle loop's own vox key (Enum: Idle) is dropped by the enum map.
+(mirelurk_guard.py -> own_block via post_build). Its idle loop's own vox key (Enum: Idle) is dropped by the enum map.
 Then Enum text keys -> Sound keys (enum_keys 'mirelurk'), then mouth_fire, mirelurk_guard + post_build (blocks), fill_updown,
 sneak_fix (sneak copies of the groups without one), power_fill (the back power), power_legs, mouth_fire --hide.
 usage: python3 assemble_mirelurk.py <deploy root>"""
@@ -33,10 +32,6 @@ for d, _, fs in os.walk(B + '/loco'):
 n3 = 0
 for f in os.listdir(B + '/idle'): cp(f'{B}/idle/{f}', os.path.join(D, 'IdleAnims', f)); n3 += 1
 cp(B + '/Skeleton.nif', os.path.join(D, 'Skeleton.nif'))
-# sneak = standing gait
-ns = 0
-for f in ['mtidle.kf'] + ['Locomotion/' + x for x in os.listdir(os.path.join(D, 'Locomotion')) if x.endswith('.kf')]:
-    cp(os.path.join(D, f), os.path.join(D, 'sneak' + os.path.basename(f))); ns += 1
 st = {}; nk = 0
 for d, _, fs in os.walk(D):
     for f in fs:
@@ -45,7 +40,7 @@ for d, _, fs in os.walk(D):
         if not r: continue
         nf, s = r; open(os.path.join(d, f), 'wb').write(nf.to_bytes()); nk += 1
         for k, v in s.items(): st[k] = st.get(k, 0) + v
-print(f'Mirelurk: own {n0}, sets {n1}, loco {n2}, furniture {n3}, sneak gait {ns}, enum-converted {nk} {st}, total files {sum(len(fs) for _, _, fs in os.walk(D))}')
+print(f'Mirelurk: own {n0}, sets {n1}, loco {n2}, furniture {n3}, enum-converted {nk} {st}, total files {sum(len(fs) for _, _, fs in os.walk(D))}')
 H = os.path.dirname(os.path.abspath(__file__))
 def py(*a):
     r = subprocess.run([sys.executable, *a], capture_output=True, text=True, cwd=H)
@@ -57,6 +52,8 @@ py(os.path.join(H, 'post_build.py'), D, 'Mirelurk')
 for f in ('_guard.kf', 'sneak_guard.kf'): os.remove(os.path.join(D, f))
 py(os.path.join(H, 'fill_updown.py'), D)
 py(os.path.join(H, 'sneak_fix.py'), D, '--apply')
+# the forward power lunge (root 512) keeps its standing legs in sneak (a crouched lower body would slide)
+for T in ('h2h', '1hm', '2hm'): shutil.copyfile(os.path.join(D, T + 'attackforwardpower.kf'), os.path.join(D, 'sneak' + T + 'attackforwardpower.kf'))
 py(os.path.join(H, 'power_fill.py'), os.path.dirname(D), '--apply')
 py(os.path.join(H, 'power_legs.py'), D, '--apply')
 py(os.path.join(H, 'mouth_fire.py'), 'mirelurk', D, os.path.join(D, 'Skeleton.nif'), '--hide')
