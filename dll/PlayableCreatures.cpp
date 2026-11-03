@@ -80,7 +80,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 71;
+static const UInt32 kPluginVersion = 72;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -146,6 +146,7 @@ static const struct { UInt32 race; const char* plugin; UInt32 bptd; } kRaceBodyP
 };
 struct Profile {
 	char section[64], name[64], plugin[128], skeleton[260], marker[64];
+	char ini[MAX_PATH];             // the config file the section came from (FirstPerson* keys are read again from it)
 	UInt32 localID;
 	void* race;
 	bool allowArmor;
@@ -183,9 +184,9 @@ struct Profile {
 	char fpNode[64], fpHide[64];    // FirstPersonNode= camera anchor node, FirstPersonHide= node shrunk away (head)
 	float fpOff[3];                 // FirstPersonOffset= right, forward, up from the anchor, in the actor's heading frame
 };
-static Profile g_prof[48];                     // 32 -> 48: 29 sections with the robots
+static Profile g_prof[64];
 static int g_numProf = 0;
-static char g_gameDir[MAX_PATH], g_iniPath[MAX_PATH];
+static char g_gameDir[MAX_PATH];
 static bool g_jip = false;
 
 static UInt16 WeaponMaskFromList(const char* s) {
@@ -212,75 +213,109 @@ static int ParseForms(const char* s, FormRef* out, int max) {
 // FirstPerson* keys: read at startup and again each time 1st person starts, so the ini can be tuned in game.
 static void ReadFirstPersonKeys(Profile& p) {
 	char tmp[96];
-	p.fpBody = GetPrivateProfileIntA(p.section, "FirstPersonBody", 0, g_iniPath) != 0;
-	GetPrivateProfileStringA(p.section, "FirstPersonNode", "Bip01 Head", p.fpNode, sizeof(p.fpNode), g_iniPath);
-	GetPrivateProfileStringA(p.section, "FirstPersonHide", "Bip01 Head", p.fpHide, sizeof(p.fpHide), g_iniPath);
-	GetPrivateProfileStringA(p.section, "FirstPersonOffset", "0,-12,-12", tmp, sizeof(tmp), g_iniPath);
+	p.fpBody = GetPrivateProfileIntA(p.section, "FirstPersonBody", 0, p.ini) != 0;
+	GetPrivateProfileStringA(p.section, "FirstPersonNode", "Bip01 Head", p.fpNode, sizeof(p.fpNode), p.ini);
+	GetPrivateProfileStringA(p.section, "FirstPersonHide", "Bip01 Head", p.fpHide, sizeof(p.fpHide), p.ini);
+	GetPrivateProfileStringA(p.section, "FirstPersonOffset", "0,-12,-12", tmp, sizeof(tmp), p.ini);
 	p.fpOff[0] = p.fpOff[1] = p.fpOff[2] = 0.0f;
 	sscanf(tmp, "%f , %f , %f", &p.fpOff[0], &p.fpOff[1], &p.fpOff[2]);
 }
-static void LoadConfig() {
-	snprintf(g_iniPath, sizeof(g_iniPath), "%sData\\NVSE\\Plugins\\PlayableCreatures.ini", g_gameDir);
+// One config file per creature pack: Data\NVSE\Plugins\PlayableCreatures\<pack>.ini, shipped in the pack, so adding
+// or removing a pack needs no shared file. The old combined Data\NVSE\Plugins\PlayableCreatures.ini is still read
+// after them; a race already set up by a pack file is skipped there.
+static int LoadConfigFile(const char* ini) {
 	char names[4096];
-	DWORD len = GetPrivateProfileSectionNamesA(names, sizeof(names), g_iniPath);
-	if (!len) { Log("config: no sections in %s", g_iniPath); return; }
-	for (char* sec = names; *sec && g_numProf < 48; sec += strlen(sec) + 1) {
+	DWORD len = GetPrivateProfileSectionNamesA(names, sizeof(names), ini);
+	if (!len) { Log("config: no sections in %s", ini); return 0; }
+	int added = 0;
+	for (char* sec = names; *sec && g_numProf < 64; sec += strlen(sec) + 1) {
 		Profile& p = g_prof[g_numProf]; memset(&p, 0, sizeof(p));
 		char tmp[1024];
-		strncpy(p.section, sec, 63);
-		GetPrivateProfileStringA(sec, "Plugin", "", p.plugin, sizeof(p.plugin), g_iniPath);
-		GetPrivateProfileStringA(sec, "Race", "", tmp, sizeof(tmp), g_iniPath); p.localID = strtoul(tmp, nullptr, 16) & 0xFFFFFF;
-		GetPrivateProfileStringA(sec, "Skeleton", "", p.skeleton, sizeof(p.skeleton), g_iniPath);
-		GetPrivateProfileStringA(sec, "Marker", "", p.marker, sizeof(p.marker), g_iniPath);
-		GetPrivateProfileStringA(sec, "Name", sec, p.name, sizeof(p.name), g_iniPath);
-		p.allowArmor = GetPrivateProfileIntA(sec, "AllowArmor", 1, g_iniPath) != 0;
-		p.armorVisuals = GetPrivateProfileIntA(sec, "ArmorVisuals", 1, g_iniPath) != 0;
-		GetPrivateProfileStringA(sec, "ShowForms", "", tmp, sizeof(tmp), g_iniPath); p.numShow = ParseForms(tmp, p.show, 16);
-		GetPrivateProfileStringA(sec, "FirstPersonForms", "", tmp, sizeof(tmp), g_iniPath); p.numShow1st = ParseForms(tmp, p.show1st, 16);
-		GetPrivateProfileStringA(sec, "WeaponAnims", "", tmp, sizeof(tmp), g_iniPath); p.weaponTypeMask = WeaponMaskFromList(tmp);
-		GetPrivateProfileStringA(sec, "AllowForms", "", tmp, sizeof(tmp), g_iniPath); p.numAllow = ParseForms(tmp, p.allow, 16);
-		GetPrivateProfileStringA(sec, "SilentBlockForms", "", tmp, sizeof(tmp), g_iniPath); p.numSilent = ParseForms(tmp, p.silent, 16);
-		GetPrivateProfileStringA(sec, "HitSound", "", tmp, sizeof(tmp), g_iniPath); ParseForms(tmp, &p.hitSnd, 1);
-		GetPrivateProfileStringA(sec, "DeathSound", "", tmp, sizeof(tmp), g_iniPath); ParseForms(tmp, &p.deathSnd, 1);
-		GetPrivateProfileStringA(sec, "RangedAttackSound", "", tmp, sizeof(tmp), g_iniPath); ParseForms(tmp, &p.rangedSnd, 1);
-		GetPrivateProfileStringA(sec, "LoopSound", "", tmp, sizeof(tmp), g_iniPath); ParseForms(tmp, &p.loopSnd, 1);
-		GetPrivateProfileStringA(sec, "VoiceType", "", tmp, sizeof(tmp), g_iniPath); ParseForms(tmp, &p.voiceType, 1);
-		p.impactMaterial = GetPrivateProfileIntA(sec, "ImpactMaterial", -1, g_iniPath);
-		p.dialogueVoice = GetPrivateProfileIntA(sec, "DialogueVoice", 0, g_iniPath) != 0 || p.voiceType.localID != 0;
-		p.hitChance = GetPrivateProfileIntA(sec, "HitSoundChance", 60, g_iniPath);
-		p.hitCooldownMs = (UInt32)(GetPrivateProfileIntA(sec, "HitSoundCooldown", 1500, g_iniPath));
-		p.rangedChance = GetPrivateProfileIntA(sec, "RangedAttackSoundChance", 25, g_iniPath);
-		p.rangedCooldownMs = (UInt32)(GetPrivateProfileIntA(sec, "RangedAttackSoundCooldown", 6000, g_iniPath));
-		p.radImmune = GetPrivateProfileIntA(sec, "RadImmune", 0, g_iniPath) != 0;
-		p.cloudImmune = GetPrivateProfileIntA(sec, "CloudImmune", 0, g_iniPath) != 0;
-		p.ghostEssential = GetPrivateProfileIntA(sec, "GhostEssential", 0, g_iniPath) != 0;
-		GetPrivateProfileStringA(sec, "ChildRace", "", tmp, sizeof(tmp), g_iniPath);
+		strncpy(p.section, sec, 63); strncpy(p.ini, ini, MAX_PATH - 1);
+		GetPrivateProfileStringA(sec, "Plugin", "", p.plugin, sizeof(p.plugin), ini);
+		GetPrivateProfileStringA(sec, "Race", "", tmp, sizeof(tmp), ini); p.localID = strtoul(tmp, nullptr, 16) & 0xFFFFFF;
+		GetPrivateProfileStringA(sec, "Skeleton", "", p.skeleton, sizeof(p.skeleton), ini);
+		GetPrivateProfileStringA(sec, "Marker", "", p.marker, sizeof(p.marker), ini);
+		GetPrivateProfileStringA(sec, "Name", sec, p.name, sizeof(p.name), ini);
+		p.allowArmor = GetPrivateProfileIntA(sec, "AllowArmor", 1, ini) != 0;
+		p.armorVisuals = GetPrivateProfileIntA(sec, "ArmorVisuals", 1, ini) != 0;
+		GetPrivateProfileStringA(sec, "ShowForms", "", tmp, sizeof(tmp), ini); p.numShow = ParseForms(tmp, p.show, 16);
+		GetPrivateProfileStringA(sec, "FirstPersonForms", "", tmp, sizeof(tmp), ini); p.numShow1st = ParseForms(tmp, p.show1st, 16);
+		GetPrivateProfileStringA(sec, "WeaponAnims", "", tmp, sizeof(tmp), ini); p.weaponTypeMask = WeaponMaskFromList(tmp);
+		GetPrivateProfileStringA(sec, "AllowForms", "", tmp, sizeof(tmp), ini); p.numAllow = ParseForms(tmp, p.allow, 16);
+		GetPrivateProfileStringA(sec, "SilentBlockForms", "", tmp, sizeof(tmp), ini); p.numSilent = ParseForms(tmp, p.silent, 16);
+		GetPrivateProfileStringA(sec, "HitSound", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.hitSnd, 1);
+		GetPrivateProfileStringA(sec, "DeathSound", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.deathSnd, 1);
+		GetPrivateProfileStringA(sec, "RangedAttackSound", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.rangedSnd, 1);
+		GetPrivateProfileStringA(sec, "LoopSound", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.loopSnd, 1);
+		GetPrivateProfileStringA(sec, "VoiceType", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.voiceType, 1);
+		p.impactMaterial = GetPrivateProfileIntA(sec, "ImpactMaterial", -1, ini);
+		p.dialogueVoice = GetPrivateProfileIntA(sec, "DialogueVoice", 0, ini) != 0 || p.voiceType.localID != 0;
+		p.hitChance = GetPrivateProfileIntA(sec, "HitSoundChance", 60, ini);
+		p.hitCooldownMs = (UInt32)(GetPrivateProfileIntA(sec, "HitSoundCooldown", 1500, ini));
+		p.rangedChance = GetPrivateProfileIntA(sec, "RangedAttackSoundChance", 25, ini);
+		p.rangedCooldownMs = (UInt32)(GetPrivateProfileIntA(sec, "RangedAttackSoundCooldown", 6000, ini));
+		p.radImmune = GetPrivateProfileIntA(sec, "RadImmune", 0, ini) != 0;
+		p.cloudImmune = GetPrivateProfileIntA(sec, "CloudImmune", 0, ini) != 0;
+		p.ghostEssential = GetPrivateProfileIntA(sec, "GhostEssential", 0, ini) != 0;
+		GetPrivateProfileStringA(sec, "ChildRace", "", tmp, sizeof(tmp), ini);
 		if (tmp[0]) { strncpy(p.childRace.plugin, p.plugin, 63); p.childRace.localID = strtoul(tmp, nullptr, 16) & 0xFFFFFF; }
-		GetPrivateProfileStringA(sec, "Faction", "", tmp, sizeof(tmp), g_iniPath); p.numFactions = ParseForms(tmp, p.factions, 4);
-		p.joinFaction = GetPrivateProfileIntA(sec, "JoinFaction", 0, g_iniPath) != 0;
-		GetPrivateProfileStringA(sec, "HideWeapon", "0", tmp, sizeof(tmp), g_iniPath);
+		GetPrivateProfileStringA(sec, "Faction", "", tmp, sizeof(tmp), ini); p.numFactions = ParseForms(tmp, p.factions, 4);
+		p.joinFaction = GetPrivateProfileIntA(sec, "JoinFaction", 0, ini) != 0;
+		GetPrivateProfileStringA(sec, "HideWeapon", "0", tmp, sizeof(tmp), ini);
 		p.hideWeaponMask = !strcmp(tmp, "1") ? 0xFFFF : !strcmp(tmp, "0") || !tmp[0] ? 0 : WeaponMaskFromList(tmp);
-		p.noFallDamage = GetPrivateProfileIntA(sec, "NoFallDamage", 0, g_iniPath) != 0;
-		GetPrivateProfileStringA(sec, "GiveItems", "", tmp, sizeof(tmp), g_iniPath); p.numGive = ParseForms(tmp, p.give, 4);
-		GetPrivateProfileStringA(sec, "BodyPartData", "", tmp, sizeof(tmp), g_iniPath); ParseForms(tmp, &p.bodyPartsIni, 1);
-		p.ghostMoves = GetPrivateProfileIntA(sec, "GhostMoves", 0, g_iniPath) != 0;
-		p.blockAnimOverrides = GetPrivateProfileIntA(sec, "BlockAnimOverrides", 1, g_iniPath) != 0;
-		p.animLog = GetPrivateProfileIntA(sec, "AnimLog", 0, g_iniPath) != 0;
+		p.noFallDamage = GetPrivateProfileIntA(sec, "NoFallDamage", 0, ini) != 0;
+		GetPrivateProfileStringA(sec, "GiveItems", "", tmp, sizeof(tmp), ini); p.numGive = ParseForms(tmp, p.give, 4);
+		GetPrivateProfileStringA(sec, "BodyPartData", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.bodyPartsIni, 1);
+		p.ghostMoves = GetPrivateProfileIntA(sec, "GhostMoves", 0, ini) != 0;
+		p.blockAnimOverrides = GetPrivateProfileIntA(sec, "BlockAnimOverrides", 1, ini) != 0;
+		p.animLog = GetPrivateProfileIntA(sec, "AnimLog", 0, ini) != 0;
 		if (!p.plugin[0] || !p.localID || !p.skeleton[0] || !p.marker[0]) { Log("config: [%s] incomplete, skipped", sec); continue; }
+		bool dup = false;
+		for (int i = 0; i < g_numProf && !dup; i++)
+			if (g_prof[i].localID == p.localID && !_stricmp(g_prof[i].plugin, p.plugin)) {
+				Log("config: [%s] %s|%06X already set up by [%s] in %s - skipped", sec, p.plugin, p.localID, g_prof[i].section, g_prof[i].ini);
+				dup = true;
+			}
+		if (dup) continue;
 		Log("config: [%s] %s|%06X skeleton='%s' marker='%s' armor=%d armorVisuals=%d weaponMask=%04X allow=%d silent=%d show=%d",
 			sec, p.plugin, p.localID, p.skeleton, p.marker, p.allowArmor, p.armorVisuals, p.weaponTypeMask, p.numAllow, p.numSilent, p.numShow);
-		p.showInMenu = GetPrivateProfileIntA(sec, "ShowInRaceMenu", 1, g_iniPath) != 0;
-		p.resistCap = GetPrivateProfileIntA(sec, "ResistCap", 0, g_iniPath);
-		GetPrivateProfileStringA(sec, "SneakCamera", "1", tmp, sizeof(tmp), g_iniPath); p.sneakCamera = (float)atof(tmp);
+		p.showInMenu = GetPrivateProfileIntA(sec, "ShowInRaceMenu", 1, ini) != 0;
+		p.resistCap = GetPrivateProfileIntA(sec, "ResistCap", 0, ini);
+		GetPrivateProfileStringA(sec, "SneakCamera", "1", tmp, sizeof(tmp), ini); p.sneakCamera = (float)atof(tmp);
 		ReadFirstPersonKeys(p);
 		if (p.sneakCamera != 1.0f) Log("config: [%s] sneak camera drop x%.2f", sec, p.sneakCamera);
 		if (p.resistCap) Log("config: [%s] resistCap=%d", sec, p.resistCap);
 		Log("config: [%s] traits radImmune=%d cloudImmune=%d ghostEssential=%d", sec, p.radImmune, p.cloudImmune, p.ghostEssential);
 		Log("config: [%s] voices hit=%06X (%u%%, %ums) death=%06X ranged=%06X (%u%%, %ums) loop=%06X voiceType=%06X", sec,
 			p.hitSnd.localID, p.hitChance, p.hitCooldownMs, p.deathSnd.localID, p.rangedSnd.localID, p.rangedChance, p.rangedCooldownMs, p.loopSnd.localID, p.voiceType.localID);
-		g_numProf++;
+		g_numProf++; added++;
 	}
+	return added;
 }
+static void LoadConfig() {
+	char dir[MAX_PATH], pat[MAX_PATH], path[MAX_PATH];
+	snprintf(dir, sizeof(dir), "%sData\\NVSE\\Plugins\\PlayableCreatures\\", g_gameDir);
+	snprintf(pat, sizeof(pat), "%s*.ini", dir);
+	WIN32_FIND_DATAA fd;
+	HANDLE h = FindFirstFileA(pat, &fd);
+	if (h != INVALID_HANDLE_VALUE) {
+		do {
+			if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
+			snprintf(path, sizeof(path), "%s%s", dir, fd.cFileName);
+			int n = LoadConfigFile(path);
+			Log("config: %s - %d race%s", fd.cFileName, n, n == 1 ? "" : "s");
+		} while (FindNextFileA(h, &fd));
+		FindClose(h);
+	}
+	snprintf(path, sizeof(path), "%sData\\NVSE\\Plugins\\PlayableCreatures.ini", g_gameDir);
+	if (GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES) {
+		int n = LoadConfigFile(path);
+		Log("config: PlayableCreatures.ini (combined, older releases) - %d race%s not set up by a pack file", n, n == 1 ? "" : "s");
+	}
+	if (!g_numProf) Log("config: no races - no pack config in %s and no PlayableCreatures.ini", dir);
+}
+
 
 // ---------------- engine helpers ----------------
 // A plugin's load index (to turn the ini's Plugin|local id into a form id): the TESFile with that name in the
