@@ -116,8 +116,9 @@ def ctda(func, comp, op=0, p1=0, OR=False):
 IS_1ST_PERSON = [ctda(F_ISID, 1, 0, 0x7), ctda(F_PC1ST, 1)]
 HUMAN = 'Characters\\_Male\\IdleAnims\\'
 idles = []
+IDLE_BY_EDID = {}
 def idle(edid, modl, conds, parent, data, prev=0):
-    fid = nid()
+    fid = nid(); IDLE_BY_EDID[edid] = fid
     idles.append(record('IDLE', fid, [('EDID', z(edid)), ('MODL', z(modl))] + [('CTDA', c) for c in conds] +
                         [('ANAM', struct.pack('<II', parent, prev)), ('DATA', bytes.fromhex(data))]))
     return fid
@@ -307,6 +308,22 @@ def act_idles(tag, folder):
     chain(0, [(f'PC{tag}StartCannibal', folder + '\\Cannibal.kf', *_AC[0x7D409])])
 for _tag, _f in (('Swampfolk', 'Swampfolk'), ('Hillfolk', 'Hillfolk'), ('Trog', 'Trog'), ('Mirelurk', 'Mirelurk'), ('SuperMutantDC', 'SuperMutantDC')):
     act_idles(_tag, 'PlayableCreatures\\%s\\IdleAnims' % _f)
+
+# The Mister Sandman kill (StartMisterSandman: FurnitureIdles > Sleeping > SandMan / SandManFloor, by the victim's
+# bed marker 1 / 2 / 3 / 4; vanilla conditions / DATA): a Sleeping group under the race's FurnitureIdles root (after its
+# Sitting group), or a FurnitureIdles root with only Sleeping for races without furniture. Files from anim/act_idles.py.
+_SM = {f: _vanilla_idle(f) for f in (0x3AEF, 0x3AFF, 0x79F16, 0x7C6CD, 0x79F17, 0x79F18, 0x7C6CE, 0x7C6CF)}
+def sandman_idles(tag, folder):
+    root = IDLE_BY_EDID.get(f'PC{tag}FurnitureIdles'); prev = IDLE_BY_EDID.get(f'PC{tag}Sitting', 0)
+    if root is None: root, = chain(0, [(f'PC{tag}FurnitureIdles', folder, *_SM[0x3AEF])]); prev = 0
+    sleeping = idle(f'PC{tag}Sleeping', folder, _SM[0x3AFF][0], root, _SM[0x3AFF][1], prev)
+    bed, floor = chain(sleeping, [(f'PC{tag}SandMan', folder, *_SM[0x79F16]), (f'PC{tag}SandManFloor', folder, *_SM[0x7C6CD])])
+    chain(bed, [(f'PC{tag}SandManBedLeft', folder + '\\SandManBedLeft.kf', *_SM[0x79F17]),
+                (f'PC{tag}SandManBedRight', folder + '\\SandManBedRight.kf', *_SM[0x79F18])])
+    chain(floor, [(f'PC{tag}SandManFlrLeft', folder + '\\SandManFlrLeft.kf', *_SM[0x7C6CE]),
+                  (f'PC{tag}SandManFlrRight', folder + '\\SandManFlrRight.kf', *_SM[0x7C6CF])])
+for _tag, _f in (('Swampfolk', 'Swampfolk'), ('Hillfolk', 'Hillfolk'), ('Trog', 'Trog'), ('Mirelurk', 'Mirelurk'), ('SuperMutantDC', 'SuperMutantDC')):
+    sandman_idles(_tag, 'PlayableCreatures\\%s\\IdleAnims' % _f)
 
 groups = [group('HAIR', [hair]), group('EYES', [eyes]), group('RACE', races), group('SPEL', spels), group('ARMO', armors), group('NPC_', npcs), group('IDLE', idles), group('BPTD', bptds)]
 nrec = 2 + len(races) + len(spels) + len(armors) + len(npcs) + len(idles) + len(bptds) + len(groups)
