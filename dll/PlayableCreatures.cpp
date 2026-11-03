@@ -80,7 +80,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 77;
+static const UInt32 kPluginVersion = 78;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -938,18 +938,24 @@ static void __cdecl CamPivotTerm(float* pz, void* player) {
 	if (!g_camOurs) { *pz += vanillaTerm; return; }
 	void* fp = *(void**)((UInt8*)player + 0x694);
 	float e0 = *(float*)((UInt8*)player + 0x698);
+	// e0 is the unscaled bind height; the 1st-person skeleton carries the player's scale (race height: the Mirelurk
+	// 0.75, the Robobrain 0.33), so its standing eye is e0 x that scale (its root's world scale) - compared against the
+	// unscaled e0, a small race read as crouched all the time
+	float s = fp ? *(float*)((UInt8*)fp + 0x98) : 1.0f;              // NiAVObject world scale
+	if (!(s > 0.01f && s < 100.0f)) s = 1.0f;
+	float e0s = e0 * s;
 	float rootZ = NodeWorldZ(root), h3 = NodeWorldZ(c3) - rootZ;
-	float k = e0 > 1.0f ? h3 / e0 : 1.0f;
+	float k = e0s > 1.0f ? h3 / e0s : 1.0f;
 	if (k < 0.1f) k = 0.1f; else if (k > 3.0f) k = 3.0f;
-	float eye = fp ? NodeWorldZ(c1) - NodeWorldZ(fp) : e0;           // 1st-person eye height now (crouch lowers it)
+	float eye = fp ? NodeWorldZ(c1) - NodeWorldZ(fp) : e0s;          // 1st-person eye height now (crouch lowers it)
 	// the crouch drop is the 1st-person (human) skeleton's; SneakCamera= scales it per race (0 = none)
 	float sc = g_camSneak;
 	float vanilla = *pz + vanillaTerm;
-	*pz = NodeWorldZ(c3) + (eye - e0) * k * sc;
+	*pz = NodeWorldZ(c3) + (eye - e0s) * k * sc;
 	if (!g_camLogged) {
 		g_camLogged = true;
-		Log("camera: '%s' feet %.1f, Camera3rd +%.1f, 1st-person eye %.1f (bind %.1f) -> pivot +%.1f (vanilla would be +%.1f), sneak drop x%.2f",
-			RootMarker(root), rootZ, h3, eye, e0, *pz - rootZ, vanilla - rootZ, sc);
+		Log("camera: '%s' feet %.1f, Camera3rd +%.1f, 1st-person eye %.1f (bind %.1f x scale %.2f) -> pivot +%.1f (vanilla would be +%.1f), sneak drop x%.2f",
+			RootMarker(root), rootZ, h3, eye, e0, s, *pz - rootZ, vanilla - rootZ, sc);
 	}
 }
 // ---------------- fall damage ----------------
