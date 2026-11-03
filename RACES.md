@@ -14,7 +14,7 @@ add-ons need their base pack too.
   save/reload).
 - Its own hit, death and attack voices, footsteps and blood type.
 - Block animations for unarmed and melee.
-- Furniture use and getting up after a knockdown.
+- Furniture use (except Tunnelers / Spore Carriers and Trogs) and getting up after a knockdown.
 - The creature's own body parts for gore, dismemberment and VATS.
 - Armor can be worn for its stats but isn't drawn (except where noted).
 - Human animation overrides from kNVSE animation mods don't apply to creature races.
@@ -69,6 +69,7 @@ add-ons need their base pack too.
 `PlayableCreatures_Tunnelers.esp`
 *Tunneler, Spore Carrier*
 - Unarmed and melee only.
+- Can't use chairs or stools (the game treats creatures this short as children).
 - **Spore Carrier:** immune to poison.
 
 ## Eyebot
@@ -154,6 +155,7 @@ add-ons need their base pack too.
 `PlayableCreatures_Trogs.esp`
 *Trog, Trog Brute, Trog Savage*
 - Unarmed and melee only.
+- Can't use chairs or stools (the game treats creatures this short as children).
 - Brute and Savage are hidden from the race menu by default.
 
 ### Mirelurks
