@@ -38,6 +38,15 @@ RACES = {int(x, 16) for x in os.environ['PC_VOICE_RACES'].split(',')}
 TTW = os.environ.get('PC_VOICE_TTW', '0') == '1'
 RACE_PLUGIN = os.environ.get('PC_RACE_PLUGIN', ESP_NAME)
 QUEST_EDID = os.environ['PC_VOICE_QUEST']
+
+
+def voice_stem(quest, topic):
+    """the engine's voice file stem: '<quest>_<topic>', both lower case; longer than 26 characters -> quest cut to 10 and
+    topic to 15 characters (every file of Fallout - Voices1.bsa: 26 or shorter never cut, 27 and longer always cut,
+    e.g. GenericSupermutant_PowerAttack -> genericsup_powerattack). Uncut names over 26 were never found: PCVoiceMisterHandy's
+    PowerAttack lines were silent."""
+    full = f'{quest}_{topic}'.lower()
+    return full if len(full) <= 26 else f'{quest[:10]}_{topic[:15]}'.lower()
 PRIORITY = int(os.environ.get('PC_VOICE_PRIORITY', '110'))
 ID_BASE = int(os.environ.get('PC_VOICE_ID_BASE', '0x800'), 16)
 T = json.load(open('/home/claude/fnv/voice_topics.json'))
@@ -304,7 +313,7 @@ for topic, tfid in TOPICS.items():
             # the player speaks with PlayerVoiceMale / PlayerVoiceFemale whatever its NPC voice type says (Actor::Say
             # looks in ...\\PlayerVoiceMale\\...), NPCs of the race with the race's voice type
             for folder in ['playervoicemale', 'playervoicefemale'] + ([v['npc_folder']] if v['npc_folder'] else []):
-                base = f"sound\\voice\\{ESP_NAME.lower()}\\{folder}\\{QUEST_EDID.lower()}_{topic.lower()}_{fid & 0xFFFFFF:08x}_1"
+                base = f"sound\\voice\\{ESP_NAME.lower()}\\{folder}\\{voice_stem(QUEST_EDID, topic)}_{fid & 0xFFFFFF:08x}_1"
                 plan.append((src + v['ext'], base + v['ext']))
             n_info += 1
     child = b'GRUP' + struct.pack('<IIiHHHH', 24 + sum(len(x) for x in infos), tfid, 7, 0, 0, 0, 0) + b''.join(infos)
