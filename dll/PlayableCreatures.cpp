@@ -80,7 +80,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 69;
+static const UInt32 kPluginVersion = 70;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -167,7 +167,8 @@ struct Profile {
 	void* childRacePtr;
 	FormRef factions[4]; int numFactions;   // Faction= list of the species' in-game factions (missing plugins skipped)
 	bool joinFaction;               // JoinFaction=1 joins them while in the race (default 0: never touched)
-	bool hideWeapon;                // HideWeapon=1 - the equipped weapon is never drawn on the 3rd-person body (1st person unchanged)
+	UInt16 hideWeaponMask;          // HideWeapon=1 (every weapon) or a type list (e.g. H2H,1HM,2HM) - those weapons are never
+	                                // drawn on the 3rd-person body (1st person unchanged)
 	bool noFallDamage;              // NoFallDamage=1 - the engine's flying-creature fall-damage exemption applies to the player
 	FormRef bodyParts;              // the creature's own body part data (gore / dismemberment / VATS parts): BodyPartData= or kRaceBodyParts
 	FormRef bodyPartsIni;           // BodyPartData=Plugin|id - takes the place of the kRaceBodyParts entry
@@ -257,7 +258,8 @@ static void LoadConfig() {
 		if (tmp[0]) { strncpy(p.childRace.plugin, p.plugin, 63); p.childRace.localID = strtoul(tmp, nullptr, 16) & 0xFFFFFF; }
 		GetPrivateProfileStringA(sec, "Faction", "", tmp, sizeof(tmp), g_iniPath); p.numFactions = ParseForms(tmp, p.factions, 4);
 		p.joinFaction = GetPrivateProfileIntA(sec, "JoinFaction", 0, g_iniPath) != 0;
-		p.hideWeapon = GetPrivateProfileIntA(sec, "HideWeapon", 0, g_iniPath) != 0;
+		GetPrivateProfileStringA(sec, "HideWeapon", "0", tmp, sizeof(tmp), g_iniPath);
+		p.hideWeaponMask = !strcmp(tmp, "1") ? 0xFFFF : !strcmp(tmp, "0") || !tmp[0] ? 0 : WeaponMaskFromList(tmp);
 		p.noFallDamage = GetPrivateProfileIntA(sec, "NoFallDamage", 0, g_iniPath) != 0;
 		GetPrivateProfileStringA(sec, "GiveItems", "", tmp, sizeof(tmp), g_iniPath); p.numGive = ParseForms(tmp, p.give, 4);
 		GetPrivateProfileStringA(sec, "BodyPartData", "", tmp, sizeof(tmp), g_iniPath); ParseForms(tmp, &p.bodyPartsIni, 1);
@@ -626,12 +628,14 @@ static void* Detour(UInt32 addr, UInt8 frameSize, void* hook, const char* what) 
 typedef bool (__fastcall* AddItemToBiped_t)(void* npc, void* edx, void* character, void* biped, void* form);
 static AddItemToBiped_t g_addBipedTramp = nullptr;
 static bool __fastcall Hook_AddItemToBiped(void* npc, void* edx, void* character, void* biped, void* form) {
-	// HideWeapon=1 (trog-type races: on all fours the weapon hung between the feet): the weapon model is never
-	// added to the 3rd-person biped; the weapon stays equipped and works, the 1st-person biped still draws it
+	// HideWeapon (trog-type races: on all fours the weapon hung between the feet; deathclaws: melee weapons): the
+	// model of a weapon of a hidden type is never added to the 3rd-person biped; the weapon stays equipped and works,
+	// the 1st-person biped still draws it
 	if (npc && form && *((UInt8*)form + 4) == kFormType_WEAP) {
 		Profile* p = ProfileForRace(NPCRace(npc));
 		void* player = Player();
-		if (p && p->hideWeapon && !(player && biped == *(void**)((UInt8*)player + 0x68C))) return true;
+		UInt8 wt = *((UInt8*)form + 0xF4);
+		if (p && wt < 16 && (p->hideWeaponMask & (1u << wt)) && !(player && biped == *(void**)((UInt8*)player + 0x68C))) return true;
 	}
 	if (npc && form && *((UInt8*)form + 4) == kFormType_ARMO) {
 		Profile* p = ProfileForRace(NPCRace(npc));
