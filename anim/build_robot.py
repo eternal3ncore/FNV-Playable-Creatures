@@ -278,6 +278,15 @@ CFG = {
 # chain, a clone of the buzzsaw arm's R Thigh chain: same bone lengths) with the buzzsaw arm's swing, while the plasma
 # arm holds its idle pose.
 CFG['mistergutsy'] = dict(CFG['misterhandy'], claw=True)
+# Mister Handy has no gun arm (right arm = buzzsaw): every gun, thrown weapon and mine is fired / thrown with its flamer
+# arm (its 2HL spin motion, aims / attacks level), from the flamer tip. The player's weapon model is never drawn
+# (HideWeapon), so the shot leaves the skeleton's ProjectileNode - on the flamer tip since skeleton v3 - while the
+# buzzsaw arm did the aiming (shots ~45 deg off to the side).
+_R = ('1hp', '2ha', '2hr', '1gt', '1md', '1lm')
+CFG['misterhandy'] = dict(CFG['misterhandy'],
+                          SRC_OF=dict(CFG['misterhandy']['SRC_OF'], **{t: '2hl' for t in _R}),
+                          PRN_OF=dict(CFG['misterhandy']['PRN_OF'], **{t: 'ProjectileNode_HeadLaser' for t in _R}),
+                          level_attacks=('2hh', '2hl') + _R)
 C = CFG[ROBOT]
 ctx = RL.Ctx([os.path.join(SRCDIR, d) for d in C['dirs']] + [os.path.join(SRCDIR, 'locomotion')], SKEL)
 if C.get('jet'):

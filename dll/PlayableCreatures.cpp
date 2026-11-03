@@ -80,7 +80,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 78;
+static const UInt32 kPluginVersion = 79;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -1032,6 +1032,37 @@ static bool __fastcall Hook_RagEye(void* ctrl, void*, void* out) {
 	}
 	return g_prevRagEye(ctrl, nullptr, out);
 }
+// The ragdoll's head pose (0x87E130 -> 0xC7DE60 at 0x87E575, for the first body part with 'IK Data' + 'IK Data -
+// Headtracking') looks the part's IK node up in the ragdoll's hkaSkeleton (0xC79340 -> 0xCDD390), which holds only the
+// bones with a collision body. The same IK node is the head-tracking (look-at) bone, so it must be the head; but many
+// creature ragdolls have no body on the head (Hillfolk1, Lakelurk: their neck is the ragdoll's top bone) - the lookup
+// failed, the pose was never set up. For the player: when the name isn't in the hkaSkeleton, the pose is set up from the
+// nearest ancestor of that node that is (the head tracking keeps the real head).
+static const UInt32 kSite_RagHead = 0x0087E575, kAddr_RagHead = 0x00C7DE60, kAddr_HkaFindBone = 0x00CDD390;
+typedef void (__fastcall* RagHead_t)(void* ctrl, void* edx, const char* name);
+typedef int (__cdecl* HkaFind_t)(void* skel, const char* name, void* cmp);
+typedef void* (__cdecl* FindNodeN_t)(void* root, const char* name);
+static RagHead_t g_prevRagHead = (RagHead_t)kAddr_RagHead;
+static bool HkaHas(void* skel, const char* nm) { return (short)((HkaFind_t)kAddr_HkaFindBone)(skel, nm, nullptr) >= 0; }
+static void __fastcall Hook_RagHead(void* ctrl, void*, const char* name) {
+	void* pl = Player();
+	if (ctrl && pl && ctrl == *(void**)((UInt8*)pl + 0xAC) && name && *name) {
+		void* ra = *(void**)((UInt8*)ctrl + 0x2A4);
+		void* skel = ra ? *(void**)((UInt8*)ra + 0x0C) : nullptr;
+		void* root = PlayerRoot(pl);
+		if (skel && root && !HkaHas(skel, name)) {
+			void* n = ((FindNodeN_t)0x004AAE30)(root, name);        // the engine's by-name search
+			const char* use = nullptr;
+			for (n = n ? *(void**)((UInt8*)n + 0x18) : nullptr; n; n = *(void**)((UInt8*)n + 0x18)) {   // NiAVObject parent
+				const char* nm = *(const char**)((UInt8*)n + 0x08);
+				if (nm && *nm && HkaHas(skel, nm)) { use = nm; break; }
+			}
+			Log("ragdoll: head node '%s' has no ragdoll body -> head pose from '%s'", name, use ? use : "(none: no ragdoll ancestor)");
+			if (use) { g_prevRagHead(ctrl, nullptr, use); return; }
+		}
+	}
+	g_prevRagHead(ctrl, nullptr, name);
+}
 static bool RedirectCall(UInt32 site, void* hook, UInt32 vanilla, UInt32* prevOut, const char* what) {
 	UInt8* p = (UInt8*)site;
 	if (p[0] != 0xE8) { Log("patch: %s @%08X not a call (%02X) - NOT patched", what, site, p[0]); return false; }
@@ -1045,6 +1076,7 @@ static void InstallRagdollDiag() {
 	UInt32 prev;
 	if (RedirectCall(kSite_RagInitCheck, (void*)Hook_RagInitOK, kAddr_RagInitOK, &prev, "ragdoll init check")) g_prevRagInit = (RagBool_t)prev;
 	if (RedirectCall(kSite_RagEye, (void*)Hook_RagEye, kAddr_RagEye, &prev, "ragdoll eye position")) g_prevRagEye = (RagEye_t)prev;
+	if (RedirectCall(kSite_RagHead, (void*)Hook_RagHead, kAddr_RagHead, &prev, "ragdoll head pose setup")) g_prevRagHead = (RagHead_t)prev;
 }
 
 static void InstallCameraPivot() {

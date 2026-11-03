@@ -257,11 +257,11 @@ creature_idles('Mirelurk', F, *human_set(F + '\\'), (MLK + 'IdleAnims\\specialid
 F = 'PlayableCreatures\\SuperMutantDC\\IdleAnims'
 creature_idles('SuperMutantDC', F, *human_set(F + '\\'), (DC + 'IdleAnims\\specialidle_getupfaceup.kf', DC + 'IdleAnims\\specialidle_getupfacedown.kf'))
 
-# The same head pose fix for the Fallout 3 creatures whose body part data fails it (tools/bptd_audit.py): The Pitt's trogs
-# (DLCPittTrogBodyPartDataDC: Head flags 0x09, IK node = the skeleton file) and Point Lookout's Tracker / Bruiser
-# (DLC04Hillfolk1BodyPartData: Head IK node Bip01 Head - no body in the Hillfolk1 ragdoll; Bip01 Neck1 is its head bone).
-# Copied from their own master, form ids moved to our master list (BPND debris / explosions / impact data sets, RAGA).
-# Ids after everything else.
+# The same head pose fix for The Pitt's trogs (DLCPittTrogBodyPartDataDC: Head flags 0x09, IK node = the skeleton file;
+# tools/bptd_audit.py), copied from its own master, form ids moved to our master list (BPND debris / explosions / impact
+# data sets, RAGA). Ids after everything else. (Point Lookout's Tracker / Bruiser keep their vanilla data: its Head IK
+# node Bip01 Head has no ragdoll body, the DLL sets the head pose up from its ragdoll ancestor Bip01 Neck1 - naming
+# Neck1 here instead made the head tracking turn the neck: they looked up.)
 BPND_FORMS = (12, 16, 32, 36, 68, 72)
 def _bptd_from(path, src_fid, edid, part, node):
     p = Plugin(path)
@@ -289,8 +289,7 @@ def _bptd_from(path, src_fid, edid, part, node):
     fid = nid(); bptds.append(record('BPTD', fid, out)); return fid
 if 'ThePitt.esm' in MASTERS:            # the TTW master list (build_plugins.py); a plain build has FalloutNV.esm only
     TROG_BPTD = _bptd_from('/home/claude/fnv/ttw/ThePitt.esm', 0x003CEA, 'PCTrogBodyPartData', 'Head', 'Bip01 Head')
-    HILLFOLK_BPTD = _bptd_from('/home/claude/fnv/ttw/PointLookout.esm', 0x010C37, 'PCHillfolkBodyPartData', 'Head', 'Bip01 Neck1')
-    print('  body part data: trog %06X, hillfolk (tracker / bruiser) %06X' % (TROG_BPTD & 0xFFFFFF, HILLFOLK_BPTD & 0xFFFFFF))
+    print('  body part data: trog %06X' % (TROG_BPTD & 0xFFFFFF))
 
 groups = [group('HAIR', [hair]), group('EYES', [eyes]), group('RACE', races), group('SPEL', spels), group('ARMO', armors), group('NPC_', npcs), group('IDLE', idles), group('BPTD', bptds)]
 nrec = 2 + len(races) + len(spels) + len(armors) + len(npcs) + len(idles) + len(bptds) + len(groups)

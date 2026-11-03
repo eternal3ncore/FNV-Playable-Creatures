@@ -39,6 +39,19 @@ def ragdoll(skel):
         while p is not None and p not in coll: p = par.get(p)
         out[names[i]] = names[p] if p is not None else None
     return out
+def ancestor(skel, name, rd):
+    f = NifFile(skel); par = {}; idx = {}
+    for i, t in enumerate(f.btype):
+        if f.types[t] in ('NiNode', 'BSFadeNode'):
+            r = f.node(i); idx[f.strings[r['name']] if r['name'] >= 0 else ''] = i
+            for c in r['children']: par[c] = i
+    names = {v: k for k, v in idx.items()}
+    i = idx.get(name)
+    p = par.get(i) if i is not None else None
+    while p is not None:
+        if names.get(p) in rd: return names[p]
+        p = par.get(p)
+    return None
 for ini in sorted(glob.glob(os.path.join(INI, '*.ini'))):
     cp = configparser.ConfigParser(strict=False, interpolation=None); cp.optionxform = str
     cp.read(ini, encoding='latin1')
@@ -61,6 +74,10 @@ for ini in sorted(glob.glob(os.path.join(INI, '*.ini'))):
             print(f'{sec:24s} FAIL  {r.edid()} ({where}): no part with IK data + headtracking' +
                   (f" ({near[0]['name']} flags {near[0]['flags']:02X}, ik '{near[0].get('ik')}')" if near else '')); continue
         h = ht[0]; ik = h.get('ik', '')
-        if ik not in rd: print(f"{sec:24s} FAIL  {r.edid()} ({where}): {h['name']} ik '{ik}' is no ragdoll bone"); continue
+        if ik not in rd:
+            anc = ancestor(skel, ik, rd)        # DLL v79: the head pose is set up from the nearest ragdoll ancestor
+            if anc: print(f"{sec:24s} ok    {r.edid()} ({where}): {h['name']} flags {h['flags']:02X} ik '{ik}' -> pose from ragdoll ancestor {anc}")
+            else: print(f"{sec:24s} FAIL  {r.edid()} ({where}): {h['name']} ik '{ik}' is no ragdoll bone and has no ragdoll ancestor")
+            continue
         if rd[ik] is None: print(f"{sec:24s} FAIL  {r.edid()} ({where}): {h['name']} ik '{ik}' has no ragdoll parent"); continue
         print(f"{sec:24s} ok    {r.edid()} ({where}): {h['name']} flags {h['flags']:02X} ik '{ik}' (ragdoll parent {rd[ik]})")
