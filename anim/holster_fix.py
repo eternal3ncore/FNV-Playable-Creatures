@@ -16,7 +16,8 @@ alone (Ghost pistols):
   unequip  : prn -> target bone (same time); Weapon unchanged before the prn key, = target from it on
   equip    : prn stays Bip01 R Hand (same time); Weapon = target before it, unchanged from it on
 Only the Weapon channel and the prn text keys change (new interpolator / data blocks; every other block untouched).
-usage: python3 holster_fix.py <human ref dir> <human skeleton.nif> <race folder> [--apply]"""
+OWN_SPOT types stay at the race's own vanilla spot (Ghost 1GT: the back).
+usage: python3 holster_fix.py <human ref dir> <human skeleton.nif> <race folder> [--only 1gt,...] [--apply]"""
 import os, re, struct, sys
 import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.insert(0, os.path.dirname(HERE))
@@ -24,8 +25,10 @@ from kf import KFEval, Skeleton, m2q, q2m
 from nifedit import NifFile
 
 TYPES = ['1hp', '2hr', '2ha', '2hh', '2hl', '1hm', '1gt', '1md', '1lm', '2hm']
-SEG = {'Bip01 Spine2': 'Bip01 Neck', 'Bip01 Pelvis': 'Bip01 L Thigh', 'Bip01 R Hand': 'Bip01 R Hand'}   # anchor -> segment end
-SEG_PARENT = {'Bip01 R Hand': True}        # R Hand: use the hand's own offset from the forearm
+# types a race keeps at its own vanilla spot (never moved to the human one): the Ghost People carry their throwing
+# spears / gas bombs on the back, as Dead Money's nvdlc01\creatures\ghosts\1gt* files place them (their spear's 2HM
+# spot), not on the hip - restored from those files by ghost_thrown_back.py
+OWN_SPOT = {'Ghost': ('1gt',)}
 
 
 def prn_keys(kf):
@@ -107,11 +110,14 @@ def times(k, fps=30.0):
     return [k.start + (k.stop - k.start) * i / (n - 1) for i in range(n)]
 
 
-def fix_race(ref, human_skel, folder, apply=False):
+def fix_race(ref, human_skel, folder, apply=False, only=None):
     H = human_targets(ref); hs = Skeleton(human_skel); cs = Skeleton(os.path.join(folder, 'Skeleton.nif'))
     report = []; ratio = torso(cs) / torso(hs)
+    own = OWN_SPOT.get(os.path.basename(os.path.normpath(folder)), {})
     for T, (bone, ht, hR) in H.items():
         if T in ('2hm',): continue                     # the races' own two-handed melee placements stay
+        if only and T not in only: continue
+        if T in own: report.append(f'{T}: kept at the race\'s own spot'); continue
         tt = ht * ratio; tR = hR
         cur = os.path.join(folder, T + 'holster.kf')
         if os.path.exists(cur):
@@ -160,4 +166,5 @@ def fix_race(ref, human_skel, folder, apply=False):
 
 if __name__ == '__main__':
     ref, hsk, folder = sys.argv[1:4]
-    for line in fix_race(ref, hsk, folder, apply='--apply' in sys.argv): print(line)
+    only = sys.argv[sys.argv.index('--only') + 1].split(',') if '--only' in sys.argv else None
+    for line in fix_race(ref, hsk, folder, apply='--apply' in sys.argv, only=only): print(line)
