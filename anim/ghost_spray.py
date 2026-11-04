@@ -214,7 +214,7 @@ def build(src, stance, out, render=None):
     return frames
 
 
-def add_emitter(path, node, active_keys, birth, prio):
+def add_emitter(path, node, active_keys, birth, prio, headtrack=True):
     """controlled blocks for a particle system's NiPSysEmitterCtlr: EmitterActive (constant-step bool keys) and BirthRate"""
     f = NifFile(path); si = f.str_index
     seq_i = next(i for i, b in enumerate(f.btype) if f.types[b] == 'NiControllerSequence')
@@ -225,10 +225,11 @@ def add_emitter(path, node, active_keys, birth, prio):
     cbs = d[12:12 + 29 * ncb]; tail = d[12 + 29 * ncb:]
     for interp, var in ((fi, 'BirthRate'), (bi, 'EmitterActive')):
         cbs += struct.pack('<iiBiiiii', interp, -1, prio, si(node), -1, si('NiPSysEmitterCtlr'), si('NiPSysBoxEmitter:0'), si(var))
-    # HeadTrack extra data 100 while it plays, as every Dead Money attack file keys it
-    ht = f.add_block('NiFloatInterpolator', struct.pack('<fi', 100.0, -1))
-    cbs += struct.pack('<iiBiiiii', ht, -1, prio, si('Bip01 Head'), -1, si('NiFloatExtraDataController'), si('HeadTrack'), -1)
-    f.blocks[seq_i] = struct.pack('<iII', nm, ncb + 3, arr) + cbs + tail
+    n = 2
+    if headtrack:     # HeadTrack extra data 100 while it plays, as every Dead Money attack file keys it
+        ht = f.add_block('NiFloatInterpolator', struct.pack('<fi', 100.0, -1)); n += 1
+        cbs += struct.pack('<iiBiiiii', ht, -1, prio, si('Bip01 Head'), -1, si('NiFloatExtraDataController'), si('HeadTrack'), -1)
+    f.blocks[seq_i] = struct.pack('<iII', nm, ncb + n, arr) + cbs + tail
     open(path, 'wb').write(f.to_bytes())
 
 

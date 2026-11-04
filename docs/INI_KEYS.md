@@ -44,16 +44,19 @@ Sections whose plugin isn't loaded are skipped (logged "NOT FOUND (plugin inacti
   FaceNodes         : skeleton node names, comma separated, in the FaceEyes order
   UnarmedEffect     : Plugin|FormID of an enchantment the player's unarmed attacks carry while in the race (as a
                       creature's EITM), fired on UnarmedEffectAnim (Glowing One: its radiation burst; Ghost People:
-                      the gas spray's knockout). The engine casts it on the actor the attack hit (bare fists only, not
-                      with an unarmed weapon): Touch effects land on that target only, Self effects on the player. On a
+                      the gas spray's knockout). The engine casts it on the actor the attack hit (bare fists; with
+                      weapons see UnarmedEffectWeapons): Touch effects land on that target only, Self effects on the player. On a
                       directional power attack (0x5D-0x60) it also fires on that direction's unarmed special-move perk
                       attack (Legion Assault / Ranger Takedown / Khan Trick: AttackCustom1 / 2 / 4 / 5Power)
   UnarmedEffectAnim : the attack animation group the effect fires on (as a creature's EAMT, e.g. 0x5E = AttackBackPower, 0x5D =
                       AttackForwardPower, 0xFF = every attack)
-  UnarmedEffectReachMult : that attack's melee reach x this (unarmed reach is 64; the hit test adds half of it to
-                      both actors' radii); bare fists, that attack (and its perk replacement) only. Ghost People: 3
-  UnarmedEffectCone : that attack's hit cone, degrees either side of the facing (vanilla: forward / standing power 40,
-                      side / back 100, Custom1 50, others 35); same scope. Ghost People: 60
+  UnarmedEffectWeapons : 1 = the effect also with an unarmed or melee weapon equipped (its forward power attack is
+                      the AttackCustom group the weapon plays in its place; the weapon's own enchantment still applies);
+                      0 (default) = bare fists only. Ghost People: 1
+  UnarmedEffectReachMult : that attack's melee reach is at least the unarmed reach (64) x this (the hit test adds half
+                      of it to both actors' radii); that attack (and what stands for it) only. Ghost People: 3
+  UnarmedEffectCone : that attack's hit cone is at least this, degrees either side of the facing (vanilla: forward /
+                      standing power 40, side / back 100, Custom1 50, others 35); same scope. Ghost People: 60
   GhostMoveForms    : the GhostMoves forms: hop spell, search spell, search idle, hop-left idle, hop-right idle
   JoinFaction       : 1 = the player joins those factions (rank 0) while in the race and leaves them on a race
                       change, so the species treats you as its own; 0 (default) = the factions are never touched

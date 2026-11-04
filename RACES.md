@@ -43,7 +43,8 @@ add-ons need their base pack too.
 - Starts with a built-in recharging **Ghost Gas**: sprays the Sierra Madre gas (a heavy weapon, flamer range);
   poison damage over time, resisted by Poison Resistance.
 - **Gas spray**: the unarmed forward power attack steps in and sprays gas from the mask; the one target it hits
-  is knocked out for a few seconds (not an area blast). Bare fists; the same with Legion Assault.
+  is knocked out for a few seconds (not an area blast). Bare fists, unarmed and melee weapons (their forward power
+  attack lunges and sprays); the same with Legion Assault.
 - Heavy weapons are cast from the open palm: the gun isn't drawn, and the shots, gas, flames or beams leave just in
   front of the hand (no backpack either).
 - Constant breathing wheeze.
