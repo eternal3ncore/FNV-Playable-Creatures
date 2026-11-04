@@ -7,21 +7,21 @@
 //     player's 3D immediately through JIP LN's UpdatePlayer3D pipeline (flag 0x5F|=1 + ModelLoader::QueueReference).
 //     JIP's QueuedPlayer/GeneratePlayerNode patches are what make a mid-game player rebuild clean (1st-person node copy,
 //     anim-data teardown, weapon anim re-sync); without JIP the vanilla queue ignores the request.
-//  3. Equipment policy: Actor::EquipItem (0x88C650) entry detour, player only: creature races may only equip
-//     the weapon animation types they have animations for (armor can be blocked per profile, AllowArmor=0).
+//  3. Locked items: Actor::EquipItem (0x88C650) entry detour, player only: LockedItems= stay refused until their
+//     UnlockGlobal= is set (every race has every weapon type and may wear armor).
 //  5. Creature players keep their own anim set: kNVSE AnimGroupOverride results are bypassed for the player's
 //     3rd-person AnimData while in a creature race (guards on the 11 anim-map lookup sites, chained); and on the
 //     4 sequence-play sites (AnimData::MorphOrBlendToSequence), where kNVSE swaps in its overrides (BlockAnimOverrides=1).
 //  4. Armor visuals: TESNPC::AddItemToBiped (0x6061B0) entry detour: for creature races with ArmorVisuals=0 worn
 //     armor never gets a model in the biped, so the creature body stays as-is while the armor still counts.
-//  6. Creature voices: xNVSE native OnHit / OnDeath event handlers (event-driven, no polling) play the race's
-//     pain / death / ranged-attack SOUNs on the player; an optional looping SOUN (Ghost People's wheeze) follows the
-//     player's 3D and is (re)started when that 3D is set, stopped on death / race change / leaving the game.
+//  6. Looping voice: an optional looping SOUN (LoopSound=, e.g. Ghost People's wheeze) follows the player's 3D and is
+//     (re)started when that 3D is set, stopped on death / race change / leaving the game.
 //     Melee / throw / jump vocals are anim text keys ("Sound: <SOUN>") in the creature's KFs, not DLL code.
 //  7. Voice types: a profile with VoiceType= gives the player that voice type while in the race (restored
-//     afterwards) and speaks the vanilla combat topics (Hit / Death / Attack) through the engine's Actor::Say
+//     afterwards) and speaks the vanilla combat topics (Hit / Death / Attack) through the engine's Actor::Say on xNVSE's
+//     native OnHit / OnDeath events
 //     (the function the Say command uses for immediate speech: picks the topic's INFO by its conditions, builds the
-//     voice file path from the voice type and plays it) on the same events - the lines themselves are ordinary
+//     voice file path from the voice type and plays it) - the lines themselves are ordinary
 //     dialogue data (in each family plugin, PlayableCreatures_<Family>.esp), so they are edited like any NPC voice.
 //  9. Race traits: RadImmune=1 -> a radiation-immunity ability (+100 Rad Resistance, the race's own ability) is
 //     given while in the race and the player's resistance cap (fPlayerMaxResistance, 85) is raised to 100;
@@ -33,6 +33,8 @@
 // 10. CloudImmune skips Dead Money's three toxic-cloud scripts (Script::Execute) instead of filtering their damage
 //     (no cloud effects at all); Faction= the species' in-game factions, joined while in the race only with JoinFaction=1.
 // 11. GhostMoves=1: Ghostification's ghost moves on the jump key, decided before any jump starts (see below).
+// 12. First person: the creature's own 3rd-person body is shown (head hidden, camera at FirstPersonNode +
+//     FirstPersonOffset) instead of the human 1st-person skeleton; on by default, FirstPersonBody=0 per race turns it off.
 //  8. Blood: ImpactMaterial= gives the player's base the creature's impact material while in the race
 //     (TESNPC+0x1E4, the NPC_/CREA NAM4 field: 6 Organic = red, 10 OrganicBug, 11 OrganicGlow); weapons then
 //     use their own impact data for that material (spray + decals), exactly as they do on the creature.
@@ -80,7 +82,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 83;
+static const UInt32 kPluginVersion = 84;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -106,23 +108,16 @@ static void Log(const char* fmt, ...) {
 struct FormRef { char plugin[64]; UInt32 localID; UInt32 fid; };
 static const UInt32 kPtr_DefaultBodyPartData = 0x011CAFEC;   // DefaultBodyPartData (form 0x1D), set at data load (0x5E53E6)
 struct Profile {
-	char section[64], name[64], plugin[128], skeleton[260], marker[64];
+	char section[64], plugin[128], skeleton[260], marker[64];
 	char ini[MAX_PATH];             // the config file the section came from (FirstPerson* keys are read again from it)
 	UInt32 localID;
 	void* race;
-	bool allowArmor;
 	bool armorVisuals;              // 0 = worn armor keeps its stats but is never drawn on the creature
-	UInt16 weaponTypeMask;          // bit per TESObjectWEAP::eWeaponType
-	FormRef allow[16]; int numAllow;   // always-allowed forms (e.g. Pip-Boy)
-	FormRef silent[16]; int numSilent; // blocked without an on-screen message (engine-driven equips)
 	FormRef show[16]; int numShow;     // armor that stays visible even when armorVisuals=0
 	FormRef show1st[16]; int numShow1st; // armor drawn only in the 1st-person view (e.g. Pip-Boy, needed to read it)
-	// creature voices (SOUN forms): pain, death, ranged-attack bark (on the player's landed hits), looping sound
-	FormRef hitSnd, deathSnd, rangedSnd, loopSnd;
-	FormRef voiceType;              // BGSVoiceType given to the player while in this race (dialogue-driven voice)
+	FormRef loopSnd;                // LoopSound= - looping SOUN on the player's 3D
+	FormRef voiceType;              // BGSVoiceType given to the player while in this race: speaks Hit / Death / Attack
 	int impactMaterial;             // -1 = leave as is
-	bool dialogueVoice;             // speak the Hit / Death / Attack topics (DialogueVoice=1, or VoiceType set)
-	UInt32 hitChance, hitCooldownMs, rangedChance, rangedCooldownMs;
 	DWORD lastHit, lastRanged;
 	bool radImmune, cloudImmune, ghostEssential;   // race traits (GhostCrippleDeath gone)
 	FormRef childRace;              // ChildRace= - the race's child version (Tranquility Lane AgeRace -1): same profile
@@ -145,8 +140,7 @@ struct Profile {
 	bool showInMenu;                // ShowInRaceMenu=0 hides the race from the race menu (RACE playable flag)
 	int resistCap;                  // ResistCap= - fPlayerMaxResistance while in the race (0 = unchanged)
 	float sneakCamera;              // SneakCamera= - share of the 1st-person crouch drop the 3rd-person camera takes (default 1)
-	bool animLog;                   // AnimLog=1 - diagnostic: each sequence the player's body starts is logged
-	bool fpBody;                    // FirstPersonBody=1 - 1st person shows the creature's own body (see "first person")
+	bool fpBody;                    // FirstPersonBody=1 (default; 0 = off) - 1st person shows the creature's own body
 	char fpNode[64], fpHide[64];    // FirstPersonNode= camera anchor node, FirstPersonHide= node shrunk away (head)
 	float fpOff[3];                 // FirstPersonOffset= right, forward, up from the anchor, in the actor's heading frame
 };
@@ -155,16 +149,6 @@ static int g_numProf = 0;
 static char g_gameDir[MAX_PATH];
 static bool g_jip = false;
 
-static UInt16 WeaponMaskFromList(const char* s) {
-	// animation prefixes -> TESObjectWEAP::eWeaponType values
-	struct { const char* p; UInt16 bits; } map[] = {
-		{"H2H", 1 << 0}, {"1HM", 1 << 1}, {"2HM", 1 << 2}, {"1HP", (1 << 3) | (1 << 4)}, {"2HR", (1 << 5) | (1 << 7)},
-		{"2HA", 1 << 6}, {"2HH", 1 << 8}, {"2HL", 1 << 9}, {"1GT", (1 << 10) | (1 << 13)}, {"1MD", 1 << 11}, {"1LM", 1 << 12}};
-	UInt16 m = 0; char buf[256]; strncpy(buf, s, 255); buf[255] = 0;
-	for (char* t = strtok(buf, ", \t"); t; t = strtok(nullptr, ", \t"))
-		for (auto& e : map) if (!_stricmp(t, e.p)) m |= e.bits;
-	return m;
-}
 static int ParseForms(const char* s, FormRef* out, int max) {
 	// "Plugin.esm|0015038, Other.esp|000801"
 	int n = 0; char buf[1024]; strncpy(buf, s, 1023); buf[1023] = 0;
@@ -179,7 +163,7 @@ static int ParseForms(const char* s, FormRef* out, int max) {
 // FirstPerson* keys: read at startup and again each time 1st person starts, so the ini can be tuned in game.
 static void ReadFirstPersonKeys(Profile& p) {
 	char tmp[96];
-	p.fpBody = GetPrivateProfileIntA(p.section, "FirstPersonBody", 0, p.ini) != 0;
+	p.fpBody = GetPrivateProfileIntA(p.section, "FirstPersonBody", 1, p.ini) != 0;
 	GetPrivateProfileStringA(p.section, "FirstPersonNode", "Bip01 Head", p.fpNode, sizeof(p.fpNode), p.ini);
 	GetPrivateProfileStringA(p.section, "FirstPersonHide", "Bip01 Head", p.fpHide, sizeof(p.fpHide), p.ini);
 	GetPrivateProfileStringA(p.section, "FirstPersonOffset", "0,-12,-12", tmp, sizeof(tmp), p.ini);
@@ -187,8 +171,7 @@ static void ReadFirstPersonKeys(Profile& p) {
 	sscanf(tmp, "%f , %f , %f", &p.fpOff[0], &p.fpOff[1], &p.fpOff[2]);
 }
 // One config file per creature pack: Data\NVSE\Plugins\PlayableCreatures\<pack>.ini, shipped in the pack, so adding
-// or removing a pack needs no shared file. The old combined Data\NVSE\Plugins\PlayableCreatures.ini is still read
-// after them; a race already set up by a pack file is skipped there.
+// or removing a pack needs no shared file.
 static int LoadConfigFile(const char* ini) {
 	char names[4096];
 	DWORD len = GetPrivateProfileSectionNamesA(names, sizeof(names), ini);
@@ -202,25 +185,12 @@ static int LoadConfigFile(const char* ini) {
 		GetPrivateProfileStringA(sec, "Race", "", tmp, sizeof(tmp), ini); p.localID = strtoul(tmp, nullptr, 16) & 0xFFFFFF;
 		GetPrivateProfileStringA(sec, "Skeleton", "", p.skeleton, sizeof(p.skeleton), ini);
 		GetPrivateProfileStringA(sec, "Marker", "", p.marker, sizeof(p.marker), ini);
-		GetPrivateProfileStringA(sec, "Name", sec, p.name, sizeof(p.name), ini);
-		p.allowArmor = GetPrivateProfileIntA(sec, "AllowArmor", 1, ini) != 0;
 		p.armorVisuals = GetPrivateProfileIntA(sec, "ArmorVisuals", 1, ini) != 0;
 		GetPrivateProfileStringA(sec, "ShowForms", "", tmp, sizeof(tmp), ini); p.numShow = ParseForms(tmp, p.show, 16);
 		GetPrivateProfileStringA(sec, "FirstPersonForms", "", tmp, sizeof(tmp), ini); p.numShow1st = ParseForms(tmp, p.show1st, 16);
-		GetPrivateProfileStringA(sec, "WeaponAnims", "", tmp, sizeof(tmp), ini); p.weaponTypeMask = WeaponMaskFromList(tmp);
-		GetPrivateProfileStringA(sec, "AllowForms", "", tmp, sizeof(tmp), ini); p.numAllow = ParseForms(tmp, p.allow, 16);
-		GetPrivateProfileStringA(sec, "SilentBlockForms", "", tmp, sizeof(tmp), ini); p.numSilent = ParseForms(tmp, p.silent, 16);
-		GetPrivateProfileStringA(sec, "HitSound", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.hitSnd, 1);
-		GetPrivateProfileStringA(sec, "DeathSound", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.deathSnd, 1);
-		GetPrivateProfileStringA(sec, "RangedAttackSound", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.rangedSnd, 1);
 		GetPrivateProfileStringA(sec, "LoopSound", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.loopSnd, 1);
 		GetPrivateProfileStringA(sec, "VoiceType", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.voiceType, 1);
 		p.impactMaterial = GetPrivateProfileIntA(sec, "ImpactMaterial", -1, ini);
-		p.dialogueVoice = GetPrivateProfileIntA(sec, "DialogueVoice", 0, ini) != 0 || p.voiceType.localID != 0;
-		p.hitChance = GetPrivateProfileIntA(sec, "HitSoundChance", 60, ini);
-		p.hitCooldownMs = (UInt32)(GetPrivateProfileIntA(sec, "HitSoundCooldown", 1500, ini));
-		p.rangedChance = GetPrivateProfileIntA(sec, "RangedAttackSoundChance", 25, ini);
-		p.rangedCooldownMs = (UInt32)(GetPrivateProfileIntA(sec, "RangedAttackSoundCooldown", 6000, ini));
 		p.radImmune = GetPrivateProfileIntA(sec, "RadImmune", 0, ini) != 0;
 		p.cloudImmune = GetPrivateProfileIntA(sec, "CloudImmune", 0, ini) != 0;
 		p.ghostEssential = GetPrivateProfileIntA(sec, "GhostEssential", 0, ini) != 0;
@@ -245,7 +215,6 @@ static int LoadConfigFile(const char* ini) {
 		GetPrivateProfileStringA(sec, "UnarmedEffectAnim", "0", tmp, sizeof(tmp), ini); p.unarmedAnim = (UInt16)strtoul(tmp, nullptr, 0);
 		p.ghostMoves = GetPrivateProfileIntA(sec, "GhostMoves", 0, ini) != 0;
 		p.blockAnimOverrides = GetPrivateProfileIntA(sec, "BlockAnimOverrides", 1, ini) != 0;
-		p.animLog = GetPrivateProfileIntA(sec, "AnimLog", 0, ini) != 0;
 		if (!p.plugin[0] || !p.localID || !p.skeleton[0] || !p.marker[0]) { Log("config: [%s] incomplete, skipped", sec); continue; }
 		bool dup = false;
 		for (int i = 0; i < g_numProf && !dup; i++)
@@ -254,8 +223,8 @@ static int LoadConfigFile(const char* ini) {
 				dup = true;
 			}
 		if (dup) continue;
-		Log("config: [%s] %s|%06X skeleton='%s' marker='%s' armor=%d armorVisuals=%d weaponMask=%04X allow=%d silent=%d show=%d",
-			sec, p.plugin, p.localID, p.skeleton, p.marker, p.allowArmor, p.armorVisuals, p.weaponTypeMask, p.numAllow, p.numSilent, p.numShow);
+		Log("config: [%s] %s|%06X skeleton='%s' marker='%s' armorVisuals=%d show=%d",
+			sec, p.plugin, p.localID, p.skeleton, p.marker, p.armorVisuals, p.numShow);
 		p.showInMenu = GetPrivateProfileIntA(sec, "ShowInRaceMenu", 1, ini) != 0;
 		p.resistCap = GetPrivateProfileIntA(sec, "ResistCap", 0, ini);
 		GetPrivateProfileStringA(sec, "SneakCamera", "1", tmp, sizeof(tmp), ini); p.sneakCamera = (float)atof(tmp);
@@ -263,8 +232,7 @@ static int LoadConfigFile(const char* ini) {
 		if (p.sneakCamera != 1.0f) Log("config: [%s] sneak camera drop x%.2f", sec, p.sneakCamera);
 		if (p.resistCap) Log("config: [%s] resistCap=%d", sec, p.resistCap);
 		Log("config: [%s] traits radImmune=%d cloudImmune=%d ghostEssential=%d", sec, p.radImmune, p.cloudImmune, p.ghostEssential);
-		Log("config: [%s] voices hit=%06X (%u%%, %ums) death=%06X ranged=%06X (%u%%, %ums) loop=%06X voiceType=%06X", sec,
-			p.hitSnd.localID, p.hitChance, p.hitCooldownMs, p.deathSnd.localID, p.rangedSnd.localID, p.rangedChance, p.rangedCooldownMs, p.loopSnd.localID, p.voiceType.localID);
+		Log("config: [%s] loop=%06X voiceType=%06X firstPersonBody=%d", sec, p.loopSnd.localID, p.voiceType.localID, p.fpBody);
 		g_numProf++; added++;
 	}
 	return added;
@@ -284,12 +252,7 @@ static void LoadConfig() {
 		} while (FindNextFileA(h, &fd));
 		FindClose(h);
 	}
-	snprintf(path, sizeof(path), "%sData\\NVSE\\Plugins\\PlayableCreatures.ini", g_gameDir);
-	if (GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES) {
-		int n = LoadConfigFile(path);
-		Log("config: PlayableCreatures.ini (combined, older releases) - %d race%s not set up by a pack file", n, n == 1 ? "" : "s");
-	}
-	if (!g_numProf) Log("config: no races - no pack config in %s and no PlayableCreatures.ini", dir);
+	if (!g_numProf) Log("config: no races - no pack config in %s", dir);
 }
 
 
@@ -361,8 +324,6 @@ static void ResolveProfiles() {
 			if (p.showInMenu) raceFlags |= 1; else raceFlags &= ~1u;
 			Log("resolve: [%s] race menu %s (flags %X -> %X)", p.section, p.showInMenu ? "shown" : "HIDDEN (ShowInRaceMenu=0)", before, raceFlags);
 		}
-		for (int k = 0; k < p.numAllow; k++) p.allow[k].fid = ResolveFID(p.allow[k].plugin, p.allow[k].localID);
-		for (int k = 0; k < p.numSilent; k++) p.silent[k].fid = ResolveFID(p.silent[k].plugin, p.silent[k].localID);
 		for (int k = 0; k < p.numShow; k++) p.show[k].fid = ResolveFID(p.show[k].plugin, p.show[k].localID);
 		for (int k = 0; k < p.numShow1st; k++) p.show1st[k].fid = ResolveFID(p.show1st[k].plugin, p.show1st[k].localID);
 		if (p.voiceType.localID) {
@@ -409,12 +370,10 @@ static void ResolveProfiles() {
 			if (!f || !def || *((UInt8*)f + 4) != *((UInt8*)def + 4)) { Log("resolve: [%s] body part data %s|%06X is not a loaded BPTD - disabled", p.section, b.plugin, b.localID); b.fid = 0; }
 			else Log("resolve: [%s] body part data %08X", p.section, b.fid);
 		}
-		FormRef* snd[4] = {&p.hitSnd, &p.deathSnd, &p.rangedSnd, &p.loopSnd};
-		for (FormRef* r : snd) {
-			if (!r->localID) continue;
+		if (FormRef* r = &p.loopSnd; r->localID) {
 			r->fid = ResolveFID(r->plugin, r->localID);
 			void* f = LookupForm(r->fid);
-			if (!f || *((UInt8*)f + 4) != kFormType_SOUN) { Log("resolve: [%s] sound %s|%06X is not a loaded SOUN - disabled", p.section, r->plugin, r->localID); r->fid = 0; }
+			if (!f || *((UInt8*)f + 4) != kFormType_SOUN) { Log("resolve: [%s] loop sound %s|%06X is not a loaded SOUN - disabled", p.section, r->plugin, r->localID); r->fid = 0; }
 		}
 	}
 	g_jip = GetModuleHandleA("jip_nvse.dll") != nullptr;
@@ -439,9 +398,9 @@ static const char* __fastcall Hook_NPCGetModelPath(void* model, void* edx) {
 	return ((GetModelPath_t)kAddr_TESNPC_GetModelPath)(model, edx);
 }
 
-// ---------------- equipment policy ----------------
+// ---------------- locked items ----------------
 static bool InList(const FormRef* l, int n, UInt32 fid) { for (int i = 0; i < n; i++) if (l[i].fid && l[i].fid == fid) return true; return false; }
-enum Verdict { kAllow = 0, kBlock, kBlockSilent, kBlockLocked };
+enum Verdict { kAllow = 0, kBlockLocked };
 // LockedItems= stay refused until the UnlockGlobal= GLOB reaches 1 (TESGlobal value +0x24, see its save code 0x5A6488);
 // the load-time equipment check unequips them too. (Securitrons: the Mk II weapons until the Securitron upgrade.)
 static bool ItemLocked(Profile* p, UInt32 fid) {
@@ -450,23 +409,10 @@ static bool ItemLocked(Profile* p, UInt32 fid) {
 	return !(g && *((UInt8*)g + 4) == kFormType_GLOB && *(float*)((UInt8*)g + 0x24) >= 1.0f);
 }
 static Verdict Judge(Profile* p, void* form) {
-	if (!p || !form) return kAllow;
-	UInt8 type = *((UInt8*)form + 4);
-	UInt32 fid = *(UInt32*)((UInt8*)form + 0x0C);
-	if (type != kFormType_ARMO && type != kFormType_WEAP) return kAllow;       // food, chems, ammo...
-	if (ItemLocked(p, fid)) return kBlockLocked;
-	if (InList(p->allow, p->numAllow, fid)) return kAllow;
-	if (InList(p->silent, p->numSilent, fid)) return kBlockSilent;
-	if (type == kFormType_ARMO) return p->allowArmor ? kAllow : kBlock;
-	UInt8 wt = *((UInt8*)form + 0xF4);
-	return (wt < 16 && (p->weaponTypeMask & (1u << wt))) ? kAllow : kBlock;
+	if (!p || !form || !p->numLocked) return kAllow;
+	return ItemLocked(p, *(UInt32*)((UInt8*)form + 0x0C)) ? kBlockLocked : kAllow;
 }
 typedef bool (__cdecl* QueueUIMessage_t)(const char*, UInt32, const char*, const char*, float, UInt8);
-static void Notify(Profile* p, UInt8 type) {
-	char msg[160];
-	snprintf(msg, sizeof(msg), type == kFormType_ARMO ? "%s cannot wear that." : "%s cannot use that weapon.", p->name);
-	((QueueUIMessage_t)kAddr_QueueUIMessage)(msg, 0, nullptr, nullptr, 2.0f, 0);
-}
 
 // Actor::EquipItem detour
 typedef void (__fastcall* EquipItem_t)(void* actor, void* edx, void* form, UInt32 count, void* xl, UInt32 ench, UInt32 lock, UInt32 noMsg);
@@ -474,16 +420,9 @@ static EquipItem_t g_equipTramp = nullptr;
 static void __fastcall Hook_EquipItem(void* actor, void* edx, void* form, UInt32 count, void* xl, UInt32 ench, UInt32 lock, UInt32 noMsg) {
 	if (actor && actor == Player()) {
 		Profile* p = PlayerProfile();
-		Verdict v = Judge(p, form);
-		if (v != kAllow) {
-			Log("equip: blocked %08X (type %02X) for [%s]%s (noMsg %u)", *(UInt32*)((UInt8*)form + 0x0C), *((UInt8*)form + 4), p->section,
-				v == kBlockSilent ? " silently" : v == kBlockLocked ? " (locked)" : "", noMsg);
-			if (v == kBlock && !noMsg) Notify(p, *((UInt8*)form + 4));
-			// the Pip-Boy's equip passes noMsg = 1, so this one ignores it
-			if (v == kBlockLocked) {
-				bool shown = ((QueueUIMessage_t)kAddr_QueueUIMessage)(p->lockedMsg, 0, nullptr, nullptr, 3.0f, 0);
-				Log("equip: locked message %s", shown ? "queued" : "NOT queued");
-			}
+		if (Judge(p, form) == kBlockLocked) {
+			bool shown = ((QueueUIMessage_t)kAddr_QueueUIMessage)(p->lockedMsg, 0, nullptr, nullptr, 3.0f, 0);
+			Log("equip: locked %08X for [%s], message %s", *(UInt32*)((UInt8*)form + 0x0C), p->section, shown ? "queued" : "NOT queued");
 			return;
 		}
 	}
@@ -491,11 +430,11 @@ static void __fastcall Hook_EquipItem(void* actor, void* edx, void* form, UInt32
 }
 typedef void (__fastcall* UnequipItem_t)(void* actor, void* edx, void* form, UInt32 count, void* xl, UInt32 ench, UInt32 lock, UInt32 noMsg);
 
-// Walk the player's inventory changes and unequip everything the profile forbids.
+// Walk the player's inventory changes and unequip the race's locked items.
 static void EnforceEquipment(const char* why) {
 	void* player = Player();
 	Profile* p = PlayerProfile();
-	if (!player || !p) return;
+	if (!player || !p || !p->numLocked) return;
 	UInt8* x = *(UInt8**)((UInt8*)player + 0x44 + 4);        // ExtraDataList::m_data
 	while (x && *(x + 4) != 0x15) x = *(UInt8**)(x + 8);      // ExtraContainerChanges
 	if (!x) return;
@@ -586,7 +525,6 @@ static void SyncPlayerSkeleton(const char* why) {
 }
 static void UpdateLoop(const char* why, void* newRoot = nullptr);
 static void ApplyVoice(const char* why);
-static void LogTraits(const char* why);
 static void GiveRaceAbilities(const char* why);
 static void GiveRaceItems(const char* why);
 static void CleanupFactions(const char* why);
@@ -602,7 +540,6 @@ static void* __fastcall Hook_RaceSexMenuDtor(void* menu, void* edx, UInt32 flags
 	CleanupFactions("race menu closed");
 	GiveRaceAbilities("race menu closed");
 	GiveRaceItems("race menu closed");
-	LogTraits("race menu closed");
 	ApplyVoice("race menu closed");
 	return r;
 }
@@ -787,37 +724,10 @@ static const int kNumPlaySites = sizeof(kPlaySites) / sizeof(kPlaySites[0]);
 // a temporary speed probe lived here (player movement groups timed between play calls); it measured the
 // Robobrain at ref scale^2 (Forward 32 units/s), fixed natively by its race ability's SpeedMult ; removed.
 static bool g_fpActive = false;                      // 1st person with the creature body shown (see "first person")
-// diagnostic while the creature body is shown in 1st person: which sequence each of the player's anim data plays
-// (1st-person data player+0x690 / the 3rd-person body), logged when it changes, 300 lines per game session
-static void LogFPPlay(void* animData, void* seq) {
-	static int lines = 0; static void* last1 = nullptr; static void* last3 = nullptr;
-	void* pl = Player();
-	if (!pl || lines >= 300 || *(void**)((UInt8*)animData + 4) != pl) return;
-	bool first = animData == *(void**)((UInt8*)pl + 0x690);
-	void*& last = first ? last1 : last3;
-	if (seq == last) return;
-	last = seq; lines++;
-	const char* nm = seq ? *(const char**)((UInt8*)seq + 0x08) : nullptr;
-	Log("first person: %s plays '%s'", first ? "1st-person data" : "creature body", nm ? nm : "?");
-}
-// AnimLog=1 diagnostic: every sequence start on the player's 3rd-person anim data, with the anim group id
-// (BSAnimGroupSequence +0x74 -> TESAnimGroup, group id UInt16 at +0x08: move type << 12 | hand type << 8 | group),
-// 600 lines per game session
-static void LogBodyPlay(void* seq) {
-	static int lines = 0;
-	if (lines >= 600) return;
-	lines++;
-	const char* nm = seq && Readable(seq, 0x78) ? *(const char**)((UInt8*)seq + 0x08) : nullptr;
-	UInt8* grp = seq && Readable(seq, 0x78) ? *(UInt8**)((UInt8*)seq + 0x74) : nullptr;
-	UInt32 id = grp && Readable(grp, 0x0C) ? *(UInt16*)(grp + 0x08) : 0xFFFF;
-	Log("anim log: plays '%s' (group %04X)", nm && Readable(nm, 1) ? nm : "?", id);
-}
 static bool __cdecl BlockOverridesC(void* animData, void* seq) {
-	if (g_fpActive) LogFPPlay(animData, seq);
 	if (!IsCreatureRaceAnim(animData)) return false;
 	UInt8* actor = *(UInt8**)((UInt8*)animData + 4);
 	Profile* p = ProfileForRace(NPCRace(*(UInt8**)(actor + 0x20)));
-	if (p && p->animLog && actor == Player()) LogBodyPlay(seq);
 	return p && p->blockAnimOverrides;
 }
 static UInt8* BuildPlayThunk(UInt8* p, UInt32 prev) {
@@ -873,47 +783,6 @@ static void InstallAnimLookupGuards() {
 	Log("animguard: %d/%d lookup sites guarded (frame-transparent thunks)", n, kNumLookupSites);
 }
 
-
-// AnimLog=1 diagnostic: the player's projectile aim. A new projectile (0x9BD860) asks the player (0x965620) to turn
-// its heading / pitch toward the crosshair from its start point, given the node it left from; logged before / after
-// with the node, the player and the camera globals, 40 shots per game session
-static const UInt32 kSite_ProjAim = 0x9BD9E2, kAddr_PlayerAim = 0x965620;
-static UInt32 g_projAimPrev = 0;
-typedef void (__thiscall *PlayerAim_t)(void*, void*, void*, float*, float*, float*, float, float);
-static void __fastcall ProjAimHook(void* player, void*, void* proj, void* node, float* rotZ, float* rotX, float* pos, float f1, float f2) {
-	static int shots = 0;
-	Profile* p = PlayerProfile();
-	bool log = p && p->animLog && shots < 40 && proj && Readable(proj, 0x40);
-	float z0 = 0, x0 = 0;
-	if (log) {
-		shots++; z0 = rotZ ? *rotZ : 0; x0 = rotX ? *rotX : 0;
-		const char* nm = node && Readable(node, 0xA0) ? *(const char**)((UInt8*)node + 0x08) : nullptr;
-		const float* pp = (const float*)((UInt8*)player + 0x30);
-		const float* wp = node ? (const float*)((UInt8*)node + 0x8C) : nullptr;   // NiAVObject world translate
-		const float* wr = node ? (const float*)((UInt8*)node + 0x68) : nullptr;   // world rotate (row-major)
-		const float* cam = (const float*)0x11F426C;
-		Log("aim: shot %d node '%s' %p world (%.1f %.1f %.1f) +Y (%.3f %.3f %.3f) | proj pos (%.1f %.1f %.1f) heading %.2f pitch %.2f deg",
-			shots, nm && Readable(nm, 1) ? nm : "?", node,
-			wp ? wp[0] : 0, wp ? wp[1] : 0, wp ? wp[2] : 0, wr ? wr[1] : 0, wr ? wr[4] : 0, wr ? wr[7] : 0,
-			pos ? pos[0] : 0, pos ? pos[1] : 0, pos ? pos[2] : 0, z0 * 57.29578f, x0 * 57.29578f);
-		Log("aim:   player pos (%.1f %.1f %.1f) heading %.2f pitch %.2f deg; 3rd person %d; global 11F426C (%.1f %.1f %.1f); args %.3f %.3f",
-			pp[0], pp[1], pp[2], *(float*)((UInt8*)player + 0x2C) * 57.29578f, *(float*)((UInt8*)player + 0x24) * 57.29578f,
-			*((UInt8*)player + 0x64B), cam[0], cam[1], cam[2], f1, f2);
-	}
-	((PlayerAim_t)g_projAimPrev)(player, proj, node, rotZ, rotX, pos, f1, f2);
-	if (log) Log("aim:   after: heading %.2f (%+.2f) pitch %.2f (%+.2f) deg", rotZ ? *rotZ * 57.29578f : 0, rotZ ? (*rotZ - z0) * 57.29578f : 0,
-		rotX ? *rotX * 57.29578f : 0, rotX ? (*rotX - x0) * 57.29578f : 0);
-}
-static void InstallProjAimDiag() {
-	UInt8* site = (UInt8*)kSite_ProjAim;
-	if (site[0] != 0xE8) { Log("aimdiag: site %08X is not a call (%02X) - skipped", kSite_ProjAim, site[0]); return; }
-	g_projAimPrev = (UInt32)site + 5 + *(SInt32*)(site + 1);
-	DWORD old; VirtualProtect(site, 5, PAGE_EXECUTE_READWRITE, &old);
-	*(SInt32*)(site + 1) = (SInt32)((UInt32)ProjAimHook - ((UInt32)site + 5));
-	VirtualProtect(site, 5, old, &old);
-	FlushInstructionCache(GetCurrentProcess(), nullptr, 0);
-	Log("aimdiag: site %08X previously -> %08X%s", kSite_ProjAim, g_projAimPrev, g_projAimPrev == kAddr_PlayerAim ? " (vanilla)" : " (another plugin, chained)");
-}
 
 // ---------------- 3rd-person camera height ----------------
 // The engine's 3rd-person camera pivot (PlayerCharacter camera update, non-vanity path) is
@@ -990,46 +859,29 @@ static void InstallFallDamage() {
 	Log("fall: flying-creature exemption call %08X -> player NoFallDamage (was %08X%s)", kSite_FallFlies, prev, prev == kAddr_BaseFlies ? ", vanilla" : ", another plugin - chained");
 }
 
-// ---------------- ragdoll diagnostics + guard ----------------
+// ---------------- ragdoll guard ----------------
 // Securitron crash (twice, ~2 s after the race menu, standing still): AI linear task -> Actor eye position
 // 0x8A2FA0 -> bhkRagdollController 0xC757B0 (call site 0x8A308D) reads the pose at controller+0xF0, which held an
 // hkpConstraintInstance. Actor::InitHavok-ish 0x87E130 makes a new controller (0x2C0 bytes, ctor 0xC7F060), stores it
 // at actor+0xAC, then checks its init flag (+0x42, 0x87EA20 at 0x87E39F); on failure it only prints "AI: Could not
-// initialize Ragdoll Controller for %s." and keeps the half-built controller. Logged here: the init result for the
-// player, and the controller's fields at 3D set; the eye-position call is skipped (no ragdoll offset) for a player
-// controller whose init failed, so it can't read the unset pose.
-static const UInt32 kSite_RagInitCheck = 0x0087E39F, kAddr_RagInitOK = 0x0087EA20;
+// initialize Ragdoll Controller for %s." and keeps the half-built controller. The eye-position call is skipped (no
+// ragdoll offset) for a player controller that isn't initialized or has no / a foreign pose, so it can't read the
+// unset pose.
 static const UInt32 kSite_RagEye = 0x008A308D, kAddr_RagEye = 0x00C757B0;
-typedef bool (__fastcall* RagBool_t)(void* ctrl, void* edx);
 typedef bool (__fastcall* RagEye_t)(void* ctrl, void* edx, void* out);
-static RagBool_t g_prevRagInit = (RagBool_t)kAddr_RagInitOK;
 static RagEye_t g_prevRagEye = (RagEye_t)kAddr_RagEye;
 static void* PlayerRagdoll() { void* pl = Player(); return pl ? *(void**)((UInt8*)pl + 0xAC) : nullptr; }
-static void LogRagdoll(const char* why) {
-	void* c = PlayerRagdoll();
-	if (!c) { Log("ragdoll (%s): none", why); return; }
-	UInt8* b = (UInt8*)c;
-	void* pose54 = *(void**)(b + 0x54); void* poseF0 = *(void**)(b + 0xF0);
-	Log("ragdoll (%s): ctrl %p vtbl %08X init %u flag190 %u pose54 %p (vtbl %08X) poseF0 %p (vtbl %08X) bones %d/%d head %d",
-		why, c, *(UInt32*)c, b[0x42], b[0x190], pose54, pose54 ? *(UInt32*)pose54 : 0, poseF0,
-		(poseF0 && !IsBadReadPtr(poseF0, 4)) ? *(UInt32*)poseF0 : 0, *(short*)(b + 0xF4), *(short*)(b + 0xF6), *(short*)(b + 0x144));
-}
-static bool __fastcall Hook_RagInitOK(void* ctrl, void*) {
-	bool ok = g_prevRagInit(ctrl, nullptr);
-	if (ctrl && ctrl == PlayerRagdoll()) { Log("ragdoll: player controller %p init %s", ctrl, ok ? "ok" : "FAILED (engine keeps it)"); LogRagdoll("after init"); }
-	return ok;
-}
 static bool __fastcall Hook_RagEye(void* ctrl, void*, void* out) {
 	if (ctrl && ctrl == PlayerRagdoll()) {
 		UInt8* b = (UInt8*)ctrl;
 		// the pose reference at +0xF0 must be the controller's own pose (+0x54); the securitron's ends up holding
-		// an hkpConstraintInstance with init ok (log) -> logged once, the ragdoll offset skipped. With no pose at all
-		// (the body part data's headtracking IK node isn't a ragdoll bone: pose matching never set up) both can be null
-		// - equal, and the vanilla code then reads bone data through the null pose (lakelurk save load).
+		// an hkpConstraintInstance with init ok -> the ragdoll offset skipped. With no pose at all (the body part data's
+		// headtracking IK node isn't a ragdoll bone: pose matching never set up) both can be null - equal, and the
+		// vanilla code then reads bone data through the null pose (lakelurk save load).
 		void* pose = *(void**)(b + 0x54);
 		if (!b[0x42] || !pose || *(void**)(b + 0xF0) != pose) {
 			static int n = 0;
-			if (n < 3) { n++; LogRagdoll(!b[0x42] ? "eye position skipped: controller not initialized" : !pose ? "eye position skipped: no ragdoll pose (body part data headtracking node is no ragdoll bone)" : "eye position skipped: pose reference (+0xF0) is not the controller's pose (+0x54)"); }
+			if (n < 3) { n++; Log("ragdoll: eye position skipped (%s)", !b[0x42] ? "controller not initialized" : !pose ? "no ragdoll pose" : "pose reference is not the controller's pose"); }
 			return false;
 		}
 	}
@@ -1044,9 +896,8 @@ static bool RedirectCall(UInt32 site, void* hook, UInt32 vanilla, UInt32* prevOu
 	Log("patch: %s @%08X -> hook (was %08X%s)", what, site, prev, prev == vanilla ? ", vanilla" : ", another plugin - chained");
 	return true;
 }
-static void InstallRagdollDiag() {
+static void InstallRagdollGuard() {
 	UInt32 prev;
-	if (RedirectCall(kSite_RagInitCheck, (void*)Hook_RagInitOK, kAddr_RagInitOK, &prev, "ragdoll init check")) g_prevRagInit = (RagBool_t)prev;
 	if (RedirectCall(kSite_RagEye, (void*)Hook_RagEye, kAddr_RagEye, &prev, "ragdoll eye position")) g_prevRagEye = (RagEye_t)prev;
 }
 
@@ -1077,7 +928,7 @@ static void InstallCameraPivot() {
 
 // ---------------- first person: the creature's own body ----------------
 // The player's 1st person runs on the human 1st-person skeleton (player+0x694) with the human 1st-person animations;
-// a creature body bound to it is a stretched mess. With FirstPersonBody=1 the engine still runs 1st person (aiming,
+// a creature body bound to it is a stretched mess. With FirstPersonBody=1 (the default) the engine still runs 1st person (aiming,
 // iron sights zoom, VATS, the view toggle), but what is drawn is the 3rd-person creature (its own animations, kept
 // updated in 1st person - PlayerCharacter::Update updates both): the 3rd-person root is shown, the 1st-person root
 // hidden (the view setter 0x951A10 does the opposite), the FirstPersonHide node is shrunk to nothing (the head), and
@@ -1204,33 +1055,6 @@ static void InstallFirstPersonBody() {
 }
 
 
-// ---------------- diagnostics: menu-key requests (Pip-Boy) ----------------
-// InterfaceManager calls 0x70EE80 from 0x70EB04; [this+0x4BC] holds a pending menu-key request (Pip-Boy, etc.).
-// Logged only while a request is pending and the player is a creature race.
-static const UInt32 kSite_MenuRequest = 0x0070EB04, kAddr_MenuRequest = 0x0070EE80, kAddr_GetAnimAction = 0x008A7570;
-typedef void (__fastcall* MenuRequest_t)(void* ui, void* edx);
-typedef SInt32 (__fastcall* GetAnimAction_t)(void* actor, void* edx);
-static void __fastcall Hook_MenuRequest(void* ui, void* edx) {
-	UInt32 req = *(UInt32*)((UInt8*)ui + 0x4BC);
-	static UInt32 lastReq = 0; static SInt32 lastAct = -2;
-	if (req && PlayerProfile()) {
-		void* pl = Player();
-		SInt32 act = ((GetAnimAction_t)kAddr_GetAnimAction)(pl, nullptr);
-		if (req != lastReq || act != lastAct) Log("menukey: request=%u animAction=%d thirdPerson=%u", req, act, *((UInt8*)pl + 0x64A));
-		lastAct = act;
-	}
-	lastReq = req;
-	((MenuRequest_t)kAddr_MenuRequest)(ui, edx);
-}
-static void InstallMenuRequestDiag() {
-	UInt8* site = (UInt8*)kSite_MenuRequest;
-	if (site[0] != 0xE8 || (UInt32)site + 5 + *(SInt32*)(site + 1) != kAddr_MenuRequest) { Log("diag: menu-key site not vanilla - skipped"); return; }
-	DWORD old; VirtualProtect(site, 5, PAGE_EXECUTE_READWRITE, &old);
-	*(SInt32*)(site + 1) = (SInt32)((UInt32)Hook_MenuRequest - ((UInt32)site + 5));
-	VirtualProtect(site, 5, old, &old);
-	Log("diag: menu-key request logging installed");
-}
-
 // ---------------- creature voices ----------------
 // BSSoundHandle (0xC) and the engine calls JIP LN uses for PlaySound3D/PlaySound3DNode (1.4.0.525):
 //   BSAudioManager (object @0x11F6EF0)::InitSoundForm 0xAE5870(this, handle*, formID, flags)
@@ -1270,11 +1094,6 @@ static bool Gate(UInt32 chance, UInt32 cooldownMs, DWORD* last) {
 	if (Roll100() >= chance) return false;
 	*last = now;
 	return true;
-}
-static inline void* ActorBaseNPC(void* ref) {
-	if (!ref) return nullptr;
-	UInt8* base = *(UInt8**)((UInt8*)ref + 0x20);
-	return (base && base[4] == 0x2A) ? base : nullptr;
 }
 
 // looping voice (e.g. Ghost People's ConsciousLoop wheeze), attached to the player's 3rd-person root
@@ -1326,7 +1145,6 @@ enum { kAV_Health = 0x10, kAV_RadResist = 0x14, kAV_PerceptionCond = 0x19, kAV_E
 // immunity); the DLL no longer adds or removes abilities. It only raises the resistance cap below while the player is
 // a RadImmune / ResistCap race, and logs the resistances after the race menu (shows whether the engine applied them).
 static void ApplyMaxResist(const char* why);
-static void ApplyRad(const char* why) { ApplyMaxResist(why); }
 // The engine loads a RACE's SPLO into its TESSpellList (race+0x2C; list = +4 -> race+0x30, {data, next} nodes,
 // 0x717e50) but never gives those spells to the player (-30: unhooded Ghost Person after the race menu,
 // Rad Resist 8 / Fire 0). So when the race menu closes the DLL adds the player's race abilities once with the engine's
@@ -1362,14 +1180,6 @@ static void GiveRaceAbilities(const char* why) {
 		bool added = ((SpellFn_t)VFn(player, 0x3E0))(player, nullptr, sp);
 		Log("race ability: %08X %s (%s)", *(UInt32*)((UInt8*)sp + 0x0C), added ? "added" : "already known", why);
 	}
-}
-enum { kAV_DamageResist = 0x12, kAV_PoisonResist = 0x13, kAV_FireResist = 0x34, kAV_DamageThreshold = 0x4C, kAV_CritChance = 0x0E };
-static void LogTraits(const char* why) {
-	void* player = Player(); if (!player) return;
-	Profile* p = PlayerProfile();
-	Log("traits (%s): race profile [%s] RadResist=%.0f PoisonResist=%.0f FireResist=%.0f DR=%.0f DT=%.0f Crit=%.0f", why, p ? p->section : "-",
-		GetAV(player, kAV_RadResist), GetAV(player, kAV_PoisonResist), GetAV(player, kAV_FireResist), GetAV(player, kAV_DamageResist),
-		GetAV(player, kAV_DamageThreshold), GetAV(player, kAV_CritChance));
 }
 // fPlayerMaxResistance (Setting 0x11D0AD8, default 85) caps the player's resistances. While the player is a
 // RadImmune race its value is raised to 100 at runtime (the setting's float, via its accessor 0x403E20) and the
@@ -1500,7 +1310,7 @@ static void CleanupFactions(const char* why) {
 // anything else jumps normally.
 static const UInt32 kSlot_PlayerJump = 0x0108AA3C + 0x254, kAddr_ActorJump = 0x00884AA0;
 static const UInt32 kAddr_GetMovementFlags = 0x008846E0, kAddr_IsWeaponOut = 0x008A16D0, kAddr_IsSneaking = 0x004997B0,
-	kAddr_Dodge = 0x00894F90, kAddr_ActorAnimData = 0x008B70D0, kAddr_CasterPrep = 0x00815B00, kAddr_QueueSpecialIdle = 0x00497CA0;
+	kAddr_ActorAnimData = 0x008B70D0, kAddr_CasterPrep = 0x00815B00;
 typedef void* (__fastcall* Jump_t)(void*, void*);
 typedef UInt32 (__fastcall* U32_t)(void*, void*);
 typedef bool (__fastcall* B_t)(void*, void*);
@@ -1846,7 +1656,6 @@ static void ApplyUnarmedEffect(const char* why) {
 		slot = g_origUnarmedItem; aslot = g_origUnarmedAnim; g_unarmedSwapped = false;
 	}
 }
-static void ApplyRad(const char* why);
 static void ApplyEssential(const char* why);
 static void ApplyFaction(const char* why);
 static void ApplyVoice(const char* why) {
@@ -1854,7 +1663,7 @@ static void ApplyVoice(const char* why) {
 	ApplyMaterial(why);
 	ApplyBodyParts(why);
 	ApplyFace(why);
-	ApplyRad(why);
+	ApplyMaxResist(why);
 	ApplyEssential(why);
 	ApplyFaction(why);
 	void* npc = PlayerNPC(); if (!npc) return;
@@ -1878,7 +1687,6 @@ static void ApplyVoice(const char* why) {
 //   (BSSoundHandle* out, TESTopic* topic, TESObjectREFR* target, bool, bool, 0, 0)
 // It evaluates TESTopic::GetInfo (0x61B320) for the speaker, builds the voice file path, and plays it (0xAD8830).
 typedef void (__fastcall* ActorSay_t)(void* actor, void* edx, SoundHandle* out, void* topic, void* target, UInt32 b1, UInt32 b2, UInt32 a6, UInt32 a7);
-static bool g_voiceWanted = false;
 static bool SayTopic(UInt32 topicLocal, const char* what) {
 	void* player = Player();
 	if (!player) return false;
@@ -1898,17 +1706,13 @@ static void OnHitHandler(void* thisObj, void* parameters) {
 	if (!player || (victim != player && attacker != player)) return;
 	GhostOnHit(victim, attacker);
 	Profile* p = PlayerProfile();
-	if (!p) return;
-	void* node = PlayerRoot(player);
-	if (victim == player) {
-		if (PlayerDead(player) || !(p->hitSnd.fid || p->dialogueVoice)) return;
-		if (!Gate(p->hitChance, p->hitCooldownMs, &p->lastHit)) return;
-		if (p->dialogueVoice) SayTopic(kTopic_Hit, "Hit");
-		else StartSound(p->hitSnd.fid, node, kSoundFlags_3D, nullptr);
+	if (!p || !p->voiceType.fid) return;
+	if (victim == player) {                                              // pain: 60 %, at most every 1.5 s
+		if (PlayerDead(player) || !Gate(60, 1500, &p->lastHit)) return;
+		SayTopic(kTopic_Hit, "Hit");
 		return;
 	}
 	// the player hit something: ranged weapons only (melee / throws are voiced by their animations' text keys)
-	if (!(p->rangedSnd.fid || p->dialogueVoice) || victim == player) return;
 	UInt8* proc = *(UInt8**)((UInt8*)player + 0x68);                     // BaseProcess; weapon info valid for levels 0/1
 	if (!proc || proc[0x28] > 1) return;
 	UInt8* info = *(UInt8**)(proc + 0x114);                             // ContChangesEntry* (equipped weapon)
@@ -1916,9 +1720,8 @@ static void OnHitHandler(void* thisObj, void* parameters) {
 	if (!weap || weap[4] != kFormType_WEAP) return;
 	UInt8 wt = weap[0xF4];
 	if (wt < 3 || wt > 9) return;                                       // 1HP..2HL
-	if (!Gate(p->rangedChance, p->rangedCooldownMs, &p->lastRanged)) return;
-	if (p->dialogueVoice) SayTopic(kTopic_Attack, "Attack");
-	else StartSound(p->rangedSnd.fid, node, kSoundFlags_3D, nullptr);
+	if (!Gate(25, 6000, &p->lastRanged)) return;                       // bark: 25 %, at most every 6 s
+	SayTopic(kTopic_Attack, "Attack");
 }
 static void OnDeathHandler(void* thisObj, void* parameters) {
 	void** a = (void**)parameters;
@@ -1928,24 +1731,17 @@ static void OnDeathHandler(void* thisObj, void* parameters) {
 	g_ghostDown = false; g_ghostRealDeath = true;
 	g_playerDied = true;                                           // rebuild the 3D at the next load
 	Profile* p = PlayerProfile();
-	if (p && p->dialogueVoice) SayTopic(kTopic_Death, "Death");
-	else if (p && p->deathSnd.fid && StartSound(p->deathSnd.fid, PlayerRoot(player), kSoundFlags_3D, nullptr)) Log("voice: death sound");
+	if (p && p->voiceType.fid) SayTopic(kTopic_Death, "Death");
 }
 static NVSEEventManagerInterface* g_events = nullptr;
 static NVSEMessagingInterface* g_msgIF = nullptr;
 static UInt32 g_handle = 0;
-static void InstallVoiceHandlers() {
-	bool any = false;
-	for (int i = 0; i < g_numProf; i++) any |= g_prof[i].hitSnd.fid || g_prof[i].deathSnd.fid || g_prof[i].rangedSnd.fid || g_prof[i].dialogueVoice;
-	bool anyVoice = false;
-	for (int i = 0; i < g_numProf; i++) anyVoice |= g_prof[i].voiceType.fid != 0;
-	g_voiceWanted = anyVoice;
-	for (int i = 0; i < g_numProf; i++) any |= g_prof[i].ghostEssential;
-	if (!any) { Log("voice: no hit/death/ranged sounds configured - event handlers not installed"); return; }
-	if (!g_events) { Log("voice: xNVSE event manager unavailable - hit/death voices disabled"); return; }
+// OnHit: voices + Ghost People's semi-dead rules; OnDeath: voice, loop stop, 3D rebuild on the next load
+static void InstallEventHandlers() {
+	if (!g_events) { Log("events: xNVSE event manager unavailable - hit / death voices and ghost rules disabled"); return; }
 	bool h = g_events->SetNativeEventHandler("OnHit", OnHitHandler);
 	bool d = g_events->SetNativeEventHandler("OnDeath", OnDeathHandler);
-	Log("voice: native event handlers OnHit=%d OnDeath=%d", h, d);
+	Log("events: native handlers OnHit=%d OnDeath=%d", h, d);
 }
 
 static void MessageHandler(NVSEMessage* msg) {
@@ -1953,13 +1749,9 @@ static void MessageHandler(NVSEMessage* msg) {
 	case kMessage_PostLoad:
 		if (g_msgIF) Log("ghost: PlayerEssentialFix listener %s", g_msgIF->RegisterListener(g_handle, "PlayerEssentialFix", PEFMessage) ? "registered" : "NOT registered");
 		break;
-	case kMessage_PostPostLoad: InstallAnimLookupGuards(); InstallAnimPlayGuards(); InstallMenuRequestDiag(); InstallProjAimDiag(); break;
+	case kMessage_PostPostLoad: InstallAnimLookupGuards(); InstallAnimPlayGuards(); break;
 	case kMessage_DeferredInit: {
-		if (FindModIndex("PlayableCreatures.esp") != 0xFF || FindModIndex("PlayableCreaturesTTW.esp") != 0xFF) {
-			Log("deps: ** the old combined plugin PlayableCreatures.esp / PlayableCreaturesTTW.esp is active - it is replaced by the family plugins (PlayableCreatures_<Family>.esp); disable it **");
-			((QueueUIMessage_t)kAddr_QueueUIMessage)("Playable Creatures: disable the old PlayableCreatures.esp / PlayableCreaturesTTW.esp (replaced by the family plugins).", 0, nullptr, nullptr, 8.0f, 0);
-		}
-		ResolveProfiles(); InstallVoiceHandlers(); ResolveCloudScripts();
+		ResolveProfiles(); InstallEventHandlers(); ResolveCloudScripts();
 		if (GetModuleHandleA("PlayerEssentialFix.dll")) Log("deps: PlayerEssentialFix loaded");
 		else for (int i = 0; i < g_numProf; i++) if (g_prof[i].ghostEssential) { Log("deps: PlayerEssentialFix.dll NOT loaded - an essential player stays ragdolled after the revive"); break; }
 		break; }
@@ -1968,7 +1760,6 @@ static void MessageHandler(NVSEMessage* msg) {
 		SyncPlayerSkeleton("game loaded");
 		UpdateLoop("game loaded");
 		ApplyVoice("game loaded");                                      // no-op if OnRefSet3D already started it during the load
-		LogTraits("game loaded");
 		break;
 	case kMessage_PreLoadGame: case kMessage_ExitToMainMenu: case kMessage_NewGame:
 		// the player is dying (life 1) or dead (2) as the next save loads: the load must rebuild the 3D. The
@@ -1987,7 +1778,6 @@ static void MessageHandler(NVSEMessage* msg) {
 			const char* m = RootMarker(node);
 			Log("player 3D set: root=%p marker='%s'", node, m ? m : "");
 			ResetPlayerHeight("player 3D set");
-			LogRagdoll("player 3D set");
 			UpdateLoop("player 3D set", node);
 			ApplyVoice("player 3D set");
 			ApplyFace("player 3D set (new root)", node);
@@ -2021,7 +1811,7 @@ __declspec(dllexport) bool NVSEPlugin_Load(const NVSEInterface* nvse) {
 	InstallFallDamage();
 	InstallGhostLimbHook();
 	InstallIsChild();
-	InstallRagdollDiag();
+	InstallRagdollGuard();
 
 	PatchPtr(kVtbl_TESNPC_TESModel + 5 * 4, (UInt32)Hook_NPCGetModelPath, kAddr_TESNPC_GetModelPath, "TESNPC::GetModelPath");
 	{   // chain: another plugin (UI mods) may already own this slot
@@ -2029,7 +1819,9 @@ __declspec(dllexport) bool NVSEPlugin_Load(const NVSEInterface* nvse) {
 		g_prevMenuDtor = (MenuDtor_t)cur;
 		PatchPtr(kVtbl_RaceSexMenu, (UInt32)Hook_RaceSexMenuDtor, cur, cur == kAddr_RaceSexMenu_Dtor ? "RaceSexMenu::~RaceSexMenu" : "RaceSexMenu::~RaceSexMenu (chained to another plugin)");
 	}
-	g_equipTramp = (EquipItem_t)DetourPadded(kAddr_EquipItem, 0x08, (void*)Hook_EquipItem, "Actor::EquipItem");
+	{ bool locks = false; for (int i = 0; i < g_numProf; i++) locks |= g_prof[i].numLocked > 0;
+	  if (locks) g_equipTramp = (EquipItem_t)DetourPadded(kAddr_EquipItem, 0x08, (void*)Hook_EquipItem, "Actor::EquipItem");
+	  else Log("equip: no race has LockedItems - Actor::EquipItem not hooked"); }
 	g_addBipedTramp = (AddItemToBiped_t)Detour(kAddr_AddItemToBiped, 0x1C, (void*)Hook_AddItemToBiped, "TESNPC::AddItemToBiped");
 	return true;
 }
