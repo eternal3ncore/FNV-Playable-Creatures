@@ -50,6 +50,10 @@ Sections whose plugin isn't loaded are skipped (logged "NOT FOUND (plugin inacti
                       attack (Legion Assault / Ranger Takedown / Khan Trick: AttackCustom1 / 2 / 4 / 5Power)
   UnarmedEffectAnim : the attack animation group the effect fires on (as a creature's EAMT, e.g. 0x5E = AttackBackPower, 0x5D =
                       AttackForwardPower, 0xFF = every attack)
+  UnarmedEffectReachMult : that attack's melee reach x this (unarmed reach is 64; the hit test adds half of it to
+                      both actors' radii); bare fists, that attack (and its perk replacement) only. Ghost People: 3
+  UnarmedEffectCone : that attack's hit cone, degrees either side of the facing (vanilla: forward / standing power 40,
+                      side / back 100, Custom1 50, others 35); same scope. Ghost People: 60
   GhostMoveForms    : the GhostMoves forms: hop spell, search spell, search idle, hop-left idle, hop-right idle
   JoinFaction       : 1 = the player joins those factions (rank 0) while in the race and leaves them on a race
                       change, so the species treats you as its own; 0 (default) = the factions are never touched
