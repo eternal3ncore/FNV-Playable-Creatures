@@ -44,8 +44,10 @@ Sections whose plugin isn't loaded are skipped (logged "NOT FOUND (plugin inacti
   FaceNodes         : skeleton node names, comma separated, in the FaceEyes order
   UnarmedEffect     : Plugin|FormID of an enchantment the player's unarmed attacks carry while in the race (as a
                       creature's EITM), fired on UnarmedEffectAnim (Glowing One: its radiation burst; Ghost People:
-                      the gas spray's knockout). The engine casts it on the actor the attack hit: Touch effects land on
-                      that target only, Self effects on the player
+                      the gas spray's knockout). The engine casts it on the actor the attack hit (bare fists only, not
+                      with an unarmed weapon): Touch effects land on that target only, Self effects on the player. On a
+                      directional power attack (0x5D-0x60) it also fires on that direction's unarmed special-move perk
+                      attack (Legion Assault / Ranger Takedown / Khan Trick: AttackCustom1 / 2 / 4 / 5Power)
   UnarmedEffectAnim : the attack animation group the effect fires on (as a creature's EAMT, e.g. 0x5E = AttackBackPower, 0x5D =
                       AttackForwardPower, 0xFF = every attack)
   GhostMoveForms    : the GhostMoves forms: hop spell, search spell, search idle, hop-left idle, hop-right idle

@@ -35,6 +35,8 @@
 // 11. GhostMoves=1: Ghostification's ghost moves on the jump key, decided before any jump starts (see below).
 // 12. First person: the creature's own 3rd-person body is shown (head hidden, camera at FirstPersonNode +
 //     FirstPersonOffset) instead of the human 1st-person skeleton; on by default, FirstPersonBody=0 per race turns it off.
+// 13. UnarmedEffect= on a directional power attack also fires on that direction's unarmed special-move perk attack
+//     (Legion Assault -> AttackCustom1Power for AttackForwardPower, etc.).
 //  8. Blood: ImpactMaterial= gives the player's base the creature's impact material while in the race
 //     (TESNPC+0x1E4, the NPC_/CREA NAM4 field: 6 Organic = red, 10 OrganicBug, 11 OrganicGlow); weapons then
 //     use their own impact data for that material (spray + decals), exactly as they do on the creature.
@@ -82,7 +84,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 84;
+static const UInt32 kPluginVersion = 85;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -1656,6 +1658,41 @@ static void ApplyUnarmedEffect(const char* why) {
 		slot = g_origUnarmedItem; aslot = g_origUnarmedAnim; g_unarmedSwapped = false;
 	}
 }
+// The on-hit function (0x8C2190) casts that effect on the actor hit when the attacker has no weapon equipped and the
+// playing attack's group (0x5F2420, low byte) equals EAMT - read through the getter 0x4A8AE0 at 0x8C2387. The unarmed
+// special-move perks (Legion Assault / Ranger Takedown / Khan Trick: entry points 0x3D / 0x3E / 0x41 / 0x42) make the
+// player play AttackCustom1 / 2 / 4 / 5Power (0x61 / 62 / 64 / 65) in place of AttackForward / Back / Left / RightPower
+// (0x5D-0x60), so an effect set on a directional power attack stopped firing once the perk was taken (one EAMT value;
+// no data route). That call is redirected: for the player's base, when EAMT is a direction and the playing group is that
+// direction's perk replacement, the getter answers the playing group; every other actor and case gets the stored value.
+static const UInt32 kSite_UnarmedAnimGet = 0x008C2387, kAddr_UnarmedAnimGet = 0x004A8AE0;
+static const UInt32 kAddr_SeqAnimGroup = 0x0048F7F0, kAddr_AnimGroupId = 0x005F2420;
+typedef UInt16 (__fastcall* AnimGet_t)(void* ench, void* edx);
+static AnimGet_t g_prevUnarmedAnimGet = (AnimGet_t)kAddr_UnarmedAnimGet;
+static UInt32 PlayerAttackGroup() {                                  // the engine's own steps at 0x8C23F0..0x8C2414
+	void* pl = Player(); if (!pl) return 0xFFFF;
+	void* proc = At<void*>(pl, 0x68); if (!proc) return 0xFFFF;
+	void* seq = ((P_t)VFn(proc, 0x3E8))(proc, nullptr); if (!seq) return 0xFFFF;
+	void* grp = ((P_t)kAddr_SeqAnimGroup)(seq, nullptr); if (!grp) return 0xFFFF;
+	return ((U32_t)kAddr_AnimGroupId)(grp, nullptr);
+}
+static UInt16 __fastcall Hook_UnarmedAnimGet(void* ench, void* edx) {
+	UInt16 a = g_prevUnarmedAnimGet(ench, edx);
+	void* npc = PlayerNPC();
+	if (npc && ench == (UInt8*)npc + 0x70 && a >= 0x5D && a <= 0x60) {
+		static const UInt8 kPerkGroup[4] = {0x61, 0x62, 0x64, 0x65};
+		UInt32 g = PlayerAttackGroup();
+		if (g == kPerkGroup[a - 0x5D]) { Log("unarmed effect: perk attack %02X stands for %02X", g, a); return (UInt16)g; }
+	}
+	return a;
+}
+static void InstallUnarmedPerkAnims() {                              // at load, when some race's effect is on a direction
+	bool dir = false; for (int i = 0; i < g_numProf; i++) dir |= g_prof[i].unarmedAnim >= 0x5D && g_prof[i].unarmedAnim <= 0x60;
+	if (!dir) { Log("unarmed effect: no race's effect is on a directional power attack - not hooked"); return; }
+	UInt32 prev;
+	if (RedirectCall(kSite_UnarmedAnimGet, (void*)Hook_UnarmedAnimGet, kAddr_UnarmedAnimGet, &prev, "unarmed effect anim (perk moves)"))
+		g_prevUnarmedAnimGet = (AnimGet_t)prev;
+}
 static void ApplyEssential(const char* why);
 static void ApplyFaction(const char* why);
 static void ApplyVoice(const char* why) {
@@ -1812,6 +1849,7 @@ __declspec(dllexport) bool NVSEPlugin_Load(const NVSEInterface* nvse) {
 	InstallGhostLimbHook();
 	InstallIsChild();
 	InstallRagdollGuard();
+	InstallUnarmedPerkAnims();
 
 	PatchPtr(kVtbl_TESNPC_TESModel + 5 * 4, (UInt32)Hook_NPCGetModelPath, kAddr_TESNPC_GetModelPath, "TESNPC::GetModelPath");
 	{   // chain: another plugin (UI mods) may already own this slot

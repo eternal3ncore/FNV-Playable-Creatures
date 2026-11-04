@@ -12,8 +12,8 @@ stance (the first frame of its standing power attack = its H2H aim), so it blend
     (on SPRAY_ON .. SPRAY_OFF) and BirthRate - as the Dead Money idle drives the ghost's breath
   * text keys: start, attack vocal, footsteps (Enum: Left / Right as the vanilla file's), the spray sound, Hit, end
 Sneak: the same motion on the sneak stance's frame.
-Also writes h2hattackcustom1power (+ sneak) = the Dead Money lunge renamed: the unarmed forward perk move plays
-Custom1 instead of AttackForwardPower, and the gas effect fires on AttackForwardPower only (EAMT 0x5D).
+Also writes h2hattackcustom1power (+ sneak) = this file renamed: the unarmed forward perk move (Legion Assault) plays
+Custom1 instead of AttackForwardPower; PlayableCreatures.dll v85 fires the race's unarmed effect on it too.
 Sources: --src <folder> with the Dead Money forward power attack and the standing power attack (+ sneak copies) as
 shipped before this file replaced them (anim_backup: ghost_spray_src).
 usage: python3 -P ghost_spray.py <Ghost anim folder (out)> --src <source folder> [--render out.png]"""
@@ -238,8 +238,9 @@ if __name__ == '__main__':
     src_dir = sys.argv[sys.argv.index('--src') + 1] if '--src' in sys.argv else folder
     from power_fill import renamed
     for sn in ('', 'sneak'):
-        # the unarmed forward perk move (Custom1, e.g. Legion Assault) keeps the Dead Money lunge: the gas only fires on
-        # the EAMT group (AttackForwardPower), so a spray played as Custom1 would knock nobody down
-        renamed(os.path.join(src_dir, f'{sn}h2hattackforwardpower.kf'), os.path.join(folder, f'{sn}h2hattackcustom1power.kf'), 'AttackCustom1Power')
+        out = os.path.join(folder, f'{sn}h2hattackforwardpower.kf')
         build(os.path.join(src_dir, f'{sn}h2hattackforwardpower.kf'), os.path.join(src_dir, f'{sn}h2hattackpower.kf'),
-              os.path.join(folder, f'{sn}h2hattackforwardpower.kf'), render=(render.replace('.png', f'_{sn or "stand"}.png') if render else None))
+              out, render=(render.replace('.png', f'_{sn or "stand"}.png') if render else None))
+        # the unarmed forward perk move (Legion Assault) plays AttackCustom1Power in its place: the same spray (the DLL
+        # counts that group as the forward power for the race's unarmed effect, so the gas works with the perk too)
+        renamed(out, os.path.join(folder, f'{sn}h2hattackcustom1power.kf'), 'AttackCustom1Power')
