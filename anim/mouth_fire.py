@@ -63,11 +63,11 @@ CREATURES = {
     # tunneler / spore carrier / trog (one skeleton; the street trog's cfg): every gun fires as the spore carrier's
     # standing power attack, the bite - the shot on its jaw (Bip01 Ponytail1) wide open (0.15 s, 33 deg; it snaps shut
     # on the Hit at 0.2); the head keeps the aim's facing (the bite lunges it down at the target)
-    'tunneler': dict(cfg='trog', aim=SPORE + 'h2haim.kf', attack=SPORE + 'h2hattackpower.kf', fire_at=0.15,
+    'tunneler': dict(cfg='trog', aim=SPORE + 'h2haim.kf', attack=SPORE + 'h2hattackpower.kf', fire_at=0.15, actor_forward=True,
                      mouth_fu=(5.0, -1.0), level_head=True, claw_aim=SPORE + 'h2haim.kf', claw_attack=SPORE + 'h2hattackright.kf',
                      pitch_bones=('Bip01 Neck', 'Bip01 Head'),
                      lower=r'^Bip01( NonAccum| Pelvis| [LR] (Thigh|Calf|Foot|Toe\d*))$'),
-    'trog': dict(cfg='trog', aim='h2haim.kf', attack=SPORE + 'h2hattackpower.kf', fire_at=0.15,
+    'trog': dict(cfg='trog', aim='h2haim.kf', attack=SPORE + 'h2hattackpower.kf', fire_at=0.15, actor_forward=True,
                  mouth_fu=(5.0, -1.0), level_head=True, claw_aim='h2haim.kf', claw_attack='h2hattackright.kf',
                  pitch_bones=('Bip01 Neck', 'Bip01 Head'),
                  lower=r'^Bip01( NonAccum| Pelvis| [LR] (Thigh|Calf|Foot|Toe\d*))$'),
@@ -103,6 +103,8 @@ for b in aim.blocks:
 W0 = sk.fk(full(sk, aim.sample(0.0)))
 B0 = W0['Bip01 NonAccum'][1]
 fwd = W0['Bip01 Head'][0] - W0['Bip01 Pelvis'][0]; fwd[2] = 0; fwd /= np.linalg.norm(fwd)
+if SPEC.get('actor_forward'): fwd = np.array([0, 1.0, 0])      # the actor's heading, not head - pelvis (the trog's head sits
+                                                                # 4 units right of its pelvis on all fours: shots went 6 deg right)
 UP = np.array([0, 0, 1.0]); LEFT = np.cross(UP, fwd)
 # mouth point / frame in the head frame
 ph0, Rh0 = W0['Bip01 Head']
