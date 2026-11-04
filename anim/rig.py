@@ -232,16 +232,22 @@ def offhand_overlay(cr, src_kf, grip, fps=30, blend_in=None):
 
 def offhand_release(cr, src_kf, fps=30):
     """samples one of the creature's own two-handed animations and lets the off arm hang in the
-    standing pose (local rotations of the off arm + fingers from the idle), for one-handed use"""
+    standing pose (local rotations of the off arm + fingers from the idle), for one-handed use. The accum root keeps
+    the source's keys: the Rig puts it at the origin, which took the travel out of the lunges (the Ghost's 1HM
+    directional power attacks stood in place, and power_legs then dropped their legs)"""
     k = KFEval(cr.path(src_kf)); L = k.stop; n = max(2, int(round(L * fps)) + 1)
     idle = Rig(cr, base_kf=cr.cfg.IDLE_KF).base
     free = list(cr.arm['L']) + list(cr.fingers['L'])
+    AR = cr.cfg.ACCUM_ROOT
     frames = []
     for i in range(n):
-        t = L * i / (n - 1)
-        rig = Rig(cr, base_pose=k.sample(t)); loc = dict(rig.base)
+        t = L * i / (n - 1); smp = k.sample(t)
+        rig = Rig(cr, base_pose=smp); loc = dict(rig.base)
         for nm in free:
             if nm in idle: loc[nm] = idle[nm]
+        if AR in smp and AR in loc:
+            p, R = smp[AR]
+            loc[AR] = (np.array(p, float) if p is not None else loc[AR][0], np.array(R, float) if R is not None else loc[AR][1])
         frames.append((t, loc))
     return frames, [(nm, pr) for nm, _, pr in k.blocks], k
 
