@@ -1127,12 +1127,70 @@ for _tag, _f in (('Robobrain', 'Robobrain'), ('Securitron', 'Securitron'), ('Sen
     _F = 'PlayableCreatures\\%s\\IdleAnims' % _f
     creature_idles(_tag, _F, *_human_set(_F + '\\'), None, root=IDLE_BY_EDID[f'PC{_tag}FurnitureIdles'], root_prev=IDLE_BY_EDID[f'PC{_tag}Sleeping'])
 _next_id = _idle_next[0]
+# ---------------- Ghost gas spray (the Ghost's unarmed forward power attack) ----------------
+# anim/ghost_spray.py: the Ghost steps in and sprays gas from its respirator (the skeleton's PCGhostMaskSpray particles,
+# switched on by the attack file). What it does to the one target the attack lands on: the race's unarmed attack effect
+# (ini UnarmedEffect / UnarmedEffectAnim = 0x5D AttackForwardPower; the DLL puts them on the player's base as a creature's
+# EITM / EAMT). The engine casts it from the attacker's MagicCaster on the actor the attack hit, and only when the
+# playing attack's group is the EAMT one (0x8C2387 .. 0x8C248E); its Touch effect lands on that target alone - no area,
+# unlike the Glowing One's burst (a Self script that explodes around the caster).
+#   PCGhostGasSpray (SPEL, actor effect, Touch, 1 s) -> PCGhostGasKnockdownEffect (MGEF, script effect as the vanilla
+#   MaulerKnockdownEffect; hit shader PCGhostGasHitShader) -> PCGhostGasKnockdownScript: the target's fatigue taken to
+#   GAS_KO_SECONDS below zero. Below zero an actor is knocked out and lies there until its fatigue is back above zero;
+#   it returns at fFatigueReturnBase (1.0) + fFatigueReturnMult (0) x ... a second while below zero (engine defaults,
+#   0x648050 / 0x88B5A0, called from the actor update only while fatigue < 0; no plugin overrides them), so every
+#   target - whatever its fatigue - goes down and stays down GAS_KO_SECONDS before it gets up.
+#   PCGhostGasHitShader (EFSH): the vanilla PuffOfSmoke with the ghosts' gas texture (their leg spray's) - a puff of
+#   the gas round the target. PCGhostGasSprayHiss (SOUN): the spray's hiss (anim text key), vanilla steam-release one-shots.
+GAS_KO_SECONDS = 4
+_gk_scpt, _gk_mgef, _gk_spel, _gk_efsh = _new(), _new(), _new(), _new()
+GHOST_GAS_SPRAY_SOUND = _new()
+_gk_src = ('scn PCGhostGasKnockdownScript\r\n\r\n'
+           '; Ghost People gas spray (their unarmed forward power attack): knocks the target out for a few seconds -\r\n'
+           '; its fatigue taken to %d below zero (fatigue returns at 1 a second while below zero).\r\n\r\n'
+           'float fFatigue\r\n\r\nBegin ScriptEffectStart\r\n'
+           '\tset fFatigue to GetAV Fatigue + %d\r\n\tif fFatigue > 0\r\n\t\tDamageAV Fatigue fFatigue\r\n\tendif\r\nEnd\r\n'
+           % (GAS_KO_SECONDS, GAS_KO_SECONDS)).encode('latin1')
+def _st(op, data): return struct.pack('<HH', op, len(data)) + data
+_ko = str(GAS_KO_SECONDS).encode()
+_expr = b' X' + struct.pack('<HHHH', 0x100E, 4, 1, 0x16) + b' ' + _ko + b' +'           # GetActorValue Fatigue + K
+_body = (_st(0x15, b'f\x01\x00' + struct.pack('<H', len(_expr)) + _expr) +                 # set fFatigue to ...
+         _st(0x16, struct.pack('<HH', 1, 8) + b' f\x01\x00 0 >') +                          # if fFatigue > 0 (1 statement)
+         _st(0x1181, struct.pack('<HH', 2, 0x16) + b'f\x01\x00') +                          # DamageActorValue Fatigue fFatigue
+         _st(0x19, b'') + _st(0x11, b''))                                                    # endif, End
+_scda = _st(0x1D, b'') + _st(0x10, struct.pack('<HI', 0x11, len(_body))) + _body          # scn, Begin ScriptEffectStart
+scpts.append(record('SCPT', _gk_scpt, [('EDID', z('PCGhostGasKnockdownScript')),
+    ('SCHR', struct.pack('<IIIIHH', 0, 0, len(_scda), 1, 0x100, 1)), ('SCDA', _scda), ('SCTX', _gk_src),
+    ('SLSD', struct.pack('<I', 1) + bytes(20)), ('SCVR', z('fFatigue'))]))
+_puff = SRC.byfid[0x0C1126]                                                                 # PuffOfSmoke
+def _efsh(k, v):
+    if k == 'ICO2': return z('nvdlc01\\effects\\FXGhostLegFX.dds')
+    if k == 'DATA':
+        d = bytearray(v); d[16:19] = bytes((70, 96, 40))                                    # membrane fill: the gas's green
+        for o in (188, 192, 196): d[o:o + 3] = b'\xff\xff\xff'                               # particle colour keys white:
+        return bytes(d)                                                                      # the texture's own colour
+    return v
+efshs = [copy_rec(_puff, _gk_efsh, 'PCGhostGasHitShader', patch=_efsh)]
+def _gkm(k, v):
+    if k == 'DESC': return z('Knocked out by Ghost gas.')
+    if k == 'DATA':
+        d = bytearray(v); struct.pack_into('<I', d, 0, 0x175)                               # Mauler's 0x170 + hostile, detrimental
+        struct.pack_into('<I', d, 8, _gk_scpt); struct.pack_into('<I', d, 0x20, _gk_efsh); return bytes(d)
+    return v
+mgefs.append(copy_rec(SRC.byfid[0x10F0A0], _gk_mgef, 'PCGhostGasKnockdownEffect', full='Ghost Gas', patch=_gkm))
+spels.append(record('SPEL', _gk_spel, [('EDID', z('PCGhostGasSpray')), ('FULL', z('Ghost Gas')),
+    ('SPIT', struct.pack('<IIIB3s', 0, 0, 0, 0x7B, b'\0\0\0')),                             # actor effect, no auto-calc (Mauler's flags + 1)
+    ('EFID', u32(_gk_mgef)), ('EFIT', struct.pack('<IIIIi', 0, 0, 1, 1, -1))]))             # magnitude 0, area 0, 1 s, Touch
+souns.append(soun(GHOST_GAS_SPRAY_SOUND, 'PCGhostGasSprayHiss', 'fx\\amb\\cistern\\oneshots\\steamrelease\\', 0.0, 0x1001, (30, 15)))
+print('  ghost gas spray: spell %06X, effect %06X, script %06X (%d bytes), hit shader %06X, sound %06X'
+      % (_gk_spel & 0xFFFFFF, _gk_mgef & 0xFFFFFF, _gk_scpt & 0xFFFFFF, len(_scda), _gk_efsh & 0xFFFFFF, GHOST_GAS_SPRAY_SOUND & 0xFFFFFF))
+
 for k, v in LAKELURKS.items():
     print('  lakelurk %s: race %06X child %06X ability %06X' % (k, v['race'] & 0xFFFFFF, v['child'] & 0xFFFFFF, v['ability'] & 0xFFFFFF))
 print('  young lakelurk ability %06X, shriek %06X, body part data %06X' % (_lk_young_ab & 0xFFFFFF, LAKELURK_SHRIEK & 0xFFFFFF, LAKELURK_BPTD & 0xFFFFFF))
 
-groups = [group('HAIR', [hair]), group('EYES', [eyes] + eyes_extra), group('RACE', races), group('SOUN', souns), group('MGEF', mgefs), group('SCPT', scpts), group('ENCH', enchs), group('SPEL', spels), group('ARMO', armors), group('WEAP', weaps), group('NPC_', npcs), group('IDLE', idles)] + ([group('PROJ', projs)] if projs else []) + [group('ANIO', anios), group('BPTD', bptds), group('VTYP', vtyp), group('IPCT', ipcts), group('IPDS', ipdss)]   # vanilla group order
-nrec = 2 + len(ipcts) + len(ipdss) + len(enchs) + len(projs) + len(eyes_extra) + len(armors) + len(bptds) + len(races) + len(weaps) + len(npcs) + len(souns) + len(mgefs) + len(scpts) + len(spels) + len(vtyp) + len(idles) + len(anios) + len(groups)
+groups = [group('HAIR', [hair]), group('EYES', [eyes] + eyes_extra), group('RACE', races), group('SOUN', souns), group('MGEF', mgefs), group('SCPT', scpts), group('ENCH', enchs), group('SPEL', spels), group('ARMO', armors), group('WEAP', weaps), group('NPC_', npcs), group('IDLE', idles)] + ([group('PROJ', projs)] if projs else []) + [group('ANIO', anios), group('EFSH', efshs), group('BPTD', bptds), group('VTYP', vtyp), group('IPCT', ipcts), group('IPDS', ipdss)]   # vanilla group order
+nrec = 2 + len(efshs) + len(ipcts) + len(ipdss) + len(enchs) + len(projs) + len(eyes_extra) + len(armors) + len(bptds) + len(races) + len(weaps) + len(npcs) + len(souns) + len(mgefs) + len(scpts) + len(spels) + len(vtyp) + len(idles) + len(anios) + len(groups)
 tes4 = record('TES4', 0, [
     ('HEDR', struct.pack('<fII', 1.34, nrec, _next_id)),
     ('CNAM', z('i3ncore')),

@@ -43,8 +43,11 @@ Sections whose plugin isn't loaded are skipped (logged "NOT FOUND (plugin inacti
                       FaceNodes node and hides the others (Securitrons: the face screens)
   FaceNodes         : skeleton node names, comma separated, in the FaceEyes order
   UnarmedEffect     : Plugin|FormID of an enchantment the player's unarmed attacks carry while in the race (as a
-                      creature's EITM), fired on UnarmedEffectAnim (Glowing One: its radiation burst)
-  UnarmedEffectAnim : the attack animation group the effect fires on (as a creature's EAMT, e.g. 0x5E = AttackBackPower)
+                      creature's EITM), fired on UnarmedEffectAnim (Glowing One: its radiation burst; Ghost People:
+                      the gas spray's knockout). The engine casts it on the actor the attack hit: Touch effects land on
+                      that target only, Self effects on the player
+  UnarmedEffectAnim : the attack animation group the effect fires on (as a creature's EAMT, e.g. 0x5E = AttackBackPower, 0x5D =
+                      AttackForwardPower, 0xFF = every attack)
   GhostMoveForms    : the GhostMoves forms: hop spell, search spell, search idle, hop-left idle, hop-right idle
   JoinFaction       : 1 = the player joins those factions (rank 0) while in the race and leaves them on a race
                       change, so the species treats you as its own; 0 (default) = the factions are never touched
