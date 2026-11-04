@@ -130,13 +130,14 @@ def run(folder, skel, emitters, melee):
 
 _G = ('1hp', '2ha', '2hr', '2hh', '2hl', '1gt', '1md', '1lm')
 def _em(**kw): return {t: kw.get(t, kw['all']) for t in _G}
+MELEE = ['h2h', '1hm', '2hm']     # robots' 1HM / 2HM = renamed copies of their H2H files (robot_melee.py)
 RACES = {
-    'protectron': (_em(all='ProjectileNode_RHandLaser', **{'2hl': 'ProjectileNode_HeadLaser'}), ['h2h']),
-    'robobrain': (_em(all='ProjectileNode_Right', **{'2hl': 'ProjectileNode_HeadLaser'}), ['h2h']),
-    'sentrybot': (_em(all='PCMissileEmitter', **{t: 'ProjectileNode_RGatling' for t in ('1hp', '2ha', '2hr', '2hh')}), ['h2h']),
+    'protectron': (_em(all='ProjectileNode_RHandLaser', **{'2hl': 'ProjectileNode_HeadLaser'}), MELEE),
+    'robobrain': (_em(all='ProjectileNode_Right', **{'2hl': 'ProjectileNode_HeadLaser'}), MELEE),
+    'sentrybot': (_em(all='PCMissileEmitter', **{t: 'ProjectileNode_RGatling' for t in ('1hp', '2ha', '2hr', '2hh')}), MELEE),
     'securitron': (_em(all='ProjectileNode_Launcher', **{'1hp': 'ProjectileNode_MachineGun', '2ha': 'ProjectileNode_MachineGun',
-                                                     '2hr': 'ProjectileNode_GatlingLaser', '2hh': 'ProjectileNode_Missle'}), ['h2h']),
-    'eyebot': ({}, ['h2h'] + list(_G)),                 # its Weapon node already sits on the emitter: kept at its bind
+                                                     '2hr': 'ProjectileNode_GatlingLaser', '2hh': 'ProjectileNode_Missle'}), MELEE),
+    'eyebot': ({}, MELEE + list(_G)),                 # its Weapon node already sits on the emitter: kept at its bind
     'trog': ({}, ['h2h', '1hm', '2hm']), 'tunneler': ({}, ['h2h', '1hm', '2hm']),   # guns: mouth_fire.py
     'misterhandy': ({}, ['h2h', '1hm', '2hm']), 'mistergutsy': ({}, ['h2h', '1hm', '2hm']),
 }

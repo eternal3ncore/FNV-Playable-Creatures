@@ -138,3 +138,4 @@ for f in [m for m in made if m.endswith('holster.kf')]:
 for f in list(made):
     shutil.copyfile(os.path.join(OUT, f), os.path.join(OUT, 'sneak' + f))
 print(len(made), 'groups +', len(made), 'sneak copies ->', OUT)
+import robot_melee; robot_melee.run(OUT)          # 1HM / 2HM = its H2H moves (weapon_hide.py --race hides the weapon)

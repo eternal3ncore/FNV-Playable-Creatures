@@ -424,3 +424,5 @@ if C.get('weapon_follow'):
     print('  Weapon on the emitter (scale 0.001, prn ->', WP + ') in', nf, 'files')
 RL.sneak_copies(OUT, made)
 print(ROBOT, len(made), 'groups +', len(made), 'sneak copies (+ hurt) ->', OUT, '| hover:', sorted(HOVER))
+if ROBOT in ('protectron', 'robobrain', 'sentrybot'):   # no melee set of their own: 1HM / 2HM = their H2H moves
+    import robot_melee; robot_melee.run(OUT)
