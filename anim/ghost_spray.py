@@ -6,7 +6,9 @@ started (the accum root never moves: the actor ends where it began). Built on th
 stance (the first frame of its standing power attack = its H2H aim), so it blends like the other attacks:
   * pelvis (Bip01 NonAccum) forward / down, both feet planted by two-bone leg IK; the front foot lifts and steps
   * spine lean, neck / head pitch (rear back, then thrust), head held on the target during the spray
-  * arms swept back and out to the sides (two-bone arm IK, targets in the leaning torso frame), hands opened
+  * arms swept back and out to the sides (two-bone arm IK, targets in the leaning torso frame), free hands opened;
+    a one-handed weapon swings back in the right hand, a two-handed one is carried low by the right hand with the left
+    hand keeping its grip (ghost_spray_melee.py)
   * the spray: the skeleton's PCGhostMaskSpray particle system (build_skel_ghost.py, on Bip01 Head at the respirator,
     emitter off at rest) switched on for the spray by this file - controlled blocks NiPSysEmitterCtlr EmitterActive
     (on SPRAY_ON .. SPRAY_OFF) and BirthRate - as the Dead Money idle drives the ghost's breath
@@ -106,7 +108,7 @@ def world_rot(loc, fk, nm, Rw_delta):
     W = fk(loc); loc[nm] = (loc[nm][0], W[sk.parent[nm]][1].T @ (Rw_delta @ W[nm][1]))
 
 
-def build(src, stance, out, render=None, arms='LR'):
+def build(src, stance, out, render=None, arms='LR', open_hands='LR', grip=False):
     ev = KFEval(src); st = KFEval(stance)
     prio = {b[0]: b[2] for b in st.blocks}; prio.update({b[0]: b[2] for b in ev.blocks})
     def full(smp):
@@ -132,9 +134,18 @@ def build(src, stance, out, render=None, arms='LR'):
     hands = {s: W0[cr.arm[s][3]][0].copy() for s in 'LR'}
     spray_hands = {s: W0[cr.arm[s][1]][0] + REACH * np.array(ARM[s]) / np.linalg.norm(ARM[s]) for s in 'LR'}
     knee = {s: W0[f'Bip01 {s} Calf'][0] + np.array([0, 25.0, 0]) for s in 'LR'}
-    fingers = [n for s in 'LR' for n in cr.fingers[s] if n in sk.local]
+    fingers = [n for s in open_hands for n in cr.fingers[s] if n in sk.local]
     X = np.array([1.0, 0, 0])
     _d = W0['Bip01 Head'][1] @ MASK_DIR; P0 = np.degrees(np.arcsin(_d[2]))      # the stance's face pitch
+
+    def hold(loc):
+        # two-handed weapon: the left hand keeps its grip - it follows the right hand (which carries the weapon) as one
+        # rigid piece, position and orientation, the elbow carried the same way
+        W = fk(loc); rh, (_, lua, lfa, lh) = cr.arm['R'][3], cr.arm['L']
+        D = W[rh][1] @ W0[rh][1].T
+        tgt = W[rh][0] + D @ (W0[lh][0] - W0[rh][0])
+        arm_ik(loc, fk, 'L', tgt, W[lua][0] + D @ (W0[lfa][0] - W0[lua][0]))
+        W = fk(loc); loc[lh] = (loc[lh][0], W[sk.parent[lh]][1].T @ (D @ W0[lh][1]))
 
     def pose(t):
         c = curves(t); loc = {k: (v[0].copy(), v[1].copy()) for k, v in base.items()}
@@ -158,7 +169,7 @@ def build(src, stance, out, render=None, arms='LR'):
             world_rot(loc, fk, f'Bip01 {s} Clavicle', rotm([0, 1.0, 0], sg * 6.0 * c['rear']) @ rotm(X, -8.0 * c['thrust']))
         # arms back and out, in the leaning torso's frame
         W = fk(loc); Tw = W['Bip01 Spine2'][1] @ W0['Bip01 Spine2'][1].T; T0 = W0['Bip01 Spine2'][0]
-        for s in arms:                    # (a held weapon: arms keep the stance's hold and move with the torso)
+        for s in arms:
             sh = W0[cr.arm[s][1]][0]; v0 = hands[s] - sh; v1 = spray_hands[s] - sh; u = c['arms']
             n0, n1 = np.linalg.norm(v0), np.linalg.norm(v1); a = np.arccos(np.clip(np.dot(v0, v1) / (n0 * n1), -1, 1))
             dv = (np.sin((1 - u) * a) * v0 / n0 + np.sin(u * a) * v1 / n1) / np.sin(a)     # the hand swings round the shoulder
@@ -166,8 +177,9 @@ def build(src, stance, out, render=None, arms='LR'):
             # elbow: the stance's elbow carried round with the hand (least upper-arm roll), a little further back
             pole = sh + align(v0, vt) @ (W0[cr.arm[s][2]][0] - sh) + np.array(POLE[s]) * u
             arm_ik(loc, fk, s, tgt, W['Bip01 Spine2'][0] + Tw @ (pole - T0))
-        # open hands
-        for nm in (fingers if arms == 'LR' else ()):
+        if grip: hold(loc)
+        # open the free hands
+        for nm in fingers:
             loc[nm] = (loc[nm][0], q2m(slerp(m2q(base[nm][1]), m2q(orth(sk.local[nm][1])), 0.85 * c['arms'])))
         # feet: the back foot stays, the front foot steps
         for s in 'LR':
@@ -184,7 +196,7 @@ def build(src, stance, out, render=None, arms='LR'):
     # the arms' IK rolls the forearm about its own line as the hand swings past the shoulder (up to ~30 deg a frame):
     # smoothed in time (binomial, 3 passes, the first / last frames kept = the stance) - the hands are free, nothing to hit
     arm_bones = [nm for s in arms for nm in sk.order if nm in base and (nm in cr.arm[s][1:] or (f'{s} Fore' in nm) or
-                 (f'{s}UpArm' in nm) or nm in cr.fingers[s])]
+                 (f'{s}UpArm' in nm) or (nm in cr.fingers[s] and s in open_hands))]
     for _ in range(3):
         qs = {nm: [m2q(loc[nm][1]) for _, loc in frames] for nm in arm_bones}
         for nm, Q in qs.items():
@@ -192,6 +204,8 @@ def build(src, stance, out, render=None, arms='LR'):
                 a, b, c_ = Q[i - 1], Q[i], Q[i + 1]
                 a = a if np.dot(a, b) >= 0 else -a; c_ = c_ if np.dot(c_, b) >= 0 else -c_
                 q = (a + 2 * b + c_) / 4; frames[i][1][nm] = (frames[i][1][nm][0], q2m(q / np.linalg.norm(q)))
+    if grip:                              # the grip again on the smoothed right arm
+        for _, loc in frames[1:-1]: hold(loc)
     # check: the feet are where they should be
     errs = []
     for t, loc in frames:
