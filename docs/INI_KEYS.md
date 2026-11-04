@@ -50,6 +50,8 @@ Sections whose plugin isn't loaded are skipped (logged "NOT FOUND (plugin inacti
                       attack (Legion Assault / Ranger Takedown / Khan Trick: AttackCustom1 / 2 / 4 / 5Power)
   UnarmedEffectAnim : the attack animation group the effect fires on (as a creature's EAMT, e.g. 0x5E = AttackBackPower, 0x5D =
                       AttackForwardPower, 0xFF = every attack)
+  (The next three keys are read by PlayableCreatures_GhostMelee.dll, which comes with the Ghost People pack and the
+  merged packs; without it they do nothing.)
   UnarmedEffectWeapons : 1 = the effect also with an unarmed or melee weapon equipped (its forward power attack is
                       the AttackCustom group the weapon plays in its place; the weapon's own enchantment still applies);
                       0 (default) = bare fists only. Ghost People: 1
