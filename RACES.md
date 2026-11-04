@@ -20,8 +20,9 @@ add-ons need their base pack too.
 - The creature's own body parts for gore, dismemberment and VATS.
 - Armor can be worn for its stats but isn't drawn (except where noted).
 - Human animation overrides from kNVSE animation mods don't apply to creature races.
-- First person shows the creature's own body (its head hidden, the view just behind it). Set `FirstPersonBody=0` in
-  a race's section of its pack's settings file for the vanilla first-person view instead.
+- First person shows the creature's own body (its head hidden, the view just behind it); Ghost People keep the
+  vanilla first-person view (their skeleton is human). `FirstPersonBody=0` / `1` in a race's section of its pack's
+  settings file switches it.
 
 ## Zetan
 `PlayableCreatures_Zetan.esp`
