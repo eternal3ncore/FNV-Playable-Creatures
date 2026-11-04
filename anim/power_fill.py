@@ -71,6 +71,11 @@ def run(root, apply=False):
 
 
 CUSTOM = range(1, 6)
+# melee weapons only ever replace the forward power attack; unarmed (no weapon or an Unarmed-skill weapon) the special-move
+# perks replace each direction: forward 0x61 (entry 0x3D), back 0x62 (0x3E), left 0x64 (0x41), right 0x65 (0x42), and
+# the sneaking power attack 0x63 (0x3F) - so the unarmed ones are the race's own power attack of that direction
+CUSTOM_SRC = {'h2h': {1: 'attackforwardpower', 2: 'attackbackpower', 3: 'attackpower', 4: 'attackleftpower', 5: 'attackrightpower'},
+              '1hm': {i: 'attackforwardpower' for i in CUSTOM}, '2hm': {i: 'attackforwardpower' for i in CUSTOM}}
 
 
 def fill_custom(root, rep, apply=False, replace=()):
@@ -79,17 +84,17 @@ def fill_custom(root, rep, apply=False, replace=()):
     player's forward group 0x5D becomes it unless 0xFF, PlayerCharacter 0x949AB2; machete / knife -> Custom3, lead pipe /
     sledgehammer -> Custom2, Dead Money 2HM -> Custom4, chainsaw -> Custom5...), and the perk moves pick them too (0x949B5C).
     A missing group stops the attack, so the forward power attack did nothing with those weapons. Each missing one = a
-    renamed copy of the type's own AttackForwardPower (sneak from sneak). replace: (race, type) whose existing ones are
-    rewritten as well."""
+    renamed copy of the type's own power attack (CUSTOM_SRC: 1HM / 2HM the forward one; unarmed the perk's direction;
+    sneak from sneak). replace: (race, type) whose existing ones are rewritten as well."""
     n = 0
     for race in sorted(os.listdir(root)):
         d = os.path.join(root, race)
         if not os.path.isdir(d): continue
         for T in ('h2h', '1hm', '2hm'):
             for sn in ('', 'sneak'):
-                src = os.path.join(d, f'{sn}{T}attackforwardpower.kf')
-                if not os.path.exists(src): continue
                 for i in CUSTOM:
+                    src = os.path.join(d, f'{sn}{T}{CUSTOM_SRC[T][i]}.kf')
+                    if not os.path.exists(src): continue
                     dst = os.path.join(d, f'{sn}{T}attackcustom{i}power.kf')
                     if os.path.exists(dst) and (race, T) not in replace: continue
                     rep.append(f'{race}: {os.path.basename(dst)} <- {os.path.basename(src)} [AttackCustom{i}Power]')
