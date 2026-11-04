@@ -106,7 +106,7 @@ def world_rot(loc, fk, nm, Rw_delta):
     W = fk(loc); loc[nm] = (loc[nm][0], W[sk.parent[nm]][1].T @ (Rw_delta @ W[nm][1]))
 
 
-def build(src, stance, out, render=None):
+def build(src, stance, out, render=None, arms='LR'):
     ev = KFEval(src); st = KFEval(stance)
     prio = {b[0]: b[2] for b in st.blocks}; prio.update({b[0]: b[2] for b in ev.blocks})
     def full(smp):
@@ -158,7 +158,7 @@ def build(src, stance, out, render=None):
             world_rot(loc, fk, f'Bip01 {s} Clavicle', rotm([0, 1.0, 0], sg * 6.0 * c['rear']) @ rotm(X, -8.0 * c['thrust']))
         # arms back and out, in the leaning torso's frame
         W = fk(loc); Tw = W['Bip01 Spine2'][1] @ W0['Bip01 Spine2'][1].T; T0 = W0['Bip01 Spine2'][0]
-        for s in 'LR':
+        for s in arms:                    # (a held weapon: arms keep the stance's hold and move with the torso)
             sh = W0[cr.arm[s][1]][0]; v0 = hands[s] - sh; v1 = spray_hands[s] - sh; u = c['arms']
             n0, n1 = np.linalg.norm(v0), np.linalg.norm(v1); a = np.arccos(np.clip(np.dot(v0, v1) / (n0 * n1), -1, 1))
             dv = (np.sin((1 - u) * a) * v0 / n0 + np.sin(u * a) * v1 / n1) / np.sin(a)     # the hand swings round the shoulder
@@ -167,7 +167,7 @@ def build(src, stance, out, render=None):
             pole = sh + align(v0, vt) @ (W0[cr.arm[s][2]][0] - sh) + np.array(POLE[s]) * u
             arm_ik(loc, fk, s, tgt, W['Bip01 Spine2'][0] + Tw @ (pole - T0))
         # open hands
-        for nm in fingers:
+        for nm in (fingers if arms == 'LR' else ()):
             loc[nm] = (loc[nm][0], q2m(slerp(m2q(base[nm][1]), m2q(orth(sk.local[nm][1])), 0.85 * c['arms'])))
         # feet: the back foot stays, the front foot steps
         for s in 'LR':
@@ -183,7 +183,7 @@ def build(src, stance, out, render=None):
     frames = [(LENGTH * i / (n - 1), pose(LENGTH * i / (n - 1))) for i in range(n)]
     # the arms' IK rolls the forearm about its own line as the hand swings past the shoulder (up to ~30 deg a frame):
     # smoothed in time (binomial, 3 passes, the first / last frames kept = the stance) - the hands are free, nothing to hit
-    arm_bones = [nm for s in 'LR' for nm in sk.order if nm in base and (nm in cr.arm[s][1:] or (f'{s} Fore' in nm) or
+    arm_bones = [nm for s in arms for nm in sk.order if nm in base and (nm in cr.arm[s][1:] or (f'{s} Fore' in nm) or
                  (f'{s}UpArm' in nm) or nm in cr.fingers[s])]
     for _ in range(3):
         qs = {nm: [m2q(loc[nm][1]) for _, loc in frames] for nm in arm_bones}
