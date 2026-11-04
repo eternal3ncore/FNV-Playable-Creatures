@@ -26,6 +26,8 @@ from act_idles import Shim, wrot, rotx, chain_of, REF, ease
 
 FEED = '/home/claude/fnv/ref_act/feed/meshes/'
 HUMAN_CANNIBAL = os.path.join(REF, '3rdp_cannibal.kf')
+ONE_HAND = {'Zetan': ('R',)}     # eats with this hand only: the Zetan's hands, both at its mouth, crossed through each
+                                 # other (its arms are too short to bring two long hands in front of its face)
 HUMAN_SKEL = '/home/claude/fnv/ref_weap/skeleton.nif'
 GORE = 'Sound: NPCHumanPerkCannibal'
 PRIO = 45
@@ -82,8 +84,21 @@ def retargeted(folder, skel, out, name, src_kf=HUMAN_CANNIBAL, src_skel=HUMAN_SK
         if k.sample(t).get('Bip01') is None or k.sample(t)['Bip01'][1] is None: loc['Bip01'] = (loc['Bip01'][0], np.eye(3))
         return loc
     rt.src_pose = src_pose
-    hx = HandXfer(src_skel, MOUTH[src_mouth], skel, name, local_pose(rt.hs, KFEval(os.path.join(folder, 'mtidle.kf')).sample(0)), src_kf, src_ref=HUMAN_STAND)
+    hx = HandXfer(src_skel, MOUTH[src_mouth], skel, name, local_pose(rt.hs, KFEval(os.path.join(folder, 'mtidle.kf')).sample(0)), src_kf,
+                  sides=ONE_HAND.get(name, ('L', 'R')), src_ref=HUMAN_STAND)
     k = KF(src_kf); ev = KFEval(src_kf); L = k.stop; n = int(round(L * 30)) + 1
+    free = tuple(sd for sd in 'LR' if sd not in hx.sides)
+    if free:
+        from hand_xfer import fk
+        idle_loc = local_pose(rt.hs, KFEval(os.path.join(folder, 'mtidle.kf')).sample(0))
+        free_bones = [b for b in rt.hs.order if any(b.startswith(f'Bip01 {sd} {x}') for sd in free for x in ('UpperArm', 'Forearm', 'Hand', 'Finger', 'Thumb'))]
+        # 1 while the source's other hand is near its mouth (within 12 .. 25), smoothed over +-3 frames
+        u = []
+        for i in range(n):
+            W = hx.src(ev, L * i / (n - 1)); m = W['Bip01 Head'][0] + W['Bip01 Head'][1] @ hx.mg
+            u.append(1 - ease((np.linalg.norm(W[f'Bip01 {free[0]} Hand'][0] - m) - 12) / 13))
+        g = np.exp(-0.5 * (np.arange(-3, 4) / 1.5) ** 2); g /= g.sum()
+        up = np.convolve(np.pad(u, 3, mode='edge'), g, mode='valid')
     frames = []
     for i in range(n):
         t = L * i / (n - 1); loc, _ = rt.frame(ev, t)
@@ -91,6 +106,10 @@ def retargeted(folder, skel, out, name, src_kf=HUMAN_CANNIBAL, src_skel=HUMAN_SK
         for r in rt.ROOTS:                   # root moves relative to each rig's own bind (the spore carrier keys Bip01
             loc[r] = (np.array(rt.hs.local[r][0], float) + (gl[r][0] - np.array(rt.gs.local[r][0], float)) * rt.ratio, loc[r][1])
         hx.apply(loc, ev, t)
+        if free:                             # the other hand tears at the body with the source's, then hangs at the
+            fw = up[i]                       # side (its own idle arm) while the eating hand is at the mouth
+            for b in free_bones: loc[b] = (loc[b][0], idle_loc[b][1])
+            if fw < 1: hx.apply(loc, ev, t, 1 - fw, sides=free)
         frames.append((t, loc))
     bones = [(b, PRIO) for b in rt.hs.order if b in rt.map or b in rt.ROOTS]
     tk = [(t, v.strip()) for t, v in k.textkeys if not v.strip().startswith('-Global')]
