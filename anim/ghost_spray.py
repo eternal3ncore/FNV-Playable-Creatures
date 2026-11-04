@@ -7,8 +7,8 @@ stance (the first frame of its standing power attack = its H2H aim), so it blend
   * pelvis (Bip01 NonAccum) forward / down, both feet planted by two-bone leg IK; the front foot lifts and steps
   * spine lean, neck / head pitch (rear back, then thrust), head held on the target during the spray
   * arms swept back and out to the sides (two-bone arm IK, targets in the leaning torso frame), free hands opened;
-    a one-handed weapon swings back in the right hand, a two-handed one is carried low by the right hand with the left
-    hand keeping its grip (ghost_spray_melee.py)
+    a held weapon swings back in the right hand (ghost_spray_melee.py; grip= keeps a two-handed hold, unused - the
+    ghosts hold the spear in one hand)
   * the spray: the skeleton's PCGhostMaskSpray particle system (build_skel_ghost.py, on Bip01 Head at the respirator,
     emitter off at rest) switched on for the spray by this file - controlled blocks NiPSysEmitterCtlr EmitterActive
     (on SPRAY_ON .. SPRAY_OFF) and BirthRate - as the Dead Money idle drives the ghost's breath
