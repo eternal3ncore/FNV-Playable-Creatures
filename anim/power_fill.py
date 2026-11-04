@@ -1,4 +1,4 @@
-"""Missing power attacks. The engine has no fallback for a power-attack direction a creature lacks: the
+"""Missing power attacks (and AttackCustom1-5Power, see fill_custom). The engine has no fallback for a power-attack direction a creature lacks: the
 player freezes. For every race / melee type (H2H, 1HM, 2HM), standing and sneak, each of AttackPower, AttackForward /
 Back / Left / RightPower that has no file gets a renamed copy (sequence name only) of one of the race's own power
 attacks of that type, chosen in the PLAN below: a non-lunging one (no root travel, feet planted) wherever a direction
@@ -65,8 +65,37 @@ def run(root, apply=False):
                     rep.append(f'{race}: {os.path.basename(dst)} <- {os.path.basename(src)} [{g}]')
                     if apply: renamed(src, dst, g)
                     n += 1
+    n += fill_custom(root, rep, apply)
     rep.append(f'{n} files')
     return rep
+
+
+CUSTOM = range(1, 6)
+
+
+def fill_custom(root, rep, apply=False, replace=()):
+    """AttackCustom1-5Power for H2H / 1HM / 2HM, standing and sneak, in every race folder under root. Vanilla melee
+    weapons replace the forward power attack with one of them (WEAP DNAM power attack override = weapon +0x198: the
+    player's forward group 0x5D becomes it unless 0xFF, PlayerCharacter 0x949AB2; machete / knife -> Custom3, lead pipe /
+    sledgehammer -> Custom2, Dead Money 2HM -> Custom4, chainsaw -> Custom5...), and the perk moves pick them too (0x949B5C).
+    A missing group stops the attack, so the forward power attack did nothing with those weapons. Each missing one = a
+    renamed copy of the type's own AttackForwardPower (sneak from sneak). replace: (race, type) whose existing ones are
+    rewritten as well."""
+    n = 0
+    for race in sorted(os.listdir(root)):
+        d = os.path.join(root, race)
+        if not os.path.isdir(d): continue
+        for T in ('h2h', '1hm', '2hm'):
+            for sn in ('', 'sneak'):
+                src = os.path.join(d, f'{sn}{T}attackforwardpower.kf')
+                if not os.path.exists(src): continue
+                for i in CUSTOM:
+                    dst = os.path.join(d, f'{sn}{T}attackcustom{i}power.kf')
+                    if os.path.exists(dst) and (race, T) not in replace: continue
+                    rep.append(f'{race}: {os.path.basename(dst)} <- {os.path.basename(src)} [AttackCustom{i}Power]')
+                    if apply: renamed(src, dst, f'AttackCustom{i}Power')
+                    n += 1
+    return n
 
 
 if __name__ == '__main__':

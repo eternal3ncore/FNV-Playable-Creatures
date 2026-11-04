@@ -4,7 +4,8 @@ robot's own H2H file for that move, sneak from sneak. Their H2H files already ke
 (weapon_hide.py), so the melee weapon is drawn and swung unseen with the unarmed attack.
   aims / blocks / equip / unequip / holster / powers  <- the H2H file of the same name
   AttackLeft_A / _B (Up / Down)   <- AttackLeft (Up / Down);   AttackRight_A / _B (Up / Down) <- AttackRight (Up / Down)
-  AttackCustom1-3Power            <- AttackPower;   AttackSpin (Up / Down) <- AttackRight (Up / Down)
+  AttackCustom1-5Power            <- AttackForwardPower (melee weapons put these in place of the forward power attack,
+                                     see power_fill.fill_custom);   AttackSpin (Up / Down) <- AttackRight (Up / Down)
   Recoil                          <- BlockHit
 No 1HM / 2HM Idle: the H2H set has none either (the robot's own idle plays).
 usage: python3 robot_melee.py <robot folder> [...]"""
@@ -19,8 +20,9 @@ PLAN = {   # file stem after the type prefix -> (sequence name, H2H source stem)
     'attackpower': ('AttackPower', 'attackpower'), 'attackforwardpower': ('AttackForwardPower', 'attackforwardpower'),
     'attackbackpower': ('AttackBackPower', 'attackbackpower'), 'attackleftpower': ('AttackLeftPower', 'attackleftpower'),
     'attackrightpower': ('AttackRightPower', 'attackrightpower'),
-    'attackcustom1power': ('AttackCustom1power', 'attackpower'), 'attackcustom2power': ('AttackCustom2Power', 'attackpower'),
-    'attackcustom3power': ('AttackCustom3Power', 'attackpower'),
+    'attackcustom1power': ('AttackCustom1Power', 'attackforwardpower'), 'attackcustom2power': ('AttackCustom2Power', 'attackforwardpower'),
+    'attackcustom3power': ('AttackCustom3Power', 'attackforwardpower'), 'attackcustom4power': ('AttackCustom4Power', 'attackforwardpower'),
+    'attackcustom5power': ('AttackCustom5Power', 'attackforwardpower'),
     'attackspin': ('AttackSpin', 'attackright'), 'attackspinup': ('AttackSpinUp', 'attackrightup'),
     'attackspindown': ('AttackSpinDown', 'attackrightdown'),
 }
