@@ -11,6 +11,8 @@ usage: python3 -P post_build.py <race folder> <race>     race = the folder name 
   3. Eyebot sneak hover lowered 40 (sneak_lower)
   4. block animations (H2H + 1HM / 2HM shared): humanoids = human blocks transferred (block_xfer); robots, Eyebot,
      Securitron, Trog, Tunneler, Deathclaw = own guard (own_block); Mister Handy / Gutsy = their claw 1HM blocks copied
+  4b. Recoil (recoil_fill: each melee type's BlockHit renamed Recoil where there is none - without it a bounced melee
+     hit leaves the attack unfinished and the player unable to attack), every race
   5. Ghost heavy weapons cast from the palm (ghost_cast: its 2HH files rebuilt from its pistol files, gun hidden)
   6. priorities (prio_fix): aim / attack up / down no higher than their level file; walk / run / sneak / turn / jump
      upper body capped under the race's lowest weapon stance (Ghost: 22 - Dead Money's walk keyed the arms at 45, over
@@ -65,6 +67,7 @@ if __name__ == '__main__':
     elif race in BLOCK_OWN:
         shutil.rmtree(tmp, ignore_errors=True); a = BLOCK_OWN[race].split()
         print(race, 'blocks', py(os.path.join(HERE, 'own_block.py'), d, tmp, *a)); copy_in(tmp, d, sneak=False); shutil.rmtree(tmp)
+    print(race, 'recoil_fill', py(os.path.join(HERE, 'recoil_fill.py'), d))       # every race, after the blocks
     if race == 'Ghost':
         shutil.rmtree(tmp, ignore_errors=True)
         print(race, 'ghost_cast', py(os.path.join(HERE, 'ghost_cast.py'), d, tmp)); copy_in(tmp, d, sneak=False); shutil.rmtree(tmp)

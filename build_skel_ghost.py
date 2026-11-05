@@ -70,7 +70,7 @@ print('grafted mask spray on Bip01 Head:', _n, 'blocks, types', sorted({_T(i) fo
 # the actor's space (the cloud travels with the Ghost as it slips back), OFF at rest like the mask spray (the dodge KF
 # switches it on). Tuned to a thick, body-sized cloud that gathers at once and thins away fast once it stops: the
 # emitter box the body's size (CLOUD_BOX), puffs 45 +- 20 u/s in every direction, size 34 +- 10 growing from 0.6 over
-# 0.08 s, life 0.45 +- 0.1 s fading over the last 0.3 s, alpha 0.6, pool 400 (700 / s x the longest life).
+# 0.08 s, life 0.45 +- 0.1 s fading over the last 0.3 s, alpha 0.6, pool 560 (980 / s x the longest life).
 CLOUD = (0.0, 0.0, 48.0); CLOUD_BOX = (26.0, 26.0, 72.0)
 _b0 = len(f.blocks)
 _root, _n = graft(f, 'Scene Root', G + 'nvdlc01_ghostlegrhtfx.nif', 4, 'PCGhostDodgeCloudRoot')
@@ -92,7 +92,7 @@ for i in range(_b0, _b0 + _n):
     if t == 'NiPSysGrowFadeModifier':
         struct.pack_into('<f', b, 13, 0.08); struct.pack_into('<f', b, 19, 0.3); struct.pack_into('<f', b, 25, 0.6)
     if t == 'NiMaterialProperty': struct.pack_into('<f', b, 40, 0.6)
-    if t == 'NiPSysData': struct.pack_into('<H', b, 4, 400)
+    if t == 'NiPSysData': struct.pack_into('<H', b, 4, 560)
     if t == 'NiBoolData':
         nk, = struct.unpack_from('<I', b, 0)
         for k in range(nk): b[8 + 5 * k + 4] = 0
