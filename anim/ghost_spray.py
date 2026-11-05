@@ -1,4 +1,4 @@
-"""Ghost People unarmed forward power attack: a gas spray from the mask (replaces the Dead Money forward lunge).
+"""Ghost People unarmed back power attack: a gas spray from the mask (the forward power attack keeps the Dead Money lunge).
 
 The Ghost steps in on its leading (left) foot, rears its head back as it draws breath, then thrusts head and chest
 forward and sprays gas from the respirator (one Hit), holds the spray with a short sweep, and steps back to where it
@@ -14,10 +14,10 @@ stance (the first frame of its standing power attack = its H2H aim), so it blend
     (on SPRAY_ON .. SPRAY_OFF) and BirthRate - as the Dead Money idle drives the ghost's breath
   * text keys: start, attack vocal, footsteps (Enum: Left / Right as the vanilla file's), the spray sound, Hit, end
 Sneak: the same motion on the sneak stance's frame.
-Also writes h2hattackcustom1power (+ sneak) = this file renamed: the unarmed forward perk move (Legion Assault) plays
-Custom1 instead of AttackForwardPower; PlayableCreatures.dll v85 fires the race's unarmed effect on it too.
-Sources: --src <folder> with the Dead Money forward power attack and the standing power attack (+ sneak copies) as
-shipped before this file replaced them (anim_backup: ghost_spray_src).
+Also writes h2hattackcustom2power (+ sneak) = this file renamed: the unarmed back perk move (Ranger Takedown) plays
+Custom2 instead of AttackBackPower; Core fires the race's unarmed effect on it too (UnarmedEffectAnim=0x5E).
+Sources: --src <folder> with the back power attack (its sequence name / priorities) and the standing power attack (the
+H2H stance) (+ sneak copies). The forward power attack and Custom1 (Legion Assault) stay the Dead Money lunge.
 usage: python3 -P ghost_spray.py <Ghost anim folder (out)> --src <source folder> [--render out.png]"""
 import os, sys, struct, importlib
 import numpy as np
@@ -253,9 +253,9 @@ if __name__ == '__main__':
     src_dir = sys.argv[sys.argv.index('--src') + 1] if '--src' in sys.argv else folder
     from power_fill import renamed
     for sn in ('', 'sneak'):
-        out = os.path.join(folder, f'{sn}h2hattackforwardpower.kf')
-        build(os.path.join(src_dir, f'{sn}h2hattackforwardpower.kf'), os.path.join(src_dir, f'{sn}h2hattackpower.kf'),
+        out = os.path.join(folder, f'{sn}h2hattackbackpower.kf')
+        build(os.path.join(src_dir, f'{sn}h2hattackbackpower.kf'), os.path.join(src_dir, f'{sn}h2hattackpower.kf'),
               out, render=(render.replace('.png', f'_{sn or "stand"}.png') if render else None))
-        # the unarmed forward perk move (Legion Assault) plays AttackCustom1Power in its place: the same spray (the DLL
-        # counts that group as the forward power for the race's unarmed effect, so the gas works with the perk too)
-        renamed(out, os.path.join(folder, f'{sn}h2hattackcustom1power.kf'), 'AttackCustom1Power')
+        # the unarmed back perk move (Ranger Takedown) plays AttackCustom2Power in its place: the same spray (Core
+        # counts that group as the back power for the race's unarmed effect, so the gas works with the perk too)
+        renamed(out, os.path.join(folder, f'{sn}h2hattackcustom2power.kf'), 'AttackCustom2Power')
