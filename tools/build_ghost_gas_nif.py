@@ -6,7 +6,8 @@ from the leg's slow puff to a spray that carries over the flamer's reach, and th
 the leg's emitter-active track only puffs from 0.25 to 0.37 s of a 1.75 s loop, longer than a projectile lives (nothing
 was drawn), so its controller timing and on / off keys are the flamer's (on from 0 to 0.33 s).
 The leg spray's material alpha (0.5) is raised to ALPHA so the stream reads as solid gas (user: too faint).
-Density as the mask spray of the gas power attack (user: thicker): 160 particles / s, cone 0.22 rad, life 0.5 s.
+Density as the mask spray of the gas power attack (user: thicker): cone 0.22 rad, life 0.5 s; then (user: less opaque, still
+not thick) bigger, more, see-through puffs: radius 56, 240 / s, alpha 0.6 (the impact keeps its own values).
 --impact builds the hit effect instead (Ghost Gas impact data set): one slow puff of the same gas billowing out in
 every direction from the hit point - the emitter on for its first 0.12 s, bigger, longer-lived particles.
 usage: python3 -P build_ghost_gas_nif.py <flamerflame01.nif> <nvdlc01_ghostlegrhtfx.nif> <out.nif> [--impact]"""
@@ -17,15 +18,15 @@ from graft import graft
 
 SPEED, SPEED_VAR = 2200.0, 600.0       # units / s (flamer 3300 +- 990, the leg puff 90)
 DECL_VAR = 0.22                        # cone half-angle, rad (flamer 0.07, leg 0.14, the mask spray 0.22)
-RADIUS, RADIUS_VAR = 40.0, 12.0        # particle radius (leg 20)
+RADIUS, RADIUS_VAR = 56.0, 14.0        # particle radius (leg 20): big soft puffs that overlap into one body of gas
 LIFE, LIFE_VAR = 0.50, 0.08            # s (flamer 0.37 +- 0.07, the mask spray 0.55)
-BIRTH = 160.0                          # particles / s per projectile (leg 60, flamer 30, the mask spray 160): a thick stream
-MAXP = 96                              # particle pool per projectile (leg 3000, flamer 12): BIRTH x the longest life
-ALPHA = 1.0                            # material alpha (leg 0.5, flamer 1.0)
+BIRTH = 240.0                          # particles / s per projectile (leg 60, flamer 30, the mask spray 160): a thick stream
+MAXP = 144                             # particle pool per projectile (leg 3000, flamer 12): BIRTH x the longest life
+ALPHA = 0.6                            # material alpha (leg 0.5, flamer 1.0): see-through puffs that build up where they overlap
 GROW, FADE, BASE = 0.12, 0.20, 0.30    # grow-from / fade-out times, start size (leg 0.33 / 0.33 / 0.25)
 
 IMPACT = dict(SPEED=45.0, SPEED_VAR=30.0, DECL_VAR=3.14159, RADIUS=26.0, RADIUS_VAR=8.0, LIFE=1.2, LIFE_VAR=0.3,
-              BIRTH=150.0, MAXP=32, GROW=0.25, FADE=0.70, BASE=0.35, ON=0.12, STOP=1.6)
+              BIRTH=150.0, MAXP=32, GROW=0.25, FADE=0.70, BASE=0.35, ON=0.12, STOP=1.6, ALPHA=1.0)
 flame, leg, out = sys.argv[1:4]
 impact = '--impact' in sys.argv[4:]
 if impact: globals().update({k: v for k, v in IMPACT.items()})
