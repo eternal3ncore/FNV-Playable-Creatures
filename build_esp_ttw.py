@@ -348,9 +348,9 @@ for _tag, _f in (('Swampfolk', 'Swampfolk'), ('Hillfolk', 'Hillfolk'), ('SuperMu
     pod_idles(_tag, 'PlayableCreatures\\%s\\IdleAnims' % _f)
 
 # Capital super mutant taunts (Core TauntIdles= / TauntSound=, as build_esp.py's PCSuperMutantTaunt*): Fallout 3's super
-# mutant intimidation idles (creatures\\smspinebreakerdc\\idleanims in TTW), the ones without Weapon keys; whole body + no
-# attacking; under a root that never passes (PCSuperMutantDCTauntIdles). Their voice, played by Core: Fallout 3's super
-# mutant taunts (MS01MutantTaunt + GenericSup NormalToCombat), every line. SNDD as build_esp.py's voice sounds.
+# mutant intimidation idles (creatures\\smspinebreakerdc\\idleanims in TTW), the ones without Weapon keys; section Special Idle
+# (as the vanilla records; Whole Body cleared the weapon-ready state) + no attacking; under a root that never passes
+# (PCSuperMutantDCTauntIdles). Their voice, played by Core: Fallout 3's super mutant taunts (MS01MutantTaunt + GenericSup NormalToCombat), every line. SNDD as build_esp.py's voice sounds.
 # New ids after everything else (the root after the ids the taunts / voice already had).
 SMDC_TAUNTS = [nid() for _ in range(3)]
 SMDC_TAUNT_SOUN = nid()
@@ -359,11 +359,11 @@ souns = [record('SOUN', SMDC_TAUNT_SOUN, [('EDID', z('PCSuperMutantDCTauntVox'))
     ('FNAM', z('fx\\npc\\playablecreatures\\supermutantdc\\taunt\\')), ('RNAM', b'\0'), ('SNDD', bytes(_sndd))])]
 SMDC_TAUNT_ROOT = nid()
 idles.append(record('IDLE', SMDC_TAUNT_ROOT, [('EDID', z('PCSuperMutantDCTauntIdles')), ('MODL', z('Creatures\\SMSpineBreakerDC\\IdleAnims')),
-    ('CTDA', ctda(F_RANDOM, 0, 4)), ('ANAM', struct.pack('<II', 0, 0)), ('DATA', bytes.fromhex('1400000000000000'))]))
+    ('CTDA', ctda(F_RANDOM, 0, 4)), ('ANAM', struct.pack('<II', 0, 0)), ('DATA', bytes.fromhex('0700000000000000'))]))
 _prev = 0
 for _i, (_fid, _fn) in enumerate(zip(SMDC_TAUNTS, ('SpecialIdle_2HAIntimidate.kf', 'SpecialIdle_2HAIntimidate2.kf', 'SpecialIdle_2HAIntimidate4.kf')), 1):
     idles.append(record('IDLE', _fid, [('EDID', z('PCSuperMutantDCTaunt%d' % _i)), ('MODL', z('Creatures\\SMSpineBreakerDC\\IdleAnims\\' + _fn)),
-        ('ANAM', struct.pack('<II', SMDC_TAUNT_ROOT, _prev)), ('DATA', bytes.fromhex('1400000000000100'))]))
+        ('ANAM', struct.pack('<II', SMDC_TAUNT_ROOT, _prev)), ('DATA', bytes.fromhex('0700000000000100'))]))
     _prev = _fid
 print('  capital super mutant taunts', ' '.join('%06X' % (f & 0xFFFFFF) for f in SMDC_TAUNTS), 'voice %06X root %06X' % (SMDC_TAUNT_SOUN & 0xFFFFFF, SMDC_TAUNT_ROOT & 0xFFFFFF))
 

@@ -1224,7 +1224,9 @@ print('  ghost back dodge idle %06X, spell %06X' % (GHOST_DODGE & 0xFFFFFF, GHOS
 
 # Super Mutant / Nightkin taunts (Core TauntIdles=: back + jump plays them in turn, held still): the super mutants' own
 # combat intimidation idles (vanilla SB2HAIntimidate / 2 and the unrecorded 4th, creatures\\smspinebreaker\\idleanims - the
-# ones that don't key the Weapon node, so they suit any weapon or none), whole body + no attacking (as PCGhostTrashPick).
+# ones that don't key the Weapon node, so they suit any weapon or none), section Special Idle as the vanilla records + no
+# attacking (as the hops). Whole Body (0x14) cleared the weapon-ready state: after the taunt the mutant stood as if
+# unarmed and couldn't attack until the weapon was readied again.
 # Under PCSuperMutantTauntIdles, a root that never passes (GetRandomPercent < 0, as PCGhostMoveIdles): as loose idles
 # (no parent, no conditions) the engine picked them on its own - the mutant gestured whenever a nearby NPC spoke.
 # Their voice is played by Core with the taunt (TauntSound=): the low-int super mutant's combat shouts, every line (no
@@ -1235,11 +1237,11 @@ SM_TAUNT_SOUN = _new()
 souns.append(soun(SM_TAUNT_SOUN, 'PCSuperMutantTauntVox', PC + 'supermutant\\taunt\\', 5.0, None, None))
 SM_TAUNT_ROOT = _new()
 idles.append(record('IDLE', SM_TAUNT_ROOT, [('EDID', z('PCSuperMutantTauntIdles')), ('MODL', z('Creatures\\SMSpineBreaker\\IdleAnims')),
-    ('CTDA', ctda(F_RANDOM, 0, 4)), ('ANAM', struct.pack('<II', 0, 0)), ('DATA', bytes.fromhex('1400000000000000'))]))
+    ('CTDA', ctda(F_RANDOM, 0, 4)), ('ANAM', struct.pack('<II', 0, 0)), ('DATA', bytes.fromhex('0700000000000000'))]))
 _prev = 0
 for _i, (_fid, _fn) in enumerate(zip(SM_TAUNTS, ('SpecialIdle_2HAIntimidate.kf', 'SpecialIdle_2HAIntimidate2.kf', 'SpecialIdle_2HAIntimidate4.kf')), 1):
     idles.append(record('IDLE', _fid, [('EDID', z('PCSuperMutantTaunt%d' % _i)), ('MODL', z('Creatures\\SMSpineBreaker\\IdleAnims\\' + _fn)),
-        ('ANAM', struct.pack('<II', SM_TAUNT_ROOT, _prev)), ('DATA', bytes.fromhex('1400000000000100'))]))
+        ('ANAM', struct.pack('<II', SM_TAUNT_ROOT, _prev)), ('DATA', bytes.fromhex('0700000000000100'))]))
     _prev = _fid
 print('  super mutant taunts', ' '.join('%06X' % (f & 0xFFFFFF) for f in SM_TAUNTS), 'voice %06X root %06X' % (SM_TAUNT_SOUN & 0xFFFFFF, SM_TAUNT_ROOT & 0xFFFFFF))
 
