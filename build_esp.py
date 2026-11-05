@@ -1229,9 +1229,13 @@ print('  ghost back dodge idle %06X, spell %06X' % (GHOST_DODGE & 0xFFFFFF, GHOS
 SM_TAUNTS = []
 for _i, _fn in enumerate(('SpecialIdle_2HAIntimidate.kf', 'SpecialIdle_2HAIntimidate2.kf', 'SpecialIdle_2HAIntimidate4.kf'), 1):
     _fid = _new(); SM_TAUNTS.append(_fid)
-    idles.append(record('IDLE', _fid, [('EDID', z('PCSuperMutantTaunt%d' % _i)), ('MODL', z('Creatures\\SMSpineBreaker\\IdleAnims\\' + _fn)),
+    idles.append(record('IDLE', _fid, [('EDID', z('PCSuperMutantTaunt%d' % _i)), ('MODL', z('PlayableCreatures\\SuperMutant\\IdleAnims\\PCTaunt%d.kf' % _i)),
         ('ANAM', struct.pack('<II', 0, 0)), ('DATA', bytes.fromhex('1400000000000100'))]))
-print('  super mutant taunts', ' '.join('%06X' % (f & 0xFFFFFF) for f in SM_TAUNTS))
+# the taunts' voice (anim/sm_taunt.py: our copies of the intimidation KFs carry 'Sound: PCSuperMutantTauntVox' at 0.1 s):
+# the low-int super mutant's combat shouts, every line (no silence padding: a taunt always speaks)
+SM_TAUNT_SOUN = _new()
+souns.append(soun(SM_TAUNT_SOUN, 'PCSuperMutantTauntVox', PC + 'supermutant\\taunt\\', 5.0, None, None))
+print('  super mutant taunts', ' '.join('%06X' % (f & 0xFFFFFF) for f in SM_TAUNTS), 'voice %06X' % (SM_TAUNT_SOUN & 0xFFFFFF))
 
 groups = [group('HAIR', [hair]), group('EYES', [eyes] + eyes_extra), group('RACE', races), group('SOUN', souns), group('MGEF', mgefs), group('SCPT', scpts), group('ENCH', enchs), group('SPEL', spels), group('ARMO', armors), group('WEAP', weaps), group('NPC_', npcs), group('IDLE', idles)] + ([group('PROJ', projs)] if projs else []) + [group('ANIO', anios), group('EFSH', efshs), group('BPTD', bptds), group('VTYP', vtyp), group('IPCT', ipcts), group('IPDS', ipdss)]   # vanilla group order
 nrec = 2 + len(efshs) + len(ipcts) + len(ipdss) + len(enchs) + len(projs) + len(eyes_extra) + len(armors) + len(bptds) + len(races) + len(weaps) + len(npcs) + len(souns) + len(mgefs) + len(scpts) + len(spels) + len(vtyp) + len(idles) + len(anios) + len(groups)

@@ -353,12 +353,18 @@ for _tag, _f in (('Swampfolk', 'Swampfolk'), ('Hillfolk', 'Hillfolk'), ('SuperMu
 SMDC_TAUNTS = []
 for _i, _fn in enumerate(('SpecialIdle_2HAIntimidate.kf', 'SpecialIdle_2HAIntimidate2.kf', 'SpecialIdle_2HAIntimidate4.kf'), 1):
     _fid = nid(); SMDC_TAUNTS.append(_fid)
-    idles.append(record('IDLE', _fid, [('EDID', z('PCSuperMutantDCTaunt%d' % _i)), ('MODL', z('Creatures\\SMSpineBreakerDC\\IdleAnims\\' + _fn)),
+    idles.append(record('IDLE', _fid, [('EDID', z('PCSuperMutantDCTaunt%d' % _i)), ('MODL', z('PlayableCreatures\\SuperMutantDC\\IdleAnims\\PCTaunt%d.kf' % _i)),
         ('ANAM', struct.pack('<II', 0, 0)), ('DATA', bytes.fromhex('1400000000000100'))]))
-print('  capital super mutant taunts', ' '.join('%06X' % (f & 0xFFFFFF) for f in SMDC_TAUNTS))
+# their voice (anim/sm_taunt.py: 'Sound: PCSuperMutantDCTauntVox' in our copies of the KFs): Fallout 3's super mutant
+# taunts (MS01MutantTaunt + GenericSup NormalToCombat), every line. SNDD as build_esp.py's voice sounds.
+SMDC_TAUNT_SOUN = nid()
+_sndd = bytearray(bytes.fromhex('3c0800000010000056050000640032001400050000005000800000000000000000000000')); struct.pack_into('<h', _sndd, 8, 500)
+souns = [record('SOUN', SMDC_TAUNT_SOUN, [('EDID', z('PCSuperMutantDCTauntVox')), ('OBND', bytes(12)),
+    ('FNAM', z('fx\\npc\\playablecreatures\\supermutantdc\\taunt\\')), ('RNAM', b'\0'), ('SNDD', bytes(_sndd))])]
+print('  capital super mutant taunts', ' '.join('%06X' % (f & 0xFFFFFF) for f in SMDC_TAUNTS), 'voice %06X' % (SMDC_TAUNT_SOUN & 0xFFFFFF))
 
-groups = [group('HAIR', [hair]), group('EYES', [eyes]), group('RACE', races), group('SPEL', spels), group('ARMO', armors), group('NPC_', npcs), group('IDLE', idles), group('BPTD', bptds)]
-nrec = 2 + len(races) + len(spels) + len(armors) + len(npcs) + len(idles) + len(bptds) + len(groups)
+groups = [group('HAIR', [hair]), group('EYES', [eyes]), group('RACE', races), group('SOUN', souns), group('SPEL', spels), group('ARMO', armors), group('NPC_', npcs), group('IDLE', idles), group('BPTD', bptds)]
+nrec = 2 + len(races) + len(souns) + len(spels) + len(armors) + len(npcs) + len(idles) + len(bptds) + len(groups)
 tes4 = record('TES4', 0, [
     ('HEDR', struct.pack('<fII', 1.34, nrec, _next[0])), ('CNAM', z('i3ncore')),
     ('SNAM', z('Playable Creatures (TTW add-on): Swampfolk (Brawler, Scrapper, Creeper, Tracker, Bruiser), Trogs, Capital Wasteland super mutants (Super Mutant, Brute, Master) as playable races; idle trees. Needs Tale of Two Wastelands and PlayableCreatures.dll.')),
