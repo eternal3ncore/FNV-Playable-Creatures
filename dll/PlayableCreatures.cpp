@@ -86,7 +86,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 89;
+static const UInt32 kPluginVersion = 93;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -1682,14 +1682,17 @@ static void ApplyUnarmedEffect(const char* why) {
 //    the same EAMT check. Which group a weapon's forward power attack plays (PlayerCharacter 0x949A5D..0x949AD5): with
 //    an override (+0x198, WEAP DNAM byte 164) other than 0xFF that group (vanilla melee weapons: AttackCustom1-5Power), so
 //    the getter also answers that group for EAMT 0x5D.
-//  * UnarmedEffectReachMult=: GetMeleeReach 0x9A69C0(actor, weapon) - no weapon: Actor vtbl 0x380 (PlayerCharacter
-//    0x88B850 = fHandReachMult 0.5 x fCombatDistance 128 = 64), a weapon: its reach x fCombatDistance; x the actor's
-//    scale. While the attack stands for the effect's, at least the unarmed reach x this.
+//  * UnarmedEffectReachMult=: the hit's target search 0x8990F0 works the reach out inline - a weapon: its reach
+//    (0x6447F0) x fCombatDistance (0x6463E0), none: Actor vtbl 0x380 (PlayerCharacter 0x88B850 = fHandReachMult 0.5 x
+//    fCombatDistance 128 = 64); x the actor's scale (x the VATS melee mult in VATS) - and passes it to the search
+//    0x9A60E0(actor, reach) at 0x8991E2 (GetMeleeReach 0x9A69C0 is the AI's, never on the player's hit). That call is
+//    redirected: while the attack stands for the effect's, the reach is at least the unarmed reach x this x scale.
 //  * UnarmedEffectCone=: the player's hit cone 0x9A6A40(playing group) at 0x9A6CA5 (forward / standing power 40, back /
 //    sides 100, Custom1 50, others 35); while the attack stands for the effect's, at least this.
 static const UInt32 kSite_UnarmedAnimGet = 0x008C2387, kAddr_UnarmedAnimGet = 0x004A8AE0;
 static const UInt32 kAddr_SeqAnimGroup = 0x0048F7F0, kAddr_AnimGroupId = 0x005F2420, kAddr_EquippedWeapon = 0x008A1710;
-static const UInt32 kAddr_HitEnchant = 0x008C2190, kAddr_MeleeReach = 0x009A69C0, kAddr_PlayerUnarmedReach = 0x0088B850;
+static const UInt32 kAddr_HitEnchant = 0x008C2190, kAddr_PlayerUnarmedReach = 0x0088B850;
+static const UInt32 kSite_MeleeTargets = 0x008991E2, kAddr_MeleeTargets = 0x009A60E0;
 static const UInt32 kAddr_GetScale = 0x00567400, kSite_PlayerHitCone = 0x009A6CA5, kAddr_PlayerHitCone = 0x009A6A40;
 typedef UInt16 (__fastcall* AnimGet_t)(void* ench, void* edx);
 typedef float (__fastcall* FThis_t)(void*, void*);
@@ -1750,18 +1753,17 @@ static bool __fastcall Hook_HitEnchant(void* attacker, void* edx, void* entry, v
 	}
 	return r;
 }
-typedef float (__cdecl* MeleeReach_t)(void* actor, void* weapon);
-static MeleeReach_t g_meleeReach = nullptr;
-static float __cdecl Hook_MeleeReach(void* actor, void* weapon) {
-	float r = g_meleeReach(actor, weapon);
+typedef void* (__cdecl* MeleeTargets_t)(void* actor, float reach);
+static MeleeTargets_t g_prevMeleeTargets = (MeleeTargets_t)kAddr_MeleeTargets;
+static void* __cdecl Hook_MeleeTargets(void* actor, float reach) {
 	if (actor == Player()) {
 		Profile* p = EffectAttack(0xFFFF);
 		if (p && p->unarmedReachMult > 0) {
 			float min = ((FThis_t)kAddr_PlayerUnarmedReach)(actor, nullptr) * p->unarmedReachMult * ((FThis_t)kAddr_GetScale)(actor, nullptr);
-			if (min > r) return min;
+			if (min > reach) reach = min;
 		}
 	}
-	return r;
+	return g_prevMeleeTargets(actor, reach);
 }
 typedef float (__cdecl* Cone_t)(UInt32 group);
 static Cone_t g_prevCone = (Cone_t)kAddr_PlayerHitCone;
@@ -1782,7 +1784,8 @@ static void InstallUnarmedPerkAnims() {                              // at load,
 	else if (RedirectCall(kSite_UnarmedAnimGet, (void*)Hook_UnarmedAnimGet, kAddr_UnarmedAnimGet, &prev, "unarmed effect anim (perk moves / weapons)"))
 		g_prevUnarmedAnimGet = (AnimGet_t)prev;
 	if (weap) g_hitEnchant = (HitEnchant_t)Detour(kAddr_HitEnchant, 0x64, (void*)Hook_HitEnchant, "on-hit enchantments (UnarmedEffectWeapons)");
-	if (reach) g_meleeReach = (MeleeReach_t)Detour(kAddr_MeleeReach, 0x10, (void*)Hook_MeleeReach, "melee reach (UnarmedEffectReachMult)");
+	if (reach && RedirectCall(kSite_MeleeTargets, (void*)Hook_MeleeTargets, kAddr_MeleeTargets, &prev, "melee hit reach (UnarmedEffectReachMult)"))
+		g_prevMeleeTargets = (MeleeTargets_t)prev;
 	if (cone && RedirectCall(kSite_PlayerHitCone, (void*)Hook_PlayerHitCone, kAddr_PlayerHitCone, &prev, "player hit cone (UnarmedEffectCone)"))
 		g_prevCone = (Cone_t)prev;
 	if (!weap && !reach && !cone) Log("unarmed effect: no race sets UnarmedEffectWeapons / ReachMult / Cone - those not hooked");
