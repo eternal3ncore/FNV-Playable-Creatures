@@ -36,8 +36,9 @@
 // 12. First person: the creature's own 3rd-person body is shown (head hidden, camera at FirstPersonNode +
 //     FirstPersonOffset) instead of the human 1st-person skeleton; on by default, FirstPersonBody=0 per race turns it off.
 // 13. UnarmedEffect= on a directional power attack also fires on that direction's unarmed special-move perk attack
-//     (Legion Assault -> AttackCustom1Power for AttackForwardPower, etc.). UnarmedEffectWeapons= / ReachMult= / Cone=
-//     are read by PlayableCreatures_GhostMelee.dll (Ghost People pack).
+//     (Legion Assault -> AttackCustom1Power for AttackForwardPower, etc.). Per race, off unless set (Ghost People: on):
+//     UnarmedEffectWeapons=1 the effect also on hits with an unarmed / melee weapon (its forward power attack stands
+//     for AttackForwardPower), UnarmedEffectReachMult= / UnarmedEffectCone= that attack's minimum reach / hit cone.
 //  8. Blood: ImpactMaterial= gives the player's base the creature's impact material while in the race
 //     (TESNPC+0x1E4, the NPC_/CREA NAM4 field: 6 Organic = red, 10 OrganicBug, 11 OrganicGlow); weapons then
 //     use their own impact data for that material (spray + decals), exactly as they do on the creature.
@@ -85,7 +86,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 88;
+static const UInt32 kPluginVersion = 89;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -139,6 +140,9 @@ struct Profile {
 	char faceNodes[16][48];         // FaceNodes= - skeleton nodes (the others are hidden)
 	FormRef unarmedEffect;          // UnarmedEffect= - enchantment given to the player's unarmed attacks while in the race
 	UInt16 unarmedAnim;             // UnarmedEffectAnim= - the attack animation it fires on (anim group id, e.g. 0x5E)
+	bool unarmedWeapons;            // UnarmedEffectWeapons=1 - the effect also with an unarmed / melee weapon (default 0)
+	float unarmedReachMult, unarmedCone;  // UnarmedEffectReachMult= / UnarmedEffectCone= - that attack's minimum reach (x the
+	                                //   unarmed reach) / hit cone (degrees); 0 (default) = vanilla
 	bool blockAnimOverrides;        // BlockAnimOverrides=1 (default) - kNVSE never swaps the sequence an actor in this race plays
 	bool showInMenu;                // ShowInRaceMenu=0 hides the race from the race menu (RACE playable flag)
 	int resistCap;                  // ResistCap= - fPlayerMaxResistance while in the race (0 = unchanged)
@@ -216,6 +220,9 @@ static int LoadConfigFile(const char* ini) {
 		  if (n < p.numFaces) p.numFaces = n; }
 		GetPrivateProfileStringA(sec, "UnarmedEffect", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.unarmedEffect, 1);
 		GetPrivateProfileStringA(sec, "UnarmedEffectAnim", "0", tmp, sizeof(tmp), ini); p.unarmedAnim = (UInt16)strtoul(tmp, nullptr, 0);
+		p.unarmedWeapons = GetPrivateProfileIntA(sec, "UnarmedEffectWeapons", 0, ini) != 0;
+		GetPrivateProfileStringA(sec, "UnarmedEffectReachMult", "0", tmp, sizeof(tmp), ini); p.unarmedReachMult = (float)atof(tmp);
+		GetPrivateProfileStringA(sec, "UnarmedEffectCone", "0", tmp, sizeof(tmp), ini); p.unarmedCone = (float)atof(tmp);
 		p.ghostMoves = GetPrivateProfileIntA(sec, "GhostMoves", 0, ini) != 0;
 		p.blockAnimOverrides = GetPrivateProfileIntA(sec, "BlockAnimOverrides", 1, ini) != 0;
 		if (!p.plugin[0] || !p.localID || !p.skeleton[0] || !p.marker[0]) { Log("config: [%s] incomplete, skipped", sec); continue; }
@@ -364,7 +371,8 @@ static void ResolveProfiles() {
 			p.ghostForms[1].fid, p.ghostForms[2].fid, p.ghostForms[3].fid, p.ghostForms[4].fid);
 		if (p.numLocked) Log("resolve: [%s] %d locked item(s) until global %08X", p.section, p.numLocked, p.unlockGlobal.fid);
 		if (p.numFaces) Log("resolve: [%s] %d faces chosen by eyes", p.section, p.numFaces);
-		if (p.unarmedEffect.fid) Log("resolve: [%s] unarmed effect %08X on anim %02X", p.section, p.unarmedEffect.fid, p.unarmedAnim);
+		if (p.unarmedEffect.fid) Log("resolve: [%s] unarmed effect %08X on anim %02X (weapons %d, reach x%.2f, cone %.0f)", p.section,
+			p.unarmedEffect.fid, p.unarmedAnim, p.unarmedWeapons, p.unarmedReachMult, p.unarmedCone);
 		if (p.bodyParts.localID) {                                     // must be a BPTD (same form type as DefaultBodyPartData)
 			FormRef& b = p.bodyParts;
 			b.fid = GetModIndex(b.plugin) == 0xFF ? 0 : ResolveFID(b.plugin, b.localID);
@@ -1666,11 +1674,25 @@ static void ApplyUnarmedEffect(const char* why) {
 // 2 / 4 / 5Power (0x61 / 62 / 64 / 65) in place of AttackForward / Back / Left / RightPower (0x5D-0x60) with bare fists or
 // an Unarmed-skill weapon (+0x15C == 0x2D), so an effect set on a directional power attack stopped firing once the perk
 // was taken (one EAMT value; no data route). That call is redirected: for the player's base the getter answers the
-// playing group when it is EAMT's perk replacement. (Weapons, reach and hit cone of that attack:
-// PlayableCreatures_GhostMelee.dll, which chains onto the same call.)
+// playing group when it is EAMT's perk replacement.
+// Per race (all off unless the race's settings set them; Ghost People: the gas spray):
+//  * UnarmedEffectWeapons=1: with a weapon the on-hit function never considers the unarmed effect. After it ran for the
+//    player's hit with an unarmed / melee weapon (DNAM animation type, TESObjectWEAP +0xF4: H2H 0 / 1HM 1 / 2HM 2), it
+//    is run once more without weapon and projectile - its bare-fists pass, which casts the unarmed effect alone, through
+//    the same EAMT check. Which group a weapon's forward power attack plays (PlayerCharacter 0x949A5D..0x949AD5): with
+//    an override (+0x198, WEAP DNAM byte 164) other than 0xFF that group (vanilla melee weapons: AttackCustom1-5Power), so
+//    the getter also answers that group for EAMT 0x5D.
+//  * UnarmedEffectReachMult=: GetMeleeReach 0x9A69C0(actor, weapon) - no weapon: Actor vtbl 0x380 (PlayerCharacter
+//    0x88B850 = fHandReachMult 0.5 x fCombatDistance 128 = 64), a weapon: its reach x fCombatDistance; x the actor's
+//    scale. While the attack stands for the effect's, at least the unarmed reach x this.
+//  * UnarmedEffectCone=: the player's hit cone 0x9A6A40(playing group) at 0x9A6CA5 (forward / standing power 40, back /
+//    sides 100, Custom1 50, others 35); while the attack stands for the effect's, at least this.
 static const UInt32 kSite_UnarmedAnimGet = 0x008C2387, kAddr_UnarmedAnimGet = 0x004A8AE0;
 static const UInt32 kAddr_SeqAnimGroup = 0x0048F7F0, kAddr_AnimGroupId = 0x005F2420, kAddr_EquippedWeapon = 0x008A1710;
+static const UInt32 kAddr_HitEnchant = 0x008C2190, kAddr_MeleeReach = 0x009A69C0, kAddr_PlayerUnarmedReach = 0x0088B850;
+static const UInt32 kAddr_GetScale = 0x00567400, kSite_PlayerHitCone = 0x009A6CA5, kAddr_PlayerHitCone = 0x009A6A40;
 typedef UInt16 (__fastcall* AnimGet_t)(void* ench, void* edx);
+typedef float (__fastcall* FThis_t)(void*, void*);
 static AnimGet_t g_prevUnarmedAnimGet = (AnimGet_t)kAddr_UnarmedAnimGet;
 static UInt32 PlayerAttackGroup() {                                  // the engine's own steps at 0x8C23F0..0x8C2414
 	void* pl = Player(); if (!pl) return 0xFFFF;
@@ -1679,25 +1701,91 @@ static UInt32 PlayerAttackGroup() {                                  // the engi
 	void* grp = ((P_t)kAddr_SeqAnimGroup)(seq, nullptr); if (!grp) return 0xFFFF;
 	return ((U32_t)kAddr_AnimGroupId)(grp, nullptr);
 }
+static void* PlayerWeapon() { void* pl = Player(); return pl ? ((P_t)kAddr_EquippedWeapon)(pl, nullptr) : nullptr; }
+static inline bool MeleeWeapon(void* w) { return w && At<UInt8>(w, 0xF4) <= 2; }        // H2H / 1HM / 2HM
+static inline UInt8 PerkGroup(UInt16 a) { static const UInt8 k[4] = {0x61, 0x62, 0x64, 0x65}; return k[a - 0x5D]; }
+static inline bool PerkStandIn(UInt16 a, UInt32 g, void* w) {       // the special-move perk's group for direction a
+	return a >= 0x5D && a <= 0x60 && g == PerkGroup(a) && (!w || At<UInt32>(w, 0x15C) == 0x2D);
+}
+static inline bool WeaponForward(UInt16 a, UInt32 g, void* w) {      // a weapon's forward power override for EAMT 0x5D
+	return a == 0x5D && w && At<UInt8>(w, 0x198) != 0xFF && g == At<UInt8>(w, 0x198);
+}
+// the player's profile while its base carries that race's unarmed effect (what ApplyUnarmedEffect gave it)
+static Profile* UnarmedProfile() {
+	Profile* p = PlayerProfile(); if (!p || !p->unarmedEffect.fid) return nullptr;
+	void* npc = PlayerNPC(); void* item = npc ? At<void*>(npc, 0x74) : nullptr;
+	return item && At<UInt32>(item, 0x0C) == p->unarmedEffect.fid ? p : nullptr;
+}
+// that profile, when the playing attack stands for its effect attack with what the player holds
+static Profile* EffectAttack(UInt32 g) {
+	Profile* p = UnarmedProfile(); if (!p) return nullptr;
+	void* w = PlayerWeapon(); if (w && !(p->unarmedWeapons && MeleeWeapon(w))) return nullptr;
+	UInt16 a = At<UInt16>(PlayerNPC(), 0x78); if (!a || a == 0xFF) return nullptr;
+	if (g == 0xFFFF) g = PlayerAttackGroup();
+	return (g == a || WeaponForward(a, g, w) || PerkStandIn(a, g, w)) ? p : nullptr;
+}
 static UInt16 __fastcall Hook_UnarmedAnimGet(void* ench, void* edx) {
 	UInt16 a = g_prevUnarmedAnimGet(ench, edx);
 	void* npc = PlayerNPC();
 	if (npc && ench == (UInt8*)npc + 0x70 && a >= 0x5D && a <= 0x60) {
-		static const UInt8 kPerkGroup[4] = {0x61, 0x62, 0x64, 0x65};
-		void* w = ((P_t)kAddr_EquippedWeapon)(Player(), nullptr);
+		void* w = PlayerWeapon();
 		UInt32 g = PlayerAttackGroup();
-		if (g == kPerkGroup[a - 0x5D] && (!w || At<UInt32>(w, 0x15C) == 0x2D)) {
-			Log("unarmed effect: perk attack %02X stands for %02X", g, a); return (UInt16)g;
-		}
+		if (PerkStandIn(a, g, w)) { Log("unarmed effect: perk attack %02X stands for %02X", g, a); return (UInt16)g; }
+		Profile* p = UnarmedProfile();
+		if (p && p->unarmedWeapons && g != a && WeaponForward(a, g, w)) { Log("unarmed effect: weapon attack %02X stands for %02X", g, a); return (UInt16)g; }
 	}
 	return a;
 }
-static void InstallUnarmedPerkAnims() {                              // at load, when some race's effect is on a direction
-	bool dir = false; for (int i = 0; i < g_numProf; i++) dir |= g_prof[i].unarmedAnim >= 0x5D && g_prof[i].unarmedAnim <= 0x60;
-	if (!dir) { Log("unarmed effect: no race's effect is on a directional power attack - not hooked"); return; }
+typedef bool (__fastcall* HitEnchant_t)(void* attacker, void* edx, void* entry, void* target, void* proj, UInt8* out);
+static HitEnchant_t g_hitEnchant = nullptr;
+static bool __fastcall Hook_HitEnchant(void* attacker, void* edx, void* entry, void* target, void* proj, UInt8* out) {
+	bool r = g_hitEnchant(attacker, edx, entry, target, proj, out);
+	if (entry && attacker == Player()) {
+		Profile* p = UnarmedProfile();
+		if (p && p->unarmedWeapons && MeleeWeapon(PlayerWeapon())) {
+			UInt8 o = 0;
+			if (g_hitEnchant(attacker, edx, nullptr, target, nullptr, &o)) r = true;   // its bare-fists pass
+			if (o && out) *out = 1;
+		}
+	}
+	return r;
+}
+typedef float (__cdecl* MeleeReach_t)(void* actor, void* weapon);
+static MeleeReach_t g_meleeReach = nullptr;
+static float __cdecl Hook_MeleeReach(void* actor, void* weapon) {
+	float r = g_meleeReach(actor, weapon);
+	if (actor == Player()) {
+		Profile* p = EffectAttack(0xFFFF);
+		if (p && p->unarmedReachMult > 0) {
+			float min = ((FThis_t)kAddr_PlayerUnarmedReach)(actor, nullptr) * p->unarmedReachMult * ((FThis_t)kAddr_GetScale)(actor, nullptr);
+			if (min > r) return min;
+		}
+	}
+	return r;
+}
+typedef float (__cdecl* Cone_t)(UInt32 group);
+static Cone_t g_prevCone = (Cone_t)kAddr_PlayerHitCone;
+static float __cdecl Hook_PlayerHitCone(UInt32 group) {
+	float c = g_prevCone(group);
+	Profile* p = EffectAttack(group & 0xFF);
+	return (p && p->unarmedCone > c) ? p->unarmedCone : c;
+}
+static void InstallUnarmedPerkAnims() {                              // at load, only for what some race's settings use
+	bool dir = false, weap = false, reach = false, cone = false;
+	for (int i = 0; i < g_numProf; i++) {
+		const Profile& p = g_prof[i]; if (!p.unarmedEffect.localID) continue;
+		dir |= p.unarmedAnim >= 0x5D && p.unarmedAnim <= 0x60;
+		weap |= p.unarmedWeapons; reach |= p.unarmedReachMult > 0; cone |= p.unarmedCone > 0;
+	}
 	UInt32 prev;
-	if (RedirectCall(kSite_UnarmedAnimGet, (void*)Hook_UnarmedAnimGet, kAddr_UnarmedAnimGet, &prev, "unarmed effect anim (perk moves)"))
+	if (!dir && !weap) Log("unarmed effect: no race's effect is on a directional power attack or weapons - getter not hooked");
+	else if (RedirectCall(kSite_UnarmedAnimGet, (void*)Hook_UnarmedAnimGet, kAddr_UnarmedAnimGet, &prev, "unarmed effect anim (perk moves / weapons)"))
 		g_prevUnarmedAnimGet = (AnimGet_t)prev;
+	if (weap) g_hitEnchant = (HitEnchant_t)Detour(kAddr_HitEnchant, 0x64, (void*)Hook_HitEnchant, "on-hit enchantments (UnarmedEffectWeapons)");
+	if (reach) g_meleeReach = (MeleeReach_t)Detour(kAddr_MeleeReach, 0x10, (void*)Hook_MeleeReach, "melee reach (UnarmedEffectReachMult)");
+	if (cone && RedirectCall(kSite_PlayerHitCone, (void*)Hook_PlayerHitCone, kAddr_PlayerHitCone, &prev, "player hit cone (UnarmedEffectCone)"))
+		g_prevCone = (Cone_t)prev;
+	if (!weap && !reach && !cone) Log("unarmed effect: no race sets UnarmedEffectWeapons / ReachMult / Cone - those not hooked");
 }
 static void ApplyEssential(const char* why);
 static void ApplyFaction(const char* why);

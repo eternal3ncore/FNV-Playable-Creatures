@@ -3,7 +3,7 @@ AttackCustom1-5Power that melee weapons play in its place (+ sneak) are the gas 
 back, thrust and spray from the mask at the Hit, step back), built on that type's own stance - the first frame of its
 aim (1hmaim / 2hmaim, + sneak), which every attack of the type starts from - with the unarmed spray's arm motion:
 both arms swing down and back at the sides as unarmed, the weapon in the right hand, the free left hand opening (the
-ghosts hold the spear in one hand too, as their own animations do). The customs are renamed copies of the forward file. PlayableCreatures_GhostMelee.dll (UnarmedEffectWeapons=1) casts the race's unarmed effect on those hits.
+ghosts hold the spear in one hand too, as their own animations do). The customs are renamed copies of the forward file. Core (UnarmedEffectWeapons=1) casts the race's unarmed effect on those hits.
 usage: python3 -P ghost_spray_melee.py <source folder: (sneak)1hm|2hm attackforwardpower + aim> <out folder>"""
 import os, sys
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.append(os.path.dirname(HERE))
