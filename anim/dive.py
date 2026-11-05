@@ -10,7 +10,8 @@ direction, legs trailing - and tilts TILT_SIDE face-up about the body's long axi
 chest (and so a drawn weapon's aim) facing forward: the gun is held on its side, as in the game. Back dive: the body pitches
 PITCH_BACK backward (head to the rear, legs forward and up) and curls the spine CURL_BACK forward so the chest still faces
 forward. Unarmed, the arms reach forward as if aiming two pistols.
-Loop: standing -> dive pose over TAKEOFF s, then held (CLAMP, so a long fall keeps the pose instead of restarting).
+Loop: the dive pose itself as a seamless cycle (LOOP, LOOP_LEN s; slow sway, bob, legs working), so a restart (the engine
+restarts the loop after an attack in the air) never goes back to standing; the takeoff is the blend into it (Blend:TAKEOFF_FRAMES).
 Land: the body drops onto its side / back (IMPACT s), lies (to RISE0), then rolls back up onto its feet (feet planted by
 leg IK through a crouch) and ends on the idle's first frame.
 usage: python3 -P dive.py <out folder> [--render out.png] [--prefixes 1hp,2hr,...]"""
@@ -27,7 +28,7 @@ cfg.SKELETON = '/home/claude/fnv/meshes/characters/_male/skeleton.nif'
 cfg.ANIM_SRC = REF; cfg.TEMPLATE_KF = 'mtjumplandleft.kf'; cfg.IDLE_KF = 'locomotion/mtidle.kf'
 cr = Creature(cfg); sk = cr.sk
 
-TAKEOFF = 0.30; LOOP_LEN = 0.90
+TAKEOFF_FRAMES = 9; LOOP_LEN = 1.2
 IMPACT = 0.14; RISE0 = 0.42; RISE1 = 0.98; LAND_LEN = 1.00
 ROLL_SIDE = 82.0; TILT_SIDE = 18.0; TILT_LAND = 40.0          # deg
 PITCH_BACK = 78.0; CURL_BACK = 46.0
@@ -35,7 +36,7 @@ AIR_Z = {'side': 58.0, 'back': 56.0}                            # pelvis height 
 GROUND_Z = {'side': 13.0, 'back': 12.0}                         # pelvis height lying on the ground
 FLOOR = 0.4                                                     # min height of any bone above the floor while lying
 LOW_PRIO = 60                                                   # root / pelvis / legs: above every weapon file (max 57)
-SPINE_PRIO = 32                                                 # back dive spine / neck / head: above the aims' 30
+SPINE_PRIO = 58                                                 # back dive spine / neck / head: above the attacks (55-57), so the curl holds while firing
 ARM_PRIO = 22                                                   # arms: above the idles (20), below every weapon stance
 X, Y, Z = np.eye(3)
 LEGS = [f'Bip01 {s} {b}' for s in 'LR' for b in ('Thigh', 'Calf', 'Foot', 'Toe0')]
@@ -147,11 +148,12 @@ class Dive:
         return loc
 
     def loop(s, t):
-        w = smooth(t / TAKEOFF)
-        drift = smooth((t - TAKEOFF) / (LOOP_LEN - TAKEOFF)) if t > TAKEOFF else 0.0
-        tilt = (TILT_SIDE + 4.0 * drift) if s.side else 0.0
-        z0 = s.na0[0][2]; za = AIR_Z['side' if s.side else 'back']
-        return s.body(w, w, tilt, z0 + (za - z0) * w - 2.0 * drift, w)
+        # the held dive, a seamless cycle (the engine may restart the loop, e.g. after an attack in the air - it must never
+        # go back to standing): a slow sway of the roll / tilt, a little bob and the legs working
+        ph = 2 * np.pi * t / LOOP_LEN
+        tilt = (TILT_SIDE + 2.0 + 2.0 * np.sin(ph)) if s.side else 2.0 * np.sin(ph)
+        za = AIR_Z['side' if s.side else 'back']
+        return s.body(1.0, 1.0 + 0.15 * np.sin(ph + 1.0), tilt, za - 1.0 - 1.5 * np.cos(ph), 1.0)
 
     def land(s, t):
         k = 'side' if s.side else 'back'
@@ -207,12 +209,12 @@ def build(out, prefix, base, render=None):
     for kind in 'LRB':
         dv = Dive(kind, base)
         for grp, fn, length, keys in (
-                ('JumpLoop', dv.loop, LOOP_LEN, [(0.0, 'start'), (LOOP_LEN, 'end')]),
-                ('JumpLand', dv.land, LAND_LEN, [(0.0, 'start'), (0.85, 'Enum: Left'), (0.95, 'Enum: Right'), (LAND_LEN, 'end')])):
+                ('JumpLoop', dv.loop, LOOP_LEN, [(0.0, 'start'), (1 / 30, f'Blend:{TAKEOFF_FRAMES}'), (LOOP_LEN, 'end')]),
+                ('JumpLand', dv.land, LAND_LEN, [(0.0, 'start'), (1 / 30, 'Blend:3'), (0.85, 'Enum: Left'), (0.95, 'Enum: Right'), (LAND_LEN, 'end')])):
             frames = frames_of(fn, length)
             name = f'{prefix}{grp}{NAMES[kind]}'.lower() + '.kf'
             seq = f'{grp}{NAMES[kind]}'                       # the engine takes the group from the sequence name
-            write_kf(cr, os.path.join(out, name), seq, length, keys, frames, bones=bones_for(kind), cycle=2)
+            write_kf(cr, os.path.join(out, name), seq, length, keys, frames, bones=bones_for(kind), cycle=0 if grp == 'JumpLoop' else 2)
             # checks: the land ends on the base pose, feet on the ground while rising
             W = fk(frames[-1][1]); Wb = fk(base)
             err = max(np.linalg.norm(W[n][0] - Wb[n][0]) for n in ('Bip01 Head', 'Bip01 L Foot', 'Bip01 R Foot'))

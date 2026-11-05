@@ -58,18 +58,21 @@ Sections whose plugin isn't loaded are skipped (logged "NOT FOUND (plugin inacti
                       of it to both actors' radii); that attack (and what stands for it) only; 0 (default) = vanilla. Ghost People: 3
   UnarmedEffectCone : that attack's hit cone is at least this, degrees either side of the facing (vanilla: forward /
                       standing power 40, side / back 100, Custom1 50, others 35); same scope; 0 (default) = vanilla. Ghost People: 60
-  GhostMoveForms    : the GhostMoves forms: dive spell, search spell, search idle, (unused) hop-left idle, hop-right idle
+  GhostMoveForms    : the GhostMoves forms: hop spell, search spell, search idle, hop-left idle, hop-right idle
   JoinFaction       : 1 = the player joins those factions (rank 0) while in the race and leaves them on a race
                       change, so the species treats you as its own; 0 (default) = the factions are never touched
   GiveItems         : Plugin|FormID[,...] (up to 4): items given to the player, one each and not equipped, when
                       the race menu closes (an existing copy is replaced, never stacked). Robots: their own weapon
   NoFallDamage      : 1 = no fall damage, the engine's rule for flying creatures (vanilla eyebots carry the
                       "Flies" flag). Default 0
-  GhostMoves        : 1 = ghost moves on the jump key (decided before a jump starts):
-                      jump while strafing, or walking backward with a weapon drawn = dive (a real jump: the race's
-                      directional JumpLoop / JumpLand files are Max Payne style dives, attacks allowed in the air;
-                      brief ghosting, slow motion + crit only in combat),
+  GhostMoves        : 1 = Ghostification's ghost moves on the jump key (decided before a jump starts, so no jump):
+                      jump while strafing = hop (dodge, brief ghosting; slow motion + crit only in combat),
                       jump while walking backward with the weapon holstered = search (trash pick, loot after 5 s)
+  DiveSpell         : Plugin|FormID: the Shootdodge pack's spell (PlayableCreatures_ShootDodge.esp|000802). When that
+                      plugin is loaded, jump while strafing, or walking backward with a weapon drawn = dive (a real jump:
+                      the pack's JumpLoop / JumpLand Left / Right / Backward over the race's own are Max Payne style
+                      dives, attacks allowed in the air; slow motion 2 s, crit in combat, ghosting 1 s). Without the
+                      plugin the race keeps its own moves (the hop). Ghost People: set
   GhostEssential    : 1 = the player is always essential (lethal damage knocks it down, it gets back up); a hit that
                       leaves a limb crippled kills, with that limb dismembered. Needs PlayerEssentialFix.dll (vanilla
                       leaves an essential player ragdolled).
