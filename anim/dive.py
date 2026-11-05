@@ -211,7 +211,7 @@ def build(out, prefix, base, render=None):
                 ('JumpLand', dv.land, LAND_LEN, [(0.0, 'start'), (0.85, 'Enum: Left'), (0.95, 'Enum: Right'), (LAND_LEN, 'end')])):
             frames = frames_of(fn, length)
             name = f'{prefix}{grp}{NAMES[kind]}'.lower() + '.kf'
-            seq = f'{prefix}{grp}{NAMES[kind]}'
+            seq = f'{grp}{NAMES[kind]}'                       # the engine takes the group from the sequence name
             write_kf(cr, os.path.join(out, name), seq, length, keys, frames, bones=bones_for(kind), cycle=2)
             # checks: the land ends on the base pose, feet on the ground while rising
             W = fk(frames[-1][1]); Wb = fk(base)
