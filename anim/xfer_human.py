@@ -65,9 +65,12 @@ def hip_from_is(cr, ref, pre, level):
         _HIP_IS[key] = (S0.T @ off, S0.T @ Rc @ S0)
     return _HIP_IS[key]
 
-def transfer(cr, hpath, base_path, fps=30, head_is=6.0, free_left=None, twist=False, _hip_is=True):
+def transfer(cr, hpath, base_path, fps=30, head_is=6.0, free_left=None, twist=False, _hip_is=True, spine_ref=None, reach=1.0):
     """free_left: path of a human file whose left arm (t=0) replaces the file's own in aims / attacks (one-handed
-    pistol aim - the creature's left hand doesn't take the two-handed iron-sight grip; reloads / jams / equips keep it)"""
+    pistol aim - the creature's left hand doesn't take the two-handed iron-sight grip; reloads / jams / equips keep it)
+    spine_ref: a human file whose Spine2 the file's own is compared with when it has no level file (melee swings: the
+    human aim) - the human trunk's turn / lean during the swing is spread over the creature's spine, as for aim up / down.
+    reach: the hand's offset from the shoulder (and the elbow pole) scaled by this (a bigger creature's longer arms)"""
     hs = Skeleton(HUMAN_SKEL)
     k = KFEval(hpath); kb = KFEval(base_path)
     base_h = kb.sample(0)
@@ -77,6 +80,7 @@ def transfer(cr, hpath, base_path, fps=30, head_is=6.0, free_left=None, twist=Fa
     lvl = re.sub(r'(up|down)\.kf$', '.kf', name)
     lvl_path = os.path.join(os.path.dirname(hpath), lvl) if lvl != name else None
     kl = KFEval(lvl_path) if lvl_path and os.path.exists(lvl_path) else None
+    if kl is None and spine_ref: kl = KFEval(spine_ref)
     Wfree = None
     if free_left and not handwork:
         kf_ = KFEval(free_left); Wfree = human_fk(hs, kf_.sample(0), None); smp_free = kf_.sample(0)
@@ -156,13 +160,13 @@ def transfer(cr, hpath, base_path, fps=30, head_is=6.0, free_left=None, twist=Fa
                 # (Feral Ghoul,: the stock went through the jaw) pushes the iron-sight hold forward
                 tgt = W[cr.head][0] + (Wh[hand][0] - Wh[cr.head][0]) + np.array(getattr(cr.cfg, 'XFER_IS_SHIFT', (0, 0, 0)), float)
             else:
-                tgt = Sg + (Wh[hand][0] - Sh)
+                tgt = Sg + (Wh[hand][0] - Sh) * reach
                 if twist and not iron and hip is None and _hip_is and not re.search(r'equip|holster|death', name):
                     # XFER_HIP_SHIFT (cfg, world units): the hip hold moved toward the middle (a hunched trunk that
                     # stays over the hips leaves a human-placed hip rifle hanging out to the right of the chest);
                     # types with iron sights use XFER_HIP_FROM_IS instead when the cfg has it
                     tgt = tgt + np.array(getattr(cr.cfg, 'XFER_HIP_SHIFT', (0, 0, 0)), float)
-            pole = Sg + (Wh[fa][0] - Sh) * 2.0
+            pole = Sg + (Wh[fa][0] - Sh) * 2.0 * reach
             Rhand = Wh[hand][1]
             if hip is not None:                                    # hip hold = the creature's iron-sight hold, moved
                 S = W[b['torso']][1]; off = S @ hip[0]; Rc = S @ hip[1] @ S.T
