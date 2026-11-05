@@ -68,11 +68,11 @@ Sections whose plugin isn't loaded are skipped (logged "NOT FOUND (plugin inacti
   GhostMoves        : 1 = Ghostification's ghost moves on the jump key (decided before a jump starts, so no jump):
                       jump while strafing = hop (dodge, brief ghosting; slow motion + crit only in combat),
                       jump while walking backward with the weapon holstered = search (trash pick, loot after 5 s)
-  DiveSpell         : Plugin|FormID: the Shootdodge pack's spell (PlayableCreatures_ShootDodge.esp|000802). When that
-                      plugin is loaded, jump while strafing, or walking backward with a weapon drawn = dive (a real jump:
-                      the pack's JumpLoop / JumpLand Left / Right / Backward over the race's own are Max Payne style
-                      dives, attacks allowed in the air; slow motion 2 s, crit in combat, ghosting 1 s). Without the
-                      plugin the race keeps its own moves (the hop). Ghost People: set
+  DiveForms         : Plugin|FormID x4: the Shootdodge pack's spell and its left / right / back dive idles
+                      (PlayableCreatures_ShootDodge.esp|000802-000805). When that plugin is loaded, jump while strafing,
+                      or walking backward with a weapon drawn = dive: one whole animation (jump into the dive, the
+                      flight moving you ~2.5 m, the landing, getting up) that attacks play over; slow motion 2 s, crit in
+                      combat, ghosting 1 s. Without the plugin the race keeps its own moves (the hop). Ghost People: set
   GhostEssential    : 1 = the player is always essential (lethal damage knocks it down, it gets back up); a hit that
                       leaves a limb crippled kills, with that limb dismembered. Needs PlayerEssentialFix.dll (vanilla
                       leaves an essential player ragdolled).

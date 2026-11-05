@@ -1,13 +1,15 @@
 """PlayableCreatures_ShootDodge.esp - the optional Max Payne style dives (its own pack, loaded after the race packs).
-The pack = this plugin + the dive animations (anim/dive.py: JumpLoop / JumpLand Left / Right / Backward, mt + sneakmt)
-in the race's skeleton folder, overwriting the race's own directional jumps. Core (PlayableCreatures.dll, GhostMoves)
-sees the dive spell through the race's DiveSpell= setting: when this plugin is loaded, strafe + jump (or back + jump with a
-weapon drawn) casts it and jumps (the dive); without it, the race keeps its own move (Ghost People: Dead Money's hop).
+The pack = this plugin + the three dive animations (anim/dive.py: DiveLeft / DiveRight / DiveBack.kf in
+meshes\\PlayableCreatures\\Shootdodge: jump into the dive, the flight with root motion, the landing, getting up). Core
+(PlayableCreatures.dll, GhostMoves) reads the race's DiveForms= (spell, left, right, back idle): when this plugin is loaded,
+strafe + jump (or back + jump with a weapon drawn) plays the dive idle and casts the spell; without it, the race keeps its
+own move (Ghost People: Dead Money's hop).
 Records (master FalloutNV.esm only):
   SCPT PCShootDodgeEffectSCRIPT 0x800 - copy of Ghostification's zGhostDodgeEffectSCRIPT (player.setghost 1 / 0)
   MGEF PCShootDodgeEffect       0x801 - copy of zGhostDodgeEffect, its script = 0x800
   SPEL PCShootDodgeSpell        0x802 - TurboEffect (slow motion) SLOWMO s, always (the Ghost hop's is combat only);
                                         crit +50 for SLOWMO s in combat; SetGhost 1 s
+  IDLE PCDiveLeft / Right / Back 0x803-0x805 - the dives (section 0x14 whole body, attacking allowed)
 usage: python3 -P build_shootdodge.py <out.esp>"""
 import struct, sys
 sys.path.append('/home/claude/fnv')
@@ -16,6 +18,8 @@ from esm import Plugin
 SLOWMO = 2                      # s: the dive in the air (~0.9 s) and the landing / get-up (1.0 s)
 MOD = 1 << 24
 SCPT, MGEF, SPEL = MOD | 0x800, MOD | 0x801, MOD | 0x802
+IDLES = [(MOD | 0x803, 'PCDiveLeft', 'DiveLeft.kf'), (MOD | 0x804, 'PCDiveRight', 'DiveRight.kf'), (MOD | 0x805, 'PCDiveBack', 'DiveBack.kf')]
+FOLDER = 'PlayableCreatures\\Shootdodge\\'
 
 
 def z(s): return s.encode('latin1') + b'\0'
@@ -47,9 +51,13 @@ spel = record('SPEL', SPEL, [('EDID', z('PCShootDodgeSpell')), ('FULL', z('Shoot
     ('EFID', u32(0x120D80)), ('EFIT', efit(1, SLOWMO, 51)),                          # TurboEffect: slow motion, always
     ('EFID', u32(0x6AA5D)), ('EFIT', efit(50, SLOWMO, 14)), ('CTDA', ctda(289, 1)),  # crit +50 in combat (IsInCombat == 1)
     ('EFID', u32(MGEF)), ('EFIT', efit(0, 1, -1))])                                  # SetGhost 1 s
-groups = [group('MGEF', [mgef]), group('SCPT', [scpt]), group('SPEL', [spel])]
-tes4 = record('TES4', 0, [('HEDR', struct.pack('<fII', 1.34, 3 + len(groups), 0x803)), ('CNAM', z('i3ncore')),
+# the dives: loose idles (no parent, no conditions - never picked by the idle trees), forced by Core like the Ghost hop;
+# whole-body section 0x14, flags 0 = attacking allowed (Dead Money's hops carry 0x01 'no attacking')
+idles = [record('IDLE', fid, [('EDID', z(ed)), ('MODL', z(FOLDER + fn)), ('ANAM', struct.pack('<II', 0, 0)),
+                              ('DATA', bytes([0x14, 0, 0, 0, 0, 0, 0, 0]))]) for fid, ed, fn in IDLES]
+groups = [group('MGEF', [mgef]), group('SCPT', [scpt]), group('SPEL', [spel]), group('IDLE', idles)]
+tes4 = record('TES4', 0, [('HEDR', struct.pack('<fII', 1.34, 3 + len(idles) + len(groups), 0x806)), ('CNAM', z('i3ncore')),
     ('SNAM', z('Playable Creatures: Shootdodge - Max Payne style dives for human-skeleton races (Ghost People)')),
     ('MAST', z('FalloutNV.esm')), ('DATA', struct.pack('<Q', 0))])
 open(sys.argv[1], 'wb').write(tes4 + b''.join(groups))
-print('wrote', sys.argv[1], 'spell %08X' % SPEL)
+print('wrote', sys.argv[1], 'spell %08X' % SPEL, 'idles', ' '.join('%08X' % f for f, _, _ in IDLES))

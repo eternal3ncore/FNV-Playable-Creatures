@@ -189,11 +189,6 @@ class Dive:
         return loc
 
 
-def frames_of(fn, length, fps=30):
-    n = int(round(length * fps)) + 1
-    return [(length * i / (n - 1), fn(length * i / (n - 1))) for i in range(n)]
-
-
 def bones_for(kind):
     b = [(n, LOW_PRIO) for n in ROOT + LEGS]
     if kind == 'B': b += [(n, SPINE_PRIO) for n in SPINE]
@@ -204,25 +199,71 @@ def bones_for(kind):
 NAMES = {'L': 'Left', 'R': 'Right', 'B': 'Backward'}
 
 
-def build(out, prefix, base, render=None):
+def frames_of(fn, length, fps=30):
+    n = int(round(length * fps)) + 1
+    return [(length * i / (n - 1), fn(length * i / (n - 1))) for i in range(n)]
+
+
+# ---- the whole dive as one special idle (Shootdodge pack: Core plays it from the jump key, like the Ghost hop) ----
+# push-off (pelvis dips) -> airborne: the actor travels DIST via the accum root (Bip01 translation = root motion, as Dead
+# Money's HopLeft / HopRight move the ghost) while the body rolls / pitches into the dive on an arc (ARC up) -> impact on
+# its side / back -> a short slide -> lies -> gets up (the land's rise: feet planted through a crouch) -> the idle's first
+# frame, DIST away. Played as a whole-body special idle (section 0x14) without the no-attacking flag, so a drawn weapon
+# can fire / swing over it; Core keeps the movement keys off it while it plays (as for the search).
+T_PUSH, T_IMPACT, DIVE_LEN = 0.22, 0.78, 1.90
+DIST = {'L': 220.0, 'R': 220.0, 'B': 190.0}; SLIDE = 28.0; ARC = 20.0
+SEQ = {'L': 'SpecialIdle_PCDiveLeft', 'R': 'SpecialIdle_PCDiveRight', 'B': 'SpecialIdle_PCDiveBack'}
+FILE = {'L': 'DiveLeft.kf', 'R': 'DiveRight.kf', 'B': 'DiveBack.kf'}
+
+
+def whole(dv, t):
+    k = 'side' if dv.side else 'back'
+    z0 = dv.na0[0][2]
+    if t < T_IMPACT:
+        if t < T_PUSH:                                   # push-off: knees give, the body starts to turn
+            u = t / T_PUSH; w = 0.25 * smooth(u)
+            z = z0 - 9.0 * np.sin(np.pi * u)
+        else:                                            # airborne: an arc from standing height down to the ground
+            u = (t - T_PUSH) / (T_IMPACT - T_PUSH); w = 0.25 + 0.75 * smooth(u / 0.45)
+            z = z0 + (GROUND_Z[k] - z0) * u ** 1.6 + 4 * ARC * u * (1 - u)
+            # nothing through the floor on the way down (the lowest bone at least FLOOR up)
+        tilt = (TILT_SIDE + (TILT_LAND - TILT_SIDE) * smooth((t - T_PUSH) / (T_IMPACT - T_PUSH))) if dv.side else 0.0
+        loc = dv.body(w, w, tilt, z, smooth((t - 0.05) / 0.35))
+        W = fk(loc); low = min(W[n][0][2] for n in sk.order if n.startswith('Bip01 ') and n != 'Bip01 NonAccum')
+        if low < FLOOR:
+            tt, R = loc['Bip01 NonAccum']; loc['Bip01 NonAccum'] = (tt + np.array([0, 0, FLOOR - low]), R)
+    else:
+        loc = dv.land(IMPACT + (t - T_IMPACT) * (LAND_LEN - IMPACT) / (DIVE_LEN - T_IMPACT))
+    # root motion: along the dive direction - nothing during the push-off, the flight (linear, ballistic), the slide
+    if t <= T_PUSH: d = 0.0
+    elif t <= T_IMPACT: d = DIST[dv.kind] * (t - T_PUSH) / (T_IMPACT - T_PUSH)
+    else: d = DIST[dv.kind] + SLIDE * smooth((t - T_IMPACT) / 0.25)
+    axis = {'L': np.array([-1.0, 0, 0]), 'R': np.array([1.0, 0, 0]), 'B': np.array([0, -1.0, 0])}[dv.kind]
+    loc['Bip01'] = (axis * d, np.eye(3))
+    return loc
+
+
+def build_whole(out, base, render=None):
     made = []
     for kind in 'LRB':
         dv = Dive(kind, base)
-        for grp, fn, length, keys in (
-                ('JumpLoop', dv.loop, LOOP_LEN, [(0.0, 'start'), (1 / 30, f'Blend:{TAKEOFF_FRAMES}'), (LOOP_LEN, 'end')]),
-                ('JumpLand', dv.land, LAND_LEN, [(0.0, 'start'), (1 / 30, 'Blend:3'), (0.85, 'Enum: Left'), (0.95, 'Enum: Right'), (LAND_LEN, 'end')])):
-            frames = frames_of(fn, length)
-            name = f'{prefix}{grp}{NAMES[kind]}'.lower() + '.kf'
-            seq = f'{grp}{NAMES[kind]}'                       # the engine takes the group from the sequence name
-            write_kf(cr, os.path.join(out, name), seq, length, keys, frames, bones=bones_for(kind), cycle=0 if grp == 'JumpLoop' else 2)
-            # checks: the land ends on the base pose, feet on the ground while rising
-            W = fk(frames[-1][1]); Wb = fk(base)
-            err = max(np.linalg.norm(W[n][0] - Wb[n][0]) for n in ('Bip01 Head', 'Bip01 L Foot', 'Bip01 R Foot'))
-            made.append((name, len(frames), round(err, 3)))
-            if render and kind in 'LB':
-                from render import draw
-                ts = [0, length * 0.25, length * 0.5, length * 0.75, length]
-                draw(sk, [fk(fn(t)) for t in ts], [f'{name} t={t:.2f}' for t in ts], render.replace('.png', f'_{name[:-3]}.png'))
+        fn = lambda t, dv=dv: whole(dv, t)
+        frames = frames_of(fn, DIVE_LEN)
+        tr = T_IMPACT + (RISE0 - IMPACT) * (DIVE_LEN - T_IMPACT) / (LAND_LEN - IMPACT)
+        keys = [(0.0, 'start'), (0.05, 'Sound: NPCGhostJumpSfx'), (T_IMPACT, 'Sound: NPCGhostLand'),
+                (DIVE_LEN - 0.12, 'Enum: Left'), (DIVE_LEN - 0.04, 'Enum: Right'), (DIVE_LEN, 'end')]
+        bones = [('Bip01', LOW_PRIO)] + bones_for(kind)
+        write_kf(cr, os.path.join(out, FILE[kind]), SEQ[kind], DIVE_LEN, keys, frames, bones=bones, cycle=2)
+        W = fk(frames[-1][1]); Wb = fk(base)
+        moved = np.linalg.norm(frames[-1][1]['Bip01'][0])
+        lows = [min(fk(l)[n][0][2] for n in sk.order if n.startswith('Bip01 ') and n not in ('Bip01 NonAccum',)) for _, l in frames]
+        made.append((FILE[kind], len(frames), 'moved %.0f' % moved, 'lowest %.1f' % min(lows), 'rise from %.2f' % tr))
+        if render and kind in 'LB':
+            from render import draw
+            ts = [0.0, 0.15, 0.4, 0.6, T_IMPACT, 1.1, 1.5, DIVE_LEN]
+            def nobase(l):
+                l = dict(l); l['Bip01'] = (np.zeros(3), np.eye(3)); return fk(l)
+            draw(sk, [nobase(fn(t)) for t in ts], [f'{FILE[kind]} t={t:.2f}' for t in ts], render.replace('.png', f'_{kind}.png'))
     return made
 
 
@@ -230,6 +271,4 @@ if __name__ == '__main__':
     out = sys.argv[1]; os.makedirs(out, exist_ok=True)
     render = sys.argv[sys.argv.index('--render') + 1] if '--render' in sys.argv else None
     stand = full(KFEval(os.path.join(REF, 'locomotion/mtidle.kf')).sample(0))
-    crouch = full(KFEval(os.path.join(REF, 'sneakmtidle.kf')).sample(0))
-    for prefix, base in (('mt', stand), ('sneakmt', crouch)):
-        for m in build(out, prefix, base, render if prefix == 'mt' else None): print(m)
+    for m in build_whole(out, stand, render): print(m)
