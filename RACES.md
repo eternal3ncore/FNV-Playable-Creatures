@@ -62,6 +62,7 @@ add-ons need their base pack too.
 `PlayableCreatures_SuperMutants.esp`
 *Super Mutant, Nightkin*
 - All weapon types.
+- One-handed melee weapons swing with its unarmed attacks; the weapon isn't drawn.
 - Immune to radiation.
 - Wear their own super mutant armor, which is drawn on the body.
 - **Nightkin:** Stealth Boy cloak while sneaking.
