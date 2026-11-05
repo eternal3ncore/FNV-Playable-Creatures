@@ -8,7 +8,9 @@ length are kept (fire events / sounds stay the heavy weapon's). In aims and atta
 forward (fingers along the up direction, perpendicular to the aim, thumb side toward the body - the hand's local
 +X = fingers, +Z = index side, +Y = palm) and the fingers / thumb take their bind (open) pose; the Weapon node is
 keyed PALM_AHEAD in front of the palm (+X = the aim direction, +Y up, +Z right, as a human gun), so the hidden gun's
-projectile node - and with it the shot, its muzzle flash, a flamer's flame - is there. Reloads, jams, equips keep the
+projectile node - and with it the shot, its muzzle flash, a flamer's flame - is there. Aimed (iron sight) 2HH files take the hip
+pistol file (2hhaimis <- 1hpaim, 2hhattackloopisup <- 1hpattackloopup ...): the sight hold would lift the open palm in
+front of the mask. Reloads, jams, equips keep the
 pistol file's hands (nothing seen in them). Weapon scale 0.001 everywhere, and the weapon model's Backpack node (the
 flamer tank / minigun ammo pack the engine hangs on Bip01 Spine2) keyed to scale 0.001 too.
 usage: python3 -P ghost_cast.py <Ghost anim folder (1hp + 2hh files)> <out folder>"""
@@ -130,8 +132,11 @@ if __name__ == '__main__':
     for fn in sorted(os.listdir(D)):
         m = re.match(r'^(sneak)?2hh(.*\.kf)$', fn, re.I)
         if not m: continue
-        src = os.path.join(D, (m.group(1) or '') + '1hp' + m.group(2))
-        if not os.path.exists(src): src = os.path.join(D, '1hp' + m.group(2))
+        # aimed (iron sight) files cast like the hip ones: the pistol's sight hold lifts the hand to the eyes, which with
+        # no gun put the open palm in front of the mask (user: "palm into his mouth")
+        rest = re.sub(r'is(up|down)?\.kf$', r'\1.kf', m.group(2), flags=re.I)
+        src = os.path.join(D, (m.group(1) or '') + '1hp' + rest)
+        if not os.path.exists(src): src = os.path.join(D, '1hp' + rest)
         if not os.path.exists(src): print('no 1hp source for', fn); miss += 1; continue
         if build(os.path.join(D, fn), src, os.path.join(OUT, fn)): nc += 1
         else: no += 1
