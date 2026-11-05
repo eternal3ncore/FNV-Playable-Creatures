@@ -1201,12 +1201,13 @@ print('  young lakelurk ability %06X, shriek %06X, body part data %06X' % (_lk_y
 
 # Ghost People back dodge (Core: back + jump with a weapon out, the 6th GhostMoveForms form): the body shrinks out of sight
 # in a thick cloud of its gas and slips back, its own root motion (anim/ghost_dodge.py; the cloud = the skeleton's
-# PCGhostDodgeCloud). Whole body + no attacking (DATA as PCGhostTrashPick); under PCGhostMoveIdles (never passes) after the
-# trash pick, so the engine never picks it on its own - Core plays it as it plays the hops. New id after everything else.
+# PCGhostDodgeCloud). DATA = Dead Money's HopLeft's (section 7, no attacking: an idle played this way moves the player by its
+# root motion, as the hops do); under PCGhostMoveIdles (never passes) after the trash pick, so the engine never picks it
+# on its own - Core plays it as it plays the hops. New id after everything else.
 GHOST_DODGE = _new()
 idles.append(record('IDLE', GHOST_DODGE, [('EDID', z('PCGhostDodgeBack')),
     ('MODL', z('PlayableCreatures\\Ghost\\IdleAnims\\PCGhostDodgeBack.kf')),
-    ('ANAM', struct.pack('<II', gm_root, GHOST_TRASH)), ('DATA', bytes.fromhex('1400020000000100'))]))
+    ('ANAM', struct.pack('<II', gm_root, GHOST_TRASH)), ('DATA', bytes.fromhex('070000ff00000100'))]))
 print('  ghost back dodge idle %06X' % (GHOST_DODGE & 0xFFFFFF))
 
 groups = [group('HAIR', [hair]), group('EYES', [eyes] + eyes_extra), group('RACE', races), group('SOUN', souns), group('MGEF', mgefs), group('SCPT', scpts), group('ENCH', enchs), group('SPEL', spels), group('ARMO', armors), group('WEAP', weaps), group('NPC_', npcs), group('IDLE', idles)] + ([group('PROJ', projs)] if projs else []) + [group('ANIO', anios), group('EFSH', efshs), group('BPTD', bptds), group('VTYP', vtyp), group('IPCT', ipcts), group('IPDS', ipdss)]   # vanilla group order

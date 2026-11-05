@@ -1,7 +1,8 @@
 """Ghost People back dodge: the Ghost is swallowed by a thick cloud of its gas, shrinks out of sight, is carried back
 unseen and re-forms. A special idle (IDLE PCGhostDodgeBack, played by Core on back + jump with a weapon out, as the hops):
-  * no root motion: a special idle's Bip01 keys don't move the player (tested); Core carries the player back at a walk
-    through the mover while the idle plays. Bip01 is keyed still (as the hop's first frame keys it)
+  * root motion: Bip01 translation keyed straight back (actor -Y) DIST over SLIP_ON..SLIP_OFF, as Dead Money's own hops key
+    their sideways move (combatidle_hopleft.kf: Bip01 x 0 -> -159, rotation identity) - the hops move the player this
+    way; the idle is played as they are (their IDLE settings, no movement hold)
   * the body: Bip01 NonAccum - the parent of every bone, so the skinned body, the head gear and the weapon in the hand -
     scaled 1 -> SMALL over SHRINK and back to 1 over GROW (scale keys on its NiTransformData; Bip01 and the camera,
     which hang above it, are not touched)
@@ -21,6 +22,8 @@ from nifedit import NifFile
 from ghost_spray import add_emitter
 
 LENGTH = 1.40
+DIST = 90.0                              # units straight back (~4 ft)
+SLIP_ON, SLIP_OFF = 0.20, 0.95           # root motion, while the body is (nearly) gone
 SHRINK = (0.15, 0.38)                    # body 1 -> SMALL, once the fog has gathered
 GROW = (0.95, 1.12)                      # body SMALL -> 1
 SMALL = 0.001
@@ -77,7 +80,7 @@ def build(hop, out):
     n = int(round(LENGTH * 30)) + 1; frames = []
     for i in range(n):
         t = LENGTH * i / (n - 1); loc = dict(base)
-        loc['Bip01'] = (np.zeros(3), np.eye(3))
+        loc['Bip01'] = (np.array([0.0, -DIST * smooth((t - SLIP_ON) / (SLIP_OFF - SLIP_ON)), 0.0]), np.eye(3))
         frames.append((t, loc))
     bones = [(b[0], PRIO) for b in h.blocks if b[0] in sk.local]
     if not any(nm == 'Bip01 NonAccum' for nm, _ in bones): bones.insert(1, ('Bip01 NonAccum', PRIO))
