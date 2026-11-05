@@ -36,8 +36,9 @@ add-ons need their base pack too.
 - Immune to radiation and the Sierra Madre toxic cloud.
 - Always essential: lethal damage knocks you down and you get back up. A crippled limb kills, with that limb
   blown off.
-- Ghost moves on the jump key: a sideways hop when strafing, and a search when moving backward with your weapon
-  holstered (sneaking or not).
+- Ghost moves on the jump key: a sideways hop when strafing; moving backward with a weapon out, a back dodge (the
+  body dissolves into a thick cloud of gas, slips back a few feet and re-forms); and a search when moving backward
+  with your weapon holstered (sneaking or not).
 - Starts with a bottomless **Throwing Knife Spear** (Dead Money's best, can't be dropped, weightless); its critical
   hits knock the target down.
 - Starts with a built-in recharging **Ghost Gas**: sprays the Sierra Madre gas (a heavy weapon, flamer range);

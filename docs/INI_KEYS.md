@@ -58,7 +58,8 @@ Sections whose plugin isn't loaded are skipped (logged "NOT FOUND (plugin inacti
                       of it to both actors' radii); that attack (and what stands for it) only; 0 (default) = vanilla. Ghost People: 3
   UnarmedEffectCone : that attack's hit cone is at least this, degrees either side of the facing (vanilla: forward /
                       standing power 40, side / back 100, Custom1 50, others 35); same scope; 0 (default) = vanilla. Ghost People: 60
-  GhostMoveForms    : the GhostMoves forms: hop spell, search spell, search idle, hop-left idle, hop-right idle
+  GhostMoveForms    : the GhostMoves forms: hop spell, search spell, search idle, hop-left idle, hop-right idle,
+                      back-dodge idle (back + jump with a weapon out; optional - without it that jumps normally)
   JoinFaction       : 1 = the player joins those factions (rank 0) while in the race and leaves them on a race
                       change, so the species treats you as its own; 0 (default) = the factions are never touched
   GiveItems         : Plugin|FormID[,...] (up to 4): items given to the player, one each and not equipped, when
