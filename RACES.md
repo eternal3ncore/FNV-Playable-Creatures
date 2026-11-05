@@ -18,6 +18,7 @@ add-ons need their base pack too.
 - Its own animations for drinking from water, Cannibal, Mister Sandman kills and stimpaks (robots: a placeholder
   for Cannibal; robots without a seated pose float onto chairs and stools).
 - The creature's own body parts for gore, dismemberment and VATS.
+- Every race but the robots starts with the **Terrifying Presence** perk (given when the race menu closes).
 - Armor can be worn for its stats but isn't drawn (except where noted).
 - Human animation overrides from kNVSE animation mods don't apply to creature races.
 - First person shows the creature's own body (its head hidden, the view just behind it); Ghost People keep the
@@ -66,6 +67,7 @@ add-ons need their base pack too.
 - One-handed melee weapons swing with its unarmed attacks; the weapon isn't drawn.
 - Immune to radiation.
 - Wear their own super mutant armor, which is drawn on the body.
+- **Taunt:** back + jump plays one of their intimidation displays (in turn).
 - **Nightkin:** Stealth Boy cloak while sneaking.
 
 ### TTW add-on: `PlayableCreatures_SuperMutantsTTW.esp`

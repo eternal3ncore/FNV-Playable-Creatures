@@ -65,6 +65,12 @@ Sections whose plugin isn't loaded are skipped (logged "NOT FOUND (plugin inacti
                       change, so the species treats you as its own; 0 (default) = the factions are never touched
   GiveItems         : Plugin|FormID[,...] (up to 4): items given to the player, one each and not equipped, when
                       the race menu closes (an existing copy is replaced, never stacked). Robots: their own weapon
+  GivePerks         : Plugin|FormID[,...] (up to 4): perks the player gets when the race menu closes, if not already
+                      had (never a second rank; not removed on a later race change). Every non-robot race:
+                      Terrifying Presence (FalloutNV.esm|10C6CD); robots list the key empty
+  TauntIdles        : Plugin|FormID[,...] (up to 4): back + jump plays the next of these idles (in turn), the player
+                      held still while it plays; races without GhostMoves only. Super Mutants / Nightkin / the
+                      Capital super mutants: their own intimidation idles
   NoFallDamage      : 1 = no fall damage, the engine's rule for flying creatures (vanilla eyebots carry the
                       "Flies" flag). Default 0
   GhostMoves        : 1 = Ghostification's ghost moves on the jump key (decided before a jump starts, so no jump):

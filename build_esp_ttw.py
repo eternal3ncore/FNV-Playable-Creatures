@@ -347,6 +347,16 @@ def pod_idles(tag, folder, files=None):
 for _tag, _f in (('Swampfolk', 'Swampfolk'), ('Hillfolk', 'Hillfolk'), ('SuperMutantDC', 'SuperMutantDC')):
     pod_idles(_tag, 'PlayableCreatures\\%s\\IdleAnims' % _f)
 
+# Capital super mutant taunts (Core TauntIdles=, as build_esp.py's PCSuperMutantTaunt*): Fallout 3's super mutant
+# intimidation idles (creatures\smspinebreakerdc\idleanims in TTW), the ones without Weapon keys. Loose, whole body +
+# no attacking. New ids after everything else.
+SMDC_TAUNTS = []
+for _i, _fn in enumerate(('SpecialIdle_2HAIntimidate.kf', 'SpecialIdle_2HAIntimidate2.kf', 'SpecialIdle_2HAIntimidate4.kf'), 1):
+    _fid = nid(); SMDC_TAUNTS.append(_fid)
+    idles.append(record('IDLE', _fid, [('EDID', z('PCSuperMutantDCTaunt%d' % _i)), ('MODL', z('Creatures\\SMSpineBreakerDC\\IdleAnims\\' + _fn)),
+        ('ANAM', struct.pack('<II', 0, 0)), ('DATA', bytes.fromhex('1400000000000100'))]))
+print('  capital super mutant taunts', ' '.join('%06X' % (f & 0xFFFFFF) for f in SMDC_TAUNTS))
+
 groups = [group('HAIR', [hair]), group('EYES', [eyes]), group('RACE', races), group('SPEL', spels), group('ARMO', armors), group('NPC_', npcs), group('IDLE', idles), group('BPTD', bptds)]
 nrec = 2 + len(races) + len(spels) + len(armors) + len(npcs) + len(idles) + len(bptds) + len(groups)
 tes4 = record('TES4', 0, [

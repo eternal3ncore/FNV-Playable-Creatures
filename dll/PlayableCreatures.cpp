@@ -86,7 +86,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 97;
+static const UInt32 kPluginVersion = 98;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -98,7 +98,7 @@ static const UInt32 kAddr_QueueUIMessage = 0x007052F0;
 static const UInt32 kAddr_AddItemToBiped = 0x006061B0;
 static const UInt32 kSlot_QueuedPlayerRun = 0x01016DB8, kAddr_VanillaQueuedPlayerRun = 0x00441C30;
 static const UInt32 kPtr_DataHandler = 0x011C3F2C, kPtr_ModelLoader = 0x011C3B3C, kPtr_Player = 0x011DEA3C;
-static const UInt8 kFormType_Race = 0x0C, kFormType_SOUN = 0x0D, kFormType_ARMO = 0x18, kFormType_WEAP = 0x28, kFormType_VTYP = 0x5D, kFormType_DIAL = 0x45, kFormType_SPEL = 0x14, kFormType_GLOB = 0x06;
+static const UInt8 kFormType_Race = 0x0C, kFormType_SOUN = 0x0D, kFormType_ARMO = 0x18, kFormType_WEAP = 0x28, kFormType_VTYP = 0x5D, kFormType_DIAL = 0x45, kFormType_SPEL = 0x14, kFormType_GLOB = 0x06, kFormType_Perk = 0x56;
 
 // ---------------- logging ----------------
 static FILE* g_log = nullptr;
@@ -131,6 +131,9 @@ struct Profile {
 	bool noFallDamage;              // NoFallDamage=1 - the engine's flying-creature fall-damage exemption applies to the player
 	FormRef bodyParts;              // BodyPartData= - the creature's own body part data (gore / dismemberment / VATS parts)
 	FormRef give[4]; int numGive;   // GiveItems= - items handed over (one each, not equipped) when the race menu closes
+	FormRef perks[4]; int numPerks; // GivePerks= - perks added (if not already had) when the race menu closes
+	FormRef taunts[4]; int numTaunts; // TauntIdles= - back + jump plays the next of these idles, held still (races
+	                                //   without GhostMoves)
 	bool ghostMoves;                // Ghostification's hop / search on the jump key
 	FormRef ghostForms[7];          // GhostMoveForms= hop spell, search spell, search idle, hop-left idle, hop-right idle,
 	                                //   back-dodge idle, back-dodge spell (else the hop spell)
@@ -208,6 +211,8 @@ static int LoadConfigFile(const char* ini) {
 		p.joinFaction = GetPrivateProfileIntA(sec, "JoinFaction", 0, ini) != 0;
 		p.noFallDamage = GetPrivateProfileIntA(sec, "NoFallDamage", 0, ini) != 0;
 		GetPrivateProfileStringA(sec, "GiveItems", "", tmp, sizeof(tmp), ini); p.numGive = ParseForms(tmp, p.give, 4);
+		GetPrivateProfileStringA(sec, "GivePerks", "", tmp, sizeof(tmp), ini); p.numPerks = ParseForms(tmp, p.perks, 4);
+		GetPrivateProfileStringA(sec, "TauntIdles", "", tmp, sizeof(tmp), ini); p.numTaunts = ParseForms(tmp, p.taunts, 4);
 		GetPrivateProfileStringA(sec, "BodyPartData", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.bodyParts, 1);
 		GetPrivateProfileStringA(sec, "GhostMoveForms", "", tmp, sizeof(tmp), ini); ParseForms(tmp, p.ghostForms, 7);
 		GetPrivateProfileStringA(sec, "LockedItems", "", tmp, sizeof(tmp), ini); p.numLocked = ParseForms(tmp, p.locked, 8);
@@ -355,6 +360,16 @@ static void ResolveProfiles() {
 			g.fid = ResolveFID(g.plugin, g.localID);
 			if (!g.fid || !LookupForm(g.fid)) { Log("resolve: [%s] give item %s|%06X not loaded - skipped", p.section, g.plugin, g.localID); g.fid = 0; }
 			else Log("resolve: [%s] give item %08X", p.section, g.fid);
+		}
+		for (int k = 0; k < p.numPerks; k++) {
+			FormRef& g = p.perks[k]; g.fid = ResolveFID(g.plugin, g.localID); void* f = g.fid ? LookupForm(g.fid) : nullptr;
+			if (!f || *((UInt8*)f + 4) != kFormType_Perk) { Log("resolve: [%s] perk %s|%06X not a loaded PERK - skipped", p.section, g.plugin, g.localID); g.fid = 0; }
+			else Log("resolve: [%s] give perk %08X", p.section, g.fid);
+		}
+		for (int k = 0; k < p.numTaunts; k++) {
+			FormRef& g = p.taunts[k]; g.fid = ResolveFID(g.plugin, g.localID);
+			if (!g.fid || !LookupForm(g.fid)) { Log("resolve: [%s] taunt idle %s|%06X not loaded - skipped", p.section, g.plugin, g.localID); g.fid = 0; }
+			else Log("resolve: [%s] taunt idle %08X", p.section, g.fid);
 		}
 		for (int fi = 0; fi < p.numFactions; fi++) {
 			FormRef& fr = p.factions[fi];
@@ -539,6 +554,7 @@ static void UpdateLoop(const char* why, void* newRoot = nullptr);
 static void ApplyVoice(const char* why);
 static void GiveRaceAbilities(const char* why);
 static void GiveRaceItems(const char* why);
+static void GiveRacePerks(const char* why);
 static void CleanupFactions(const char* why);
 typedef void* (__fastcall* MenuDtor_t)(void* menu, void* edx, UInt32 flags);
 static MenuDtor_t g_prevMenuDtor = (MenuDtor_t)kAddr_RaceSexMenu_Dtor;
@@ -552,6 +568,7 @@ static void* __fastcall Hook_RaceSexMenuDtor(void* menu, void* edx, UInt32 flags
 	CleanupFactions("race menu closed");
 	GiveRaceAbilities("race menu closed");
 	GiveRaceItems("race menu closed");
+	GiveRacePerks("race menu closed");
 	ApplyVoice("race menu closed");
 	return r;
 }
@@ -1180,6 +1197,23 @@ static void GiveRaceItems(const char* why) {
 		Log("give: %08X %s (%s)", fid, ok ? "given" : "FAILED", why);
 	}
 }
+// GivePerks=: perks the race's player gets, once (the HasPerk command's own check, Actor vtbl 0x4A0(perk, teammate) =
+// rank, so closing the race menu again never adds a second rank); added through the console's AddPerk (messages off).
+// Nothing is removed on a later race change.
+typedef UInt8 (__fastcall* PerkRank_t)(void* actor, void* edx, void* perk, bool teammate);
+static void GiveRacePerks(const char* why) {
+	void* pl = Player(); void* npc = PlayerNPC(); if (!pl || !npc) return;
+	Profile* p = ProfileForRace(NPCRace(npc));
+	if (!p || !p->numPerks) return;
+	if (!g_console || !g_console->RunScriptLine2) { Log("perks: no console interface - not given (%s)", why); return; }
+	for (int i = 0; i < p->numPerks; i++) {
+		UInt32 fid = p->perks[i].fid; void* perk = fid ? LookupForm(fid) : nullptr; if (!perk) continue;
+		if (((PerkRank_t)VFn(pl, 0x4A0))(pl, nullptr, perk, false)) { Log("perks: %08X already had (%s)", fid, why); continue; }
+		char line[64]; snprintf(line, sizeof(line), "player.addperk %08X", fid);
+		bool ok = g_console->RunScriptLine2(line, nullptr, true);
+		Log("perks: %08X %s (%s)", fid, ok ? "added" : "FAILED", why);
+	}
+}
 static void GiveRaceAbilities(const char* why) {
 	void* player = Player(); void* npc = PlayerNPC(); if (!player || !npc) return;
 	void* race = NPCRace(npc);
@@ -1388,6 +1422,7 @@ static int HoldIdlePlaying(void* actor, void* ad) {
 		void* idle = obj ? At<void*>(obj, 0x2C) : nullptr;
 		if (IsHoldIdle(idle, p->ghostForms[2].fid)) return 1;
 		if (IsHoldIdle(idle, p->ghostForms[5].fid)) return 2;
+		for (int k = 0; k < p->numTaunts; k++) if (IsHoldIdle(idle, p->taunts[k].fid)) return 1;
 	}
 	return 0;
 }
@@ -1401,7 +1436,7 @@ static bool g_holdLogged = false;
 static void __fastcall Hook_PlayerMoverSetFlags(void* mover, void* edx, UInt32 flags) {
 	if (flags & 0x3F) {
 		void* pl = Player(); Profile* p = pl ? PlayerProfile() : nullptr;
-		if (p && p->ghostMoves) {
+		if (p && (p->ghostMoves || p->numTaunts)) {
 			bool hold = HoldIdleKind(pl) == 1;
 			if (hold || g_holdPending > 0) flags &= ~0x3Fu;
 			if (hold != g_holdLogged) { g_holdLogged = hold; Log("ghost move: movement hold %s", hold ? "on (search idle playing)" : "off"); }
@@ -1412,7 +1447,7 @@ static void __fastcall Hook_PlayerMoverSetFlags(void* mover, void* edx, UInt32 f
 }
 static void* __fastcall Hook_PlayerJump(void* actor, void* edx) {
 	Profile* p = (actor == Player()) ? PlayerProfile() : nullptr;
-	if (!p || !p->ghostMoves) return g_origJump(actor, edx);
+	if (!p || (!p->ghostMoves && !p->numTaunts)) return g_origJump(actor, edx);
 	// while the scan / search idle plays (or is about to start) the jump key does nothing: the hold keeps the movement
 	// bits at 0 during the idle, otherwise a second press reads "standing still, not sneaking" and starts a real jump,
 	// which replaces the idle.
@@ -1421,6 +1456,20 @@ static void* __fastcall Hook_PlayerJump(void* actor, void* edx) {
 	}
 	UInt32 mv = ((U32_t)kAddr_GetMovementFlags)(actor, nullptr) & 0xF;
 	bool out = ((B_t)kAddr_IsWeaponOut)(actor, nullptr), sneak = ((B_t)kAddr_IsSneaking)(actor, nullptr);
+	if (!p->ghostMoves) {
+		// TauntIdles=: back + jump plays the race's taunts in turn, held still like the search (a stand-still idle: the
+		// held back key would start the walk, which replaces it); anything else jumps normally
+		static int next = 0;
+		if (mv == 2) {
+			for (int tries = 0; tries < p->numTaunts; tries++) {
+				UInt32 fid = p->taunts[(next + tries) % p->numTaunts].fid; if (!fid) continue;
+				if (PlayIdleForm(actor, fid)) {
+					next = (next + tries + 1) % p->numTaunts; g_holdPending = 2; Log("taunt: %08X", fid); return nullptr;
+				}
+			}
+		}
+		return g_origJump(actor, edx);
+	}
 	if (mv & 0xC) {
 		// the hop is Dead Money's own HopLeft / HopRight idle (the ghosts' combat hop), played like the scan /
 		// search idles (the engine dodge's DodgeLeft/Right groups never reach the player's anim map).
@@ -1442,7 +1491,7 @@ static void* __fastcall Hook_PlayerJump(void* actor, void* edx) {
 	return g_origJump(actor, edx);
 }
 static void InstallGhostMoves() {                                    // at load
-	bool any = false; for (int i = 0; i < g_numProf; i++) any |= g_prof[i].ghostMoves;
+	bool any = false; for (int i = 0; i < g_numProf; i++) any |= g_prof[i].ghostMoves || g_prof[i].numTaunts;
 	if (!any) return;
 	UInt32 cur = *(UInt32*)kSlot_PlayerJump;
 	g_origJump = (Jump_t)cur;

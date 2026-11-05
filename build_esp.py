@@ -1222,6 +1222,17 @@ spels.append(record('SPEL', GHOST_DODGE_SPEL, [('EDID', z('PCGhostDodgeSpell')),
     ('EFID', u32(0x31D7A)), ('EFIT', efit(DODGE_SPEED, 1, 21))]))                   # IncreaseSpeedMult +DODGE_SPEED, 1 s
 print('  ghost back dodge idle %06X, spell %06X' % (GHOST_DODGE & 0xFFFFFF, GHOST_DODGE_SPEL & 0xFFFFFF))
 
+# Super Mutant / Nightkin taunts (Core TauntIdles=: back + jump plays them in turn, held still): the super mutants' own
+# combat intimidation idles (vanilla SB2HAIntimidate / 2 and the unrecorded 4th, creatures\smspinebreaker\idleanims - the
+# ones that don't key the Weapon node, so they suit any weapon or none). Loose idles (no parent, no conditions: the idle
+# trees never pick them), whole body + no attacking (as PCGhostTrashPick). New ids after everything else.
+SM_TAUNTS = []
+for _i, _fn in enumerate(('SpecialIdle_2HAIntimidate.kf', 'SpecialIdle_2HAIntimidate2.kf', 'SpecialIdle_2HAIntimidate4.kf'), 1):
+    _fid = _new(); SM_TAUNTS.append(_fid)
+    idles.append(record('IDLE', _fid, [('EDID', z('PCSuperMutantTaunt%d' % _i)), ('MODL', z('Creatures\\SMSpineBreaker\\IdleAnims\\' + _fn)),
+        ('ANAM', struct.pack('<II', 0, 0)), ('DATA', bytes.fromhex('1400000000000100'))]))
+print('  super mutant taunts', ' '.join('%06X' % (f & 0xFFFFFF) for f in SM_TAUNTS))
+
 groups = [group('HAIR', [hair]), group('EYES', [eyes] + eyes_extra), group('RACE', races), group('SOUN', souns), group('MGEF', mgefs), group('SCPT', scpts), group('ENCH', enchs), group('SPEL', spels), group('ARMO', armors), group('WEAP', weaps), group('NPC_', npcs), group('IDLE', idles)] + ([group('PROJ', projs)] if projs else []) + [group('ANIO', anios), group('EFSH', efshs), group('BPTD', bptds), group('VTYP', vtyp), group('IPCT', ipcts), group('IPDS', ipdss)]   # vanilla group order
 nrec = 2 + len(efshs) + len(ipcts) + len(ipdss) + len(enchs) + len(projs) + len(eyes_extra) + len(armors) + len(bptds) + len(races) + len(weaps) + len(npcs) + len(souns) + len(mgefs) + len(scpts) + len(spels) + len(vtyp) + len(idles) + len(anios) + len(groups)
 tes4 = record('TES4', 0, [
