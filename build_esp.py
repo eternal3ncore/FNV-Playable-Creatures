@@ -1208,7 +1208,19 @@ GHOST_DODGE = _new()
 idles.append(record('IDLE', GHOST_DODGE, [('EDID', z('PCGhostDodgeBack')),
     ('MODL', z('PlayableCreatures\\Ghost\\IdleAnims\\PCGhostDodgeBack.kf')),
     ('ANAM', struct.pack('<II', gm_root, GHOST_TRASH)), ('DATA', bytes.fromhex('070000ff00000100'))]))
-print('  ghost back dodge idle %06X' % (GHOST_DODGE & 0xFFFFFF))
+# Its spell (the 7th GhostMoveForms form, cast by Core in place of the hop's): the hop's effects + IncreaseSpeedMult
+# (vanilla 031D7A, Speed Multiplier +DODGE_SPEED for 1 s). A special idle's root motion moves the player no faster than
+# the player's own movement speed (the hops go ~4 ft running, less walking, whatever their keys say), so the dodge raises
+# that speed for its length; the idle's own slide still sets direction and timing.
+DODGE_SPEED = 300
+GHOST_DODGE_SPEL = _new()
+spels.append(record('SPEL', GHOST_DODGE_SPEL, [('EDID', z('PCGhostDodgeSpell')), ('FULL', z('Ghastly Visage')),
+    ('SPIT', gt['zzGhostMove'].get('SPIT')),
+    ('EFID', u32(0x120D80)), ('EFIT', efit(1, 1, 51)), ('CTDA', ctda(289, 1)),      # TurboEffect 1 s, in combat
+    ('EFID', u32(0x6AA5D)), ('EFIT', efit(50, 1, 14)), ('CTDA', ctda(289, 1)),      # IncreaseCritChance +50, 1 s, in combat
+    ('EFID', u32(MOVE_MGEF)), ('EFIT', efit(0, 1, -1)),                              # SetGhost 1 s
+    ('EFID', u32(0x31D7A)), ('EFIT', efit(DODGE_SPEED, 1, 21))]))                   # IncreaseSpeedMult +DODGE_SPEED, 1 s
+print('  ghost back dodge idle %06X, spell %06X' % (GHOST_DODGE & 0xFFFFFF, GHOST_DODGE_SPEL & 0xFFFFFF))
 
 groups = [group('HAIR', [hair]), group('EYES', [eyes] + eyes_extra), group('RACE', races), group('SOUN', souns), group('MGEF', mgefs), group('SCPT', scpts), group('ENCH', enchs), group('SPEL', spels), group('ARMO', armors), group('WEAP', weaps), group('NPC_', npcs), group('IDLE', idles)] + ([group('PROJ', projs)] if projs else []) + [group('ANIO', anios), group('EFSH', efshs), group('BPTD', bptds), group('VTYP', vtyp), group('IPCT', ipcts), group('IPDS', ipdss)]   # vanilla group order
 nrec = 2 + len(efshs) + len(ipcts) + len(ipdss) + len(enchs) + len(projs) + len(eyes_extra) + len(armors) + len(bptds) + len(races) + len(weaps) + len(npcs) + len(souns) + len(mgefs) + len(scpts) + len(spels) + len(vtyp) + len(idles) + len(anios) + len(groups)

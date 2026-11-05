@@ -2,7 +2,8 @@
 unseen and re-forms. A special idle (IDLE PCGhostDodgeBack, played by Core on back + jump with a weapon out, as the hops):
   * root motion: Bip01 translation keyed straight back (actor -Y) DIST over SLIP_ON..SLIP_OFF, as Dead Money's own hops key
     their sideways move (combatidle_hopleft.kf: Bip01 x 0 -> -159, rotation identity) - the hops move the player this
-    way; the idle is played as they are (their IDLE settings, no movement hold)
+    way; the idle is played as they are (their IDLE settings, no movement hold). The player is moved no faster than its
+    own movement speed (the hops: ~4 ft running, less walking), so the dodge's spell raises SpeedMult for 1 s (LENGTH)
   * the body: Bip01 NonAccum - the parent of every bone, so the skinned body, the head gear and the weapon in the hand -
     scaled 1 -> SMALL over SHRINK and back to 1 over GROW (scale keys on its NiTransformData; Bip01 and the camera,
     which hang above it, are not touched)
@@ -22,13 +23,13 @@ from rig import Creature, write_kf, smooth
 from nifedit import NifFile
 from ghost_spray import add_emitter
 
-LENGTH = 0.70                            # (user: twice as fast as the first 1.4 s, twice the distance)
+LENGTH = 1.00                            # = the dodge spell's speed boost (1 s, its shortest)
 DIST = 360.0                             # units straight back (~16 ft)
-SLIP_ON, SLIP_OFF = 0.10, 0.475          # root motion, while the body is (nearly) gone
+SLIP_ON, SLIP_OFF = 0.10, 0.85           # root motion, while the body is (nearly) gone
 SHRINK = (0.075, 0.19)                   # body 1 -> SMALL, once the fog has gathered
-GROW = (0.475, 0.56)                     # body SMALL -> 1
+GROW = (0.85, 0.94)                      # body SMALL -> 1
 SMALL = 0.001
-CLOUD_ON, CLOUD_OFF = 0.0, 0.51          # emitter on from the first frame, off as the body re-forms
+CLOUD_ON, CLOUD_OFF = 0.0, 0.88          # emitter on from the first frame, off as the body re-forms
 BIRTH = 700.0                            # puffs / s while on
 PRIO = 58                                # Dead Money's hop
 SEQ = 'SpecialIdle_PCDodgeBack'

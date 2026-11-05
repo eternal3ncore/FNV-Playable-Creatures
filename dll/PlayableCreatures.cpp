@@ -86,7 +86,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 96;
+static const UInt32 kPluginVersion = 97;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -132,8 +132,8 @@ struct Profile {
 	FormRef bodyParts;              // BodyPartData= - the creature's own body part data (gore / dismemberment / VATS parts)
 	FormRef give[4]; int numGive;   // GiveItems= - items handed over (one each, not equipped) when the race menu closes
 	bool ghostMoves;                // Ghostification's hop / search on the jump key
-	FormRef ghostForms[6];          // GhostMoveForms= hop spell, search spell, search idle, hop-left idle, hop-right idle,
-	                                //   back-dodge idle
+	FormRef ghostForms[7];          // GhostMoveForms= hop spell, search spell, search idle, hop-left idle, hop-right idle,
+	                                //   back-dodge idle, back-dodge spell (else the hop spell)
 	FormRef locked[8]; int numLocked;  // LockedItems= - refused (and unequipped) until UnlockGlobal is 1 or more
 	FormRef unlockGlobal;           // UnlockGlobal= - the GLOB that unlocks them
 	char lockedMsg[128];            // LockedMessage= - shown when one is refused
@@ -209,7 +209,7 @@ static int LoadConfigFile(const char* ini) {
 		p.noFallDamage = GetPrivateProfileIntA(sec, "NoFallDamage", 0, ini) != 0;
 		GetPrivateProfileStringA(sec, "GiveItems", "", tmp, sizeof(tmp), ini); p.numGive = ParseForms(tmp, p.give, 4);
 		GetPrivateProfileStringA(sec, "BodyPartData", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.bodyParts, 1);
-		GetPrivateProfileStringA(sec, "GhostMoveForms", "", tmp, sizeof(tmp), ini); ParseForms(tmp, p.ghostForms, 6);
+		GetPrivateProfileStringA(sec, "GhostMoveForms", "", tmp, sizeof(tmp), ini); ParseForms(tmp, p.ghostForms, 7);
 		GetPrivateProfileStringA(sec, "LockedItems", "", tmp, sizeof(tmp), ini); p.numLocked = ParseForms(tmp, p.locked, 8);
 		GetPrivateProfileStringA(sec, "UnlockGlobal", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.unlockGlobal, 1);
 		GetPrivateProfileStringA(sec, "LockedMessage", "You can't use that yet.", p.lockedMsg, sizeof(p.lockedMsg), ini);
@@ -368,8 +368,8 @@ static void ResolveProfiles() {
 		p.unlockGlobal.fid = p.unlockGlobal.localID ? ResolveFID(p.unlockGlobal.plugin, p.unlockGlobal.localID) : 0;
 		for (int k = 0; k < p.numFaces; k++) p.faceEyes[k].fid = ResolveFID(p.faceEyes[k].plugin, p.faceEyes[k].localID);
 		p.unarmedEffect.fid = p.unarmedEffect.localID ? ResolveFID(p.unarmedEffect.plugin, p.unarmedEffect.localID) : 0;
-		if (p.ghostMoves) Log("resolve: [%s] ghost moves: spells %08X %08X, idles %08X %08X %08X %08X", p.section, p.ghostForms[0].fid,
-			p.ghostForms[1].fid, p.ghostForms[2].fid, p.ghostForms[3].fid, p.ghostForms[4].fid, p.ghostForms[5].fid);
+		if (p.ghostMoves) Log("resolve: [%s] ghost moves: spells %08X %08X, idles %08X %08X %08X %08X, dodge spell %08X", p.section, p.ghostForms[0].fid,
+			p.ghostForms[1].fid, p.ghostForms[2].fid, p.ghostForms[3].fid, p.ghostForms[4].fid, p.ghostForms[5].fid, p.ghostForms[6].fid);
 		if (p.numLocked) Log("resolve: [%s] %d locked item(s) until global %08X", p.section, p.numLocked, p.unlockGlobal.fid);
 		if (p.numFaces) Log("resolve: [%s] %d faces chosen by eyes", p.section, p.numFaces);
 		if (p.unarmedEffect.fid) Log("resolve: [%s] unarmed effect %08X on anim %02X (weapons %d, reach x%.2f, cone %.0f)", p.section,
@@ -1320,7 +1320,8 @@ static void CleanupFactions(const char* why) {
 //                                         (Turbo + crit 1 s, SetGhost 1 s)
 //   walking backward, holstered -> search: trash-pick idle (PCGhostTrashPick, whole body) + PCGhostSearchSpell (loot after 5 s)
 //   walking backward, weapon out -> back dodge: PCGhostDodgeBack (whole body; the body shrinks out of sight in its gas
-//                                         cloud and slips back, its root motion) + PCGhostMoveSpell, played as the hops
+//                                         cloud and slips back, its root motion) + its own spell (the hop's + a short
+//                                         speed boost: root motion moves the player no faster than its move speed)
 // anything else jumps normally.
 static const UInt32 kSlot_PlayerJump = 0x0108AA3C + 0x254, kAddr_ActorJump = 0x00884AA0;
 static const UInt32 kAddr_GetMovementFlags = 0x008846E0, kAddr_IsWeaponOut = 0x008A16D0, kAddr_IsSneaking = 0x004997B0,
@@ -1433,7 +1434,9 @@ static void* __fastcall Hook_PlayerJump(void* actor, void* edx) {
 		if (PlayIdleForm(actor, p->ghostForms[2].fid)) { g_holdPending = 2; CastOnSelf(actor, p->ghostForms[1].fid); Log("ghost move: search"); return nullptr; }
 	} else if (mv == 2 && out && p->ghostForms[5].fid) {
 		// the back dodge: played as the hops (no hold), its root motion carries the player back
-		if (PlayIdleForm(actor, p->ghostForms[5].fid)) { CastOnSelf(actor, p->ghostForms[0].fid); Log("ghost move: back dodge"); return nullptr; }
+		if (PlayIdleForm(actor, p->ghostForms[5].fid)) {
+			CastOnSelf(actor, p->ghostForms[p->ghostForms[6].fid ? 6 : 0].fid); Log("ghost move: back dodge"); return nullptr;
+		}
 	}
 	Log("ghost move: normal jump (movement %X, weapon out %d, sneaking %d)", mv, out, sneak);
 	return g_origJump(actor, edx);
