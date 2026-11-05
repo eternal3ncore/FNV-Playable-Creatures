@@ -899,6 +899,7 @@ print('  eyebot laser %06X, damage %d' % (EYEBOT_ZAP & 0xFFFFFF, EYEBOT_LASER_DA
 # (AmmoMicroBreeder, nothing to carry; clip 60, 0.5 s per round = 30 s), Can't Drop, weightless, worth nothing, no
 # weapon mods. Given at race-menu close (ini GiveItems), not equipped.
 GHOST_GAS_MODEL = 'PlayableCreatures\\Ghost\\GhostGasProjectile.nif'
+GHOST_GAS_WEAPON_MODEL = 'PlayableCreatures\\Ghost\\GhostGas.nif'   # the Flamer without its fuel tank (tools/build_ghost_gas_weapon_nif.py)
 gas_snd = _new()        # (id kept, no record: the toxic-cloud loop played nothing as a weapon loop; the Flamer's own
                         # fire loop WPNFlamerFire3DLPM is used)
 gas_ench = _new()
@@ -921,6 +922,7 @@ def _gw(k, v):
     if k == 'EDID': return z('PCGhostGas')
     if k == 'FULL': return z('Ghost Gas')
     if k == 'EITM': return u32(gas_ench)
+    if k == 'MODL': return z(GHOST_GAS_WEAPON_MODEL)
     if k == 'NAM0': return u32(0x121155)                                        # AmmoMicroBreeder
     if k == 'INAM': return u32(_NO_IMPACT)                                     # no flame scorch decals; -> PCGhostGasImpactSet below
     if k == 'DATA': d = bytearray(v); struct.pack_into('<iif', d, 0, 0, 200, 0.0); return bytes(d)    # value 0, health, weight 0
@@ -930,7 +932,7 @@ def _gw(k, v):
     if k == 'CRDT': d = bytearray(v); struct.pack_into('<I', d, 12, 0); return bytes(d)   # no FlamerCritEffect02
     return v
 weaps.append(record('WEAP', GHOST_GAS, [(k, _gw(k, v)) for k, v in SRC.byfid[0x432D].subs()
-                                        if k not in ('UNAM', 'MOD4', 'MWD1', 'WNM1', 'WMI1')]))        # no idle loop, no mods
+                                        if k not in ('UNAM', 'MOD4', 'MWD1', 'WNM1', 'WMI1', 'MODT')]))   # no idle loop, no mods; own model
 print('  ghost gas %06X (projectile %06X, enchantment %06X)' % (GHOST_GAS & 0xFFFFFF, gas_proj & 0xFFFFFF, gas_ench & 0xFFFFFF))
 
 # ---------------- Ghost knife spear ----------------
