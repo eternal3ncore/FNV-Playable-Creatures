@@ -1223,19 +1223,25 @@ spels.append(record('SPEL', GHOST_DODGE_SPEL, [('EDID', z('PCGhostDodgeSpell')),
 print('  ghost back dodge idle %06X, spell %06X' % (GHOST_DODGE & 0xFFFFFF, GHOST_DODGE_SPEL & 0xFFFFFF))
 
 # Super Mutant / Nightkin taunts (Core TauntIdles=: back + jump plays them in turn, held still): the super mutants' own
-# combat intimidation idles (vanilla SB2HAIntimidate / 2 and the unrecorded 4th, creatures\smspinebreaker\idleanims - the
-# ones that don't key the Weapon node, so they suit any weapon or none). Loose idles (no parent, no conditions: the idle
-# trees never pick them), whole body + no attacking (as PCGhostTrashPick). New ids after everything else.
-SM_TAUNTS = []
-for _i, _fn in enumerate(('SpecialIdle_2HAIntimidate.kf', 'SpecialIdle_2HAIntimidate2.kf', 'SpecialIdle_2HAIntimidate4.kf'), 1):
-    _fid = _new(); SM_TAUNTS.append(_fid)
-    idles.append(record('IDLE', _fid, [('EDID', z('PCSuperMutantTaunt%d' % _i)), ('MODL', z('PlayableCreatures\\SuperMutant\\IdleAnims\\PCTaunt%d.kf' % _i)),
-        ('ANAM', struct.pack('<II', 0, 0)), ('DATA', bytes.fromhex('1400000000000100'))]))
-# the taunts' voice (anim/sm_taunt.py: our copies of the intimidation KFs carry 'Sound: PCSuperMutantTauntVox' at 0.1 s):
-# the low-int super mutant's combat shouts, every line (no silence padding: a taunt always speaks)
+# combat intimidation idles (vanilla SB2HAIntimidate / 2 and the unrecorded 4th, creatures\\smspinebreaker\\idleanims - the
+# ones that don't key the Weapon node, so they suit any weapon or none), whole body + no attacking (as PCGhostTrashPick).
+# Under PCSuperMutantTauntIdles, a root that never passes (GetRandomPercent < 0, as PCGhostMoveIdles): as loose idles
+# (no parent, no conditions) the engine picked them on its own - the mutant gestured whenever a nearby NPC spoke.
+# Their voice is played by Core with the taunt (TauntSound=): the low-int super mutant's combat shouts, every line (no
+# silence padding: a taunt always speaks) - a 'Sound:' key in the idle played nothing for the player.
+# New ids after everything else (the root after the ids the taunts / voice already had).
+SM_TAUNTS = [_new() for _ in range(3)]
 SM_TAUNT_SOUN = _new()
 souns.append(soun(SM_TAUNT_SOUN, 'PCSuperMutantTauntVox', PC + 'supermutant\\taunt\\', 5.0, None, None))
-print('  super mutant taunts', ' '.join('%06X' % (f & 0xFFFFFF) for f in SM_TAUNTS), 'voice %06X' % (SM_TAUNT_SOUN & 0xFFFFFF))
+SM_TAUNT_ROOT = _new()
+idles.append(record('IDLE', SM_TAUNT_ROOT, [('EDID', z('PCSuperMutantTauntIdles')), ('MODL', z('Creatures\\SMSpineBreaker\\IdleAnims')),
+    ('CTDA', ctda(F_RANDOM, 0, 4)), ('ANAM', struct.pack('<II', 0, 0)), ('DATA', bytes.fromhex('1400000000000000'))]))
+_prev = 0
+for _i, (_fid, _fn) in enumerate(zip(SM_TAUNTS, ('SpecialIdle_2HAIntimidate.kf', 'SpecialIdle_2HAIntimidate2.kf', 'SpecialIdle_2HAIntimidate4.kf')), 1):
+    idles.append(record('IDLE', _fid, [('EDID', z('PCSuperMutantTaunt%d' % _i)), ('MODL', z('Creatures\\SMSpineBreaker\\IdleAnims\\' + _fn)),
+        ('ANAM', struct.pack('<II', SM_TAUNT_ROOT, _prev)), ('DATA', bytes.fromhex('1400000000000100'))]))
+    _prev = _fid
+print('  super mutant taunts', ' '.join('%06X' % (f & 0xFFFFFF) for f in SM_TAUNTS), 'voice %06X root %06X' % (SM_TAUNT_SOUN & 0xFFFFFF, SM_TAUNT_ROOT & 0xFFFFFF))
 
 groups = [group('HAIR', [hair]), group('EYES', [eyes] + eyes_extra), group('RACE', races), group('SOUN', souns), group('MGEF', mgefs), group('SCPT', scpts), group('ENCH', enchs), group('SPEL', spels), group('ARMO', armors), group('WEAP', weaps), group('NPC_', npcs), group('IDLE', idles)] + ([group('PROJ', projs)] if projs else []) + [group('ANIO', anios), group('EFSH', efshs), group('BPTD', bptds), group('VTYP', vtyp), group('IPCT', ipcts), group('IPDS', ipdss)]   # vanilla group order
 nrec = 2 + len(efshs) + len(ipcts) + len(ipdss) + len(enchs) + len(projs) + len(eyes_extra) + len(armors) + len(bptds) + len(races) + len(weaps) + len(npcs) + len(souns) + len(mgefs) + len(scpts) + len(spels) + len(vtyp) + len(idles) + len(anios) + len(groups)

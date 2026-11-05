@@ -70,7 +70,11 @@ Sections whose plugin isn't loaded are skipped (logged "NOT FOUND (plugin inacti
                       Terrifying Presence (FalloutNV.esm|10C6CD); robots list the key empty
   TauntIdles        : Plugin|FormID[,...] (up to 4): back + jump plays the next of these idles (in turn), the player
                       held still while it plays; races without GhostMoves only. Super Mutants / Nightkin / the
-                      Capital super mutants: their own intimidation idles
+                      Capital super mutants: their own intimidation idles. Put the IDLEs under a parent whose
+                      conditions never pass (e.g. GetRandomPercent < 0): loose top-level idles get picked by the
+                      engine itself (the player gestures whenever an NPC nearby speaks)
+  TauntSound        : Plugin|FormID - a SOUN played (3D, at the player) as each taunt starts. Super mutants: their
+                      combat shouts (a 'Sound:' text key in the idle plays nothing for the player)
   NoFallDamage      : 1 = no fall damage, the engine's rule for flying creatures (vanilla eyebots carry the
                       "Flies" flag). Default 0
   GhostMoves        : 1 = Ghostification's ghost moves on the jump key (decided before a jump starts, so no jump):

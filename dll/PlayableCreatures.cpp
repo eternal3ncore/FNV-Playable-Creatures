@@ -86,7 +86,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 98;
+static const UInt32 kPluginVersion = 99;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -134,6 +134,7 @@ struct Profile {
 	FormRef perks[4]; int numPerks; // GivePerks= - perks added (if not already had) when the race menu closes
 	FormRef taunts[4]; int numTaunts; // TauntIdles= - back + jump plays the next of these idles, held still (races
 	                                //   without GhostMoves)
+	FormRef tauntSnd;               // TauntSound= - the voice played (3D, at the player) as a taunt starts
 	bool ghostMoves;                // Ghostification's hop / search on the jump key
 	FormRef ghostForms[7];          // GhostMoveForms= hop spell, search spell, search idle, hop-left idle, hop-right idle,
 	                                //   back-dodge idle, back-dodge spell (else the hop spell)
@@ -213,6 +214,7 @@ static int LoadConfigFile(const char* ini) {
 		GetPrivateProfileStringA(sec, "GiveItems", "", tmp, sizeof(tmp), ini); p.numGive = ParseForms(tmp, p.give, 4);
 		GetPrivateProfileStringA(sec, "GivePerks", "", tmp, sizeof(tmp), ini); p.numPerks = ParseForms(tmp, p.perks, 4);
 		GetPrivateProfileStringA(sec, "TauntIdles", "", tmp, sizeof(tmp), ini); p.numTaunts = ParseForms(tmp, p.taunts, 4);
+		GetPrivateProfileStringA(sec, "TauntSound", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.tauntSnd, 1);
 		GetPrivateProfileStringA(sec, "BodyPartData", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.bodyParts, 1);
 		GetPrivateProfileStringA(sec, "GhostMoveForms", "", tmp, sizeof(tmp), ini); ParseForms(tmp, p.ghostForms, 7);
 		GetPrivateProfileStringA(sec, "LockedItems", "", tmp, sizeof(tmp), ini); p.numLocked = ParseForms(tmp, p.locked, 8);
@@ -370,6 +372,11 @@ static void ResolveProfiles() {
 			FormRef& g = p.taunts[k]; g.fid = ResolveFID(g.plugin, g.localID);
 			if (!g.fid || !LookupForm(g.fid)) { Log("resolve: [%s] taunt idle %s|%06X not loaded - skipped", p.section, g.plugin, g.localID); g.fid = 0; }
 			else Log("resolve: [%s] taunt idle %08X", p.section, g.fid);
+		}
+		if (p.tauntSnd.plugin[0]) {
+			FormRef& g = p.tauntSnd; g.fid = ResolveFID(g.plugin, g.localID);
+			if (!g.fid || !LookupForm(g.fid)) { Log("resolve: [%s] taunt sound %s|%06X not loaded - skipped", p.section, g.plugin, g.localID); g.fid = 0; }
+			else Log("resolve: [%s] taunt sound %08X", p.section, g.fid);
 		}
 		for (int fi = 0; fi < p.numFactions; fi++) {
 			FormRef& fr = p.factions[fi];
@@ -1464,7 +1471,10 @@ static void* __fastcall Hook_PlayerJump(void* actor, void* edx) {
 			for (int tries = 0; tries < p->numTaunts; tries++) {
 				UInt32 fid = p->taunts[(next + tries) % p->numTaunts].fid; if (!fid) continue;
 				if (PlayIdleForm(actor, fid)) {
-					next = (next + tries + 1) % p->numTaunts; g_holdPending = 2; Log("taunt: %08X", fid); return nullptr;
+					next = (next + tries + 1) % p->numTaunts; g_holdPending = 2;
+					// the voice: a 'Sound:' text key in the idle played nothing for the player
+					bool spoke = p->tauntSnd.fid && StartSound(p->tauntSnd.fid, PlayerRoot(actor), kSoundFlags_3D, nullptr);
+					Log("taunt: %08X%s", fid, spoke ? " + voice" : ""); return nullptr;
 				}
 			}
 		}
