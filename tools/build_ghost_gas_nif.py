@@ -6,6 +6,7 @@ from the leg's slow puff to a spray that carries over the flamer's reach, and th
 the leg's emitter-active track only puffs from 0.25 to 0.37 s of a 1.75 s loop, longer than a projectile lives (nothing
 was drawn), so its controller timing and on / off keys are the flamer's (on from 0 to 0.33 s).
 The leg spray's material alpha (0.5) is raised to ALPHA so the stream reads as solid gas (user: too faint).
+Density as the mask spray of the gas power attack (user: thicker): 160 particles / s, cone 0.22 rad, life 0.5 s.
 --impact builds the hit effect instead (Ghost Gas impact data set): one slow puff of the same gas billowing out in
 every direction from the hit point - the emitter on for its first 0.12 s, bigger, longer-lived particles.
 usage: python3 -P build_ghost_gas_nif.py <flamerflame01.nif> <nvdlc01_ghostlegrhtfx.nif> <out.nif> [--impact]"""
@@ -15,11 +16,11 @@ from nifedit import NifFile
 from graft import graft
 
 SPEED, SPEED_VAR = 2200.0, 600.0       # units / s (flamer 3300 +- 990, the leg puff 90)
-DECL_VAR = 0.20                        # cone half-angle, rad (flamer 0.07, leg 0.14)
+DECL_VAR = 0.22                        # cone half-angle, rad (flamer 0.07, leg 0.14, the mask spray 0.22)
 RADIUS, RADIUS_VAR = 40.0, 12.0        # particle radius (leg 20)
-LIFE, LIFE_VAR = 0.40, 0.08            # s (flamer 0.37 +- 0.07)
-BIRTH = 40.0                           # particles / s per projectile (leg 60, flamer 30)
-MAXP = 32                              # particle pool per projectile (leg 3000, flamer 12)
+LIFE, LIFE_VAR = 0.50, 0.08            # s (flamer 0.37 +- 0.07, the mask spray 0.55)
+BIRTH = 160.0                          # particles / s per projectile (leg 60, flamer 30, the mask spray 160): a thick stream
+MAXP = 96                              # particle pool per projectile (leg 3000, flamer 12): BIRTH x the longest life
 ALPHA = 1.0                            # material alpha (leg 0.5, flamer 1.0)
 GROW, FADE, BASE = 0.12, 0.20, 0.30    # grow-from / fade-out times, start size (leg 0.33 / 0.33 / 0.25)
 
