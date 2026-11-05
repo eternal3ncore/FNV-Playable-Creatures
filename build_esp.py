@@ -1143,6 +1143,8 @@ _next_id = _idle_next[0]
 #   PCGhostGasHitShader (EFSH): the vanilla PuffOfSmoke with the ghosts' gas texture (their leg spray's) - a puff of
 #   the gas round the target. PCGhostGasSprayHiss (SOUN): the spray's hiss (anim text key), vanilla steam-release one-shots.
 GAS_KO_SECONDS = 4
+GAS_PUFF_SCALE = (5.0, 26.0)    # gas hit shader particle size, birth -> death (PuffOfSmoke 15 -> 75)
+GAS_PUFF_LIFE = 1.4
 _gk_scpt, _gk_mgef, _gk_spel, _gk_efsh = _new(), _new(), _new(), _new()
 GHOST_GAS_SPRAY_SOUND = _new()
 _gk_src = ('scn PCGhostGasKnockdownScript\r\n\r\n'
@@ -1168,7 +1170,14 @@ def _efsh(k, v):
     if k == 'DATA':
         d = bytearray(v); d[16:19] = bytes((70, 96, 40))                                    # membrane fill: the gas's green
         for o in (188, 192, 196): d[o:o + 3] = b'\xff\xff\xff'                               # particle colour keys white:
-        return bytes(d)                                                                      # the texture's own colour
+                                                                                             # the texture's own colour
+        # the gas texture is one cloud, not PuffOfSmoke's 2 x 2 sheet of puffs: texture count U / V 1 (with 2 each
+        # particle showed a quarter of the cloud, cut off with straight hard edges); particle size keys 15 -> 75
+        # (PuffOfSmoke's) down to GAS_PUFF_SCALE, lifetime 2.25 -> GAS_PUFF_LIFE s
+        struct.pack_into('<II', d, 276, 1, 1)
+        struct.pack_into('<ff', d, 172, *GAS_PUFF_SCALE)
+        struct.pack_into('<f', d, 132, GAS_PUFF_LIFE)
+        return bytes(d)
     return v
 efshs = [copy_rec(_puff, _gk_efsh, 'PCGhostGasHitShader', patch=_efsh)]
 def _gkm(k, v):
