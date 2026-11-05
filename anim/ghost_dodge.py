@@ -12,7 +12,7 @@ unseen and re-forms. A special idle (IDLE PCGhostDodgeBack, played by Core on ba
     and short-lived, so it thins away as the body re-forms (controlled blocks NiPSysEmitterCtlr EmitterActive / BirthRate, as the
     mask spray); its puffs stay where they were let out, so the cloud hangs along the path and thins after the Ghost is back
   * the pose: the Ghost's standing frame of Dead Money's hop (its first frame), every bone at the hop's priority 58
-  * text keys: start, the gas hiss at the vanish, end
+  * text keys: start, the gas hiss (SOUND_AT, just after the start), the ghosts' hop sound (as the hop keys it), end
 usage: python3 -P ghost_dodge.py <hop kf (Dead Money combatidle_hopleft.kf)> <out PCGhostDodgeBack.kf>"""
 import os, sys, struct, importlib
 import numpy as np
@@ -23,7 +23,7 @@ from nifedit import NifFile
 from ghost_spray import add_emitter
 
 LENGTH = 0.70                            # (user: twice as fast as the first 1.4 s, twice the distance)
-DIST = 180.0                             # units straight back (~8 ft)
+DIST = 360.0                             # units straight back (~16 ft)
 SLIP_ON, SLIP_OFF = 0.10, 0.475          # root motion, while the body is (nearly) gone
 SHRINK = (0.075, 0.19)                   # body 1 -> SMALL, once the fog has gathered
 GROW = (0.475, 0.56)                     # body SMALL -> 1
@@ -34,6 +34,8 @@ PRIO = 58                                # Dead Money's hop
 SEQ = 'SpecialIdle_PCDodgeBack'
 NODE = 'PCGhostDodgeCloud'
 SOUND = 'PCGhostGasSprayHiss'
+SOUND_AT = 0.03
+HOP_SOUND, HOP_SOUND_AT = 'NPCGhostJumpSfx', 0.067   # Dead Money's hop sound, at the hop's own time
 
 cfg = importlib.import_module('creatures.ghost'); cr = Creature(cfg); sk = cr.sk
 
@@ -85,7 +87,8 @@ def build(hop, out):
         frames.append((t, loc))
     bones = [(b[0], PRIO) for b in h.blocks if b[0] in sk.local]
     if not any(nm == 'Bip01 NonAccum' for nm, _ in bones): bones.insert(1, ('Bip01 NonAccum', PRIO))
-    keys = [(0.0, 'start'), (0.0, f'Sound: {SOUND}'), (LENGTH, 'end')]
+    # the hiss just after the start: a Sound key at 0.0 (on the start key) played nothing in game
+    keys = [(0.0, 'start'), (SOUND_AT, f'Sound: {SOUND}'), (HOP_SOUND_AT, f'Sound: {HOP_SOUND}'), (LENGTH, 'end')]
     write_kf(cr, out, SEQ, LENGTH, keys, frames, bones=bones, cycle=2)
     ts = sorted({0.0, LENGTH} | {round(x, 4) for x in np.arange(SHRINK[0], SHRINK[1] + 1e-6, 1 / 30)} |
                 {round(x, 4) for x in np.arange(GROW[0], GROW[1] + 1e-6, 1 / 30)} | {SHRINK[1], GROW[0], GROW[1]})
