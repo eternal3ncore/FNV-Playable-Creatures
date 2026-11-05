@@ -86,7 +86,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 89;
+static const UInt32 kPluginVersion = 90;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -1315,7 +1315,9 @@ static void CleanupFactions(const char* why) {
 // character controller, then the jump-start event 0x838780). PlayerCharacter::Update calls that slot only when the
 // jump key was pressed and the controller can jump (0x942158 -> 0x944400). Replacing the call for the player's vtable
 // (0x108AA3C + 0x254) means the jump is never started - no jump height, no airborne state - when a move is chosen:
-//   strafing (left/right)              -> hop: Dead Money's HopLeft / HopRight idle + PCGhostMoveSpell
+//   strafing (left/right), or walking backward with a weapon drawn
+//                                      -> dive: the jump itself (the race's JumpLoop / JumpLand Left / Right / Backward
+//                                         are Max Payne style dives, attacks allowed as in any jump) + PCGhostMoveSpell
 //                                         (Turbo + crit 1 s, SetGhost 1 s)
 //   walking backward, holstered -> search: trash-pick idle (PCGhostTrashPick, whole body) + PCGhostSearchSpell (loot after 5 s)
 // anything else jumps normally.
@@ -1408,14 +1410,13 @@ static void* __fastcall Hook_PlayerJump(void* actor, void* edx) {
 	}
 	UInt32 mv = ((U32_t)kAddr_GetMovementFlags)(actor, nullptr) & 0xF;
 	bool out = ((B_t)kAddr_IsWeaponOut)(actor, nullptr), sneak = ((B_t)kAddr_IsSneaking)(actor, nullptr);
-	if (mv & 0xC) {
-		// the hop is Dead Money's own HopLeft / HopRight idle (the ghosts' combat hop), played like the scan /
-		// search idles (the engine dodge's DodgeLeft/Right groups never reach the player's anim map).
-		bool left = (mv & 4) != 0;
-		if (PlayIdleForm(actor, p->ghostForms[left ? 3 : 4].fid)) {
-			CastOnSelf(actor, p->ghostForms[0].fid); Log("ghost move: hop %s", left ? "left" : "right"); return nullptr;
-		}
-		Log("ghost move: hop idle missing - normal jump");
+	if (mv & 0xC || (mv == 2 && out)) {
+		// the dive (Max Payne style shootdodge): a real jump - the engine plays the race's JumpLoop / JumpLand Left /
+		// Right / Backward, which are the dive animations, and lets the player attack in the air as in any jump - plus
+		// the move spell (slow motion + crit, SetGhost 1 s)
+		CastOnSelf(actor, p->ghostForms[0].fid);
+		Log("ghost move: dive %s", (mv & 4) ? "left" : (mv & 8) ? "right" : "backward");
+		return g_origJump(actor, edx);
 	} else if (mv == 2 && !out) {
 		// the search (trash pick) is back + jump with the weapon holstered
 		if (PlayIdleForm(actor, p->ghostForms[2].fid)) { g_holdPending = 2; CastOnSelf(actor, p->ghostForms[1].fid); Log("ghost move: search"); return nullptr; }
