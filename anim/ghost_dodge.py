@@ -6,9 +6,10 @@ unseen and re-forms. A special idle (IDLE PCGhostDodgeBack, played by Core on ba
   * the body: Bip01 NonAccum - the parent of every bone, so the skinned body, the head gear and the weapon in the hand -
     scaled 1 -> SMALL over SHRINK and back to 1 over GROW (scale keys on its NiTransformData; Bip01 and the camera,
     which hang above it, are not touched)
-  * the cloud: the skeleton's PCGhostDodgeCloud (build_skel_ghost.py, on Scene Root, world-space particles, off at rest)
+  * the cloud: the skeleton's PCGhostDodgeCloud (build_skel_ghost.py, on Scene Root, particles in the actor's space, off at rest)
     switched on CLOUD_ON..CLOUD_OFF at BIRTH / s - from the first frame, the body shrinking only once the fog has
-    gathered round it (SHRINK starts 0.15 s in: "lost in the fog") (controlled blocks NiPSysEmitterCtlr EmitterActive / BirthRate, as the
+    gathered round it ("lost in the fog"); its particles are in the actor's space, so the cloud travels with the Ghost,
+    and short-lived, so it thins away as the body re-forms (controlled blocks NiPSysEmitterCtlr EmitterActive / BirthRate, as the
     mask spray); its puffs stay where they were let out, so the cloud hangs along the path and thins after the Ghost is back
   * the pose: the Ghost's standing frame of Dead Money's hop (its first frame), every bone at the hop's priority 58
   * text keys: start, the gas hiss at the vanish, end
@@ -21,14 +22,14 @@ from rig import Creature, write_kf, smooth
 from nifedit import NifFile
 from ghost_spray import add_emitter
 
-LENGTH = 1.40
-DIST = 90.0                              # units straight back (~4 ft)
-SLIP_ON, SLIP_OFF = 0.20, 0.95           # root motion, while the body is (nearly) gone
-SHRINK = (0.15, 0.38)                    # body 1 -> SMALL, once the fog has gathered
-GROW = (0.95, 1.12)                      # body SMALL -> 1
+LENGTH = 0.70                            # (user: twice as fast as the first 1.4 s, twice the distance)
+DIST = 180.0                             # units straight back (~8 ft)
+SLIP_ON, SLIP_OFF = 0.10, 0.475          # root motion, while the body is (nearly) gone
+SHRINK = (0.075, 0.19)                   # body 1 -> SMALL, once the fog has gathered
+GROW = (0.475, 0.56)                     # body SMALL -> 1
 SMALL = 0.001
-CLOUD_ON, CLOUD_OFF = 0.0, 1.02          # emitter on from the first frame
-BIRTH = 360.0                            # puffs / s while on
+CLOUD_ON, CLOUD_OFF = 0.0, 0.51          # emitter on from the first frame, off as the body re-forms
+BIRTH = 700.0                            # puffs / s while on
 PRIO = 58                                # Dead Money's hop
 SEQ = 'SpecialIdle_PCDodgeBack'
 NODE = 'PCGhostDodgeCloud'
