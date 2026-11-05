@@ -86,7 +86,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 94;
+static const UInt32 kPluginVersion = 95;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -1320,7 +1320,7 @@ static void CleanupFactions(const char* why) {
 //                                         (Turbo + crit 1 s, SetGhost 1 s)
 //   walking backward, holstered -> search: trash-pick idle (PCGhostTrashPick, whole body) + PCGhostSearchSpell (loot after 5 s)
 //   walking backward, weapon out -> back dodge: PCGhostDodgeBack (whole body; the body shrinks out of sight in its gas
-//                                         cloud and slips back, its root motion) + PCGhostMoveSpell, as the hop
+//                                         cloud) + PCGhostMoveSpell, as the hop; carried back at a walk while it plays
 // anything else jumps normally.
 static const UInt32 kSlot_PlayerJump = 0x0108AA3C + 0x254, kAddr_ActorJump = 0x00884AA0;
 static const UInt32 kAddr_GetMovementFlags = 0x008846E0, kAddr_IsWeaponOut = 0x008A16D0, kAddr_IsSneaking = 0x004997B0,
@@ -1370,7 +1370,6 @@ static const UInt32 kSlot_PlayerMoverSetFlags = 0x0109297C + 0x0C, kAddr_PlayerM
 typedef void (__fastcall* MoverFlags_t)(void*, void*, UInt32);
 static MoverFlags_t g_origMoverFlags = (MoverFlags_t)kAddr_PlayerMoverSetFlags;
 static int g_holdPending = 0;
-static bool g_holdLogged = false;
 static bool IsHoldIdle(void* idle, UInt32 holdFid) {
 	if (!idle) return false;
 	UInt32 id = At<UInt32>(idle, 0x0C);
@@ -1379,26 +1378,42 @@ static bool IsHoldIdle(void* idle, UInt32 holdFid) {
 // anim data +0x124 = the idle being played, +0x128 = the forced idle waiting to start (0x497F20 stores it there,
 // 0x498290 starts it); both hold an idle-play object (ctor 0x4965D0) whose IDLE form is at +0x2C (+0x14 section,
 // +0x18 the anim sequence; the sequence at +0x18 is not the idle).
-static bool HoldIdlePlaying(void* actor, void* ad) {
+// -> 1 the search idle, 2 the back dodge, 0 neither
+static int HoldIdlePlaying(void* actor, void* ad) {
 	Profile* p = PlayerProfile();
-	if (!ad || !p) return false;
+	if (!ad || !p) return 0;
 	for (UInt32 off = 0x124; off <= 0x128; off += 4) {
 		void* obj = At<void*>(ad, off);
 		void* idle = obj ? At<void*>(obj, 0x2C) : nullptr;
-		if (IsHoldIdle(idle, p->ghostForms[2].fid) || IsHoldIdle(idle, p->ghostForms[5].fid)) return true;
+		if (IsHoldIdle(idle, p->ghostForms[2].fid)) return 1;
+		if (IsHoldIdle(idle, p->ghostForms[5].fid)) return 2;
 	}
-	return false;
+	return 0;
 }
+static int HoldIdleKind(void* pl) {
+	int a = HoldIdlePlaying(pl, ((P_t)kAddr_ActorAnimData)(pl, nullptr)), b = HoldIdlePlaying(pl, ((P_t)VFn(pl, 0x1E4))(pl, nullptr));
+	return a > b ? a : b;
+}
+// The back dodge moves the player by the player's own movement: a special idle's root motion is not applied to the player
+// (tested: the dodge idle's Bip01 keys moved nothing). While it plays (and the update before it starts) the mover is
+// handed "backward at a walk" (direction bit 0x02 + walk 0x100, run 0x200 cleared), whatever keys are held, so the
+// Ghost is carried straight back with collision; the back key is usually still held from the press, so the movement
+// state doesn't change and the idle stays (as the hops, which play while strafing).
+static int g_dodgePending = 0, g_holdKindLogged = 0;
 static void __fastcall Hook_PlayerMoverSetFlags(void* mover, void* edx, UInt32 flags) {
-	if (flags & 0x3F) {
-		void* pl = Player(); Profile* p = pl ? PlayerProfile() : nullptr;
-		if (p && p->ghostMoves) {
-			bool hold = HoldIdlePlaying(pl, ((P_t)kAddr_ActorAnimData)(pl, nullptr)) || HoldIdlePlaying(pl, ((P_t)VFn(pl, 0x1E4))(pl, nullptr));
-			if (hold || g_holdPending > 0) flags &= ~0x3Fu;
-			if (hold != g_holdLogged) { g_holdLogged = hold; Log("ghost move: movement hold %s", hold ? "on (scan/search idle playing)" : "off"); }
+	void* pl = (g_holdPending > 0 || g_dodgePending > 0 || (flags & 0x3F) || g_holdKindLogged) ? Player() : nullptr;
+	Profile* p = pl ? PlayerProfile() : nullptr;
+	if (p && p->ghostMoves) {
+		int kind = HoldIdleKind(pl);
+		if (kind == 2 || g_dodgePending > 0) flags = (flags & ~0x33Fu) | 0x102;
+		else if (kind == 1 || g_holdPending > 0) flags &= ~0x3Fu;
+		if (kind != g_holdKindLogged) {
+			g_holdKindLogged = kind;
+			Log("ghost move: movement %s", kind == 2 ? "carried back (dodge playing)" : kind == 1 ? "hold on (search idle playing)" : "back to the keys");
 		}
 	}
 	if (g_holdPending > 0) g_holdPending--;
+	if (g_dodgePending > 0) g_dodgePending--;
 	g_origMoverFlags(mover, edx, flags);
 }
 static void* __fastcall Hook_PlayerJump(void* actor, void* edx) {
@@ -1407,8 +1422,8 @@ static void* __fastcall Hook_PlayerJump(void* actor, void* edx) {
 	// while the scan / search idle plays (or is about to start) the jump key does nothing: the hold keeps the movement
 	// bits at 0 during the idle, otherwise a second press reads "standing still, not sneaking" and starts a real jump,
 	// which replaces the idle.
-	if (g_holdPending > 0 || HoldIdlePlaying(actor, ((P_t)kAddr_ActorAnimData)(actor, nullptr)) || HoldIdlePlaying(actor, ((P_t)VFn(actor, 0x1E4))(actor, nullptr))) {
-		Log("ghost move: jump ignored - scan/search idle playing"); return nullptr;
+	if (g_holdPending > 0 || g_dodgePending > 0 || HoldIdleKind(actor)) {
+		Log("ghost move: jump ignored - search / dodge idle playing"); return nullptr;
 	}
 	UInt32 mv = ((U32_t)kAddr_GetMovementFlags)(actor, nullptr) & 0xF;
 	bool out = ((B_t)kAddr_IsWeaponOut)(actor, nullptr), sneak = ((B_t)kAddr_IsSneaking)(actor, nullptr);
@@ -1424,9 +1439,8 @@ static void* __fastcall Hook_PlayerJump(void* actor, void* edx) {
 		// the search (trash pick) is back + jump with the weapon holstered
 		if (PlayIdleForm(actor, p->ghostForms[2].fid)) { g_holdPending = 2; CastOnSelf(actor, p->ghostForms[1].fid); Log("ghost move: search"); return nullptr; }
 	} else if (mv == 2 && out && p->ghostForms[5].fid) {
-		// the back dodge: held still like the search (the back key would start the walk, which replaces the idle) - the
-		// idle's own root motion carries the actor back
-		if (PlayIdleForm(actor, p->ghostForms[5].fid)) { g_holdPending = 2; CastOnSelf(actor, p->ghostForms[0].fid); Log("ghost move: back dodge"); return nullptr; }
+		// the back dodge: carried back at a walk by the mover while it plays (Hook_PlayerMoverSetFlags)
+		if (PlayIdleForm(actor, p->ghostForms[5].fid)) { g_dodgePending = 2; CastOnSelf(actor, p->ghostForms[0].fid); Log("ghost move: back dodge"); return nullptr; }
 	}
 	Log("ghost move: normal jump (movement %X, weapon out %d, sneaking %d)", mv, out, sneak);
 	return g_origJump(actor, edx);

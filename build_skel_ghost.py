@@ -68,8 +68,9 @@ print('grafted mask spray on Bip01 Head:', _n, 'blocks, types', sorted({_T(i) fo
 # stays with the actor while the body - everything under Bip01 NonAccum - is shrunk out of sight), root PCGhostDodgeCloudRoot
 # at CLOUD (actor space, the body's middle), particle system / emitter node PCGhostDodgeCloud / -Emitter, world-space
 # particles (they stay where they were puffed out: a cloud along the slip back), OFF at rest like the mask spray (the
-# dodge KF switches it on). Tuned to a thick, slow, body-sized cloud: the emitter box the body's size (CLOUD_BOX), puffs
-# 30 +- 20 u/s in every direction, size 34 +- 10 growing from 0.3 over 0.3 s, life 1.6 +- 0.4 s, alpha 0.6, pool 400.
+# dodge KF switches it on). Tuned to a thick, slow, body-sized cloud that gathers fast: the emitter box the body's size
+# (CLOUD_BOX), puffs 45 +- 20 u/s in every direction, size 34 +- 10 growing from 0.6 over 0.12 s (near full size at once),
+# life 1.6 +- 0.4 s, alpha 0.6, pool 640 (360 / s x the longest life).
 CLOUD = (0.0, 0.0, 48.0); CLOUD_BOX = (26.0, 26.0, 72.0)
 _b0 = len(f.blocks)
 _root, _n = graft(f, 'Scene Root', G + 'nvdlc01_ghostlegrhtfx.nif', 4, 'PCGhostDodgeCloudRoot')
@@ -86,12 +87,12 @@ for i in range(_b0, _b0 + _n):
         assert o + 1 + 4 + 4 * struct.unpack_from('<I', b, o + 1)[0] == len(b); b[o] = 1                      # world space
     if t == 'NiPSysBoxEmitter':
         assert len(b) == 85
-        struct.pack_into('<4f', b, 13, 30.0, 20.0, 0.0, 3.14159); struct.pack_into('<4f', b, 53, 34.0, 10.0, 1.6, 0.4)
+        struct.pack_into('<4f', b, 13, 45.0, 20.0, 0.0, 3.14159); struct.pack_into('<4f', b, 53, 34.0, 10.0, 1.6, 0.4)
         struct.pack_into('<3f', b, 73, *CLOUD_BOX)                                       # width, height, depth
     if t == 'NiPSysGrowFadeModifier':
-        struct.pack_into('<f', b, 13, 0.3); struct.pack_into('<f', b, 19, 0.6); struct.pack_into('<f', b, 25, 0.3)
+        struct.pack_into('<f', b, 13, 0.12); struct.pack_into('<f', b, 19, 0.6); struct.pack_into('<f', b, 25, 0.6)
     if t == 'NiMaterialProperty': struct.pack_into('<f', b, 40, 0.6)
-    if t == 'NiPSysData': struct.pack_into('<H', b, 4, 400)
+    if t == 'NiPSysData': struct.pack_into('<H', b, 4, 640)
     if t == 'NiBoolData':
         nk, = struct.unpack_from('<I', b, 0)
         for k in range(nk): b[8 + 5 * k + 4] = 0

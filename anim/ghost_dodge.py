@@ -1,12 +1,13 @@
-"""Ghost People back dodge: the Ghost dissolves into a thick cloud of its gas, slips back DIST units unseen, and
-re-forms. A special idle (IDLE PCGhostDodgeBack, played by Core on back + jump with a weapon out, as the hops):
-  * root motion: Bip01 translation keyed straight back (actor -Y) DIST over SLIP_ON..SLIP_OFF, as Dead Money's own hops key
-    their sideways move (combatidle_hopleft.kf: Bip01 x 0 -> -159, rotation identity)
+"""Ghost People back dodge: the Ghost is swallowed by a thick cloud of its gas, shrinks out of sight, is carried back
+unseen and re-forms. A special idle (IDLE PCGhostDodgeBack, played by Core on back + jump with a weapon out, as the hops):
+  * no root motion: a special idle's Bip01 keys don't move the player (tested); Core carries the player back at a walk
+    through the mover while the idle plays. Bip01 is keyed still (as the hop's first frame keys it)
   * the body: Bip01 NonAccum - the parent of every bone, so the skinned body, the head gear and the weapon in the hand -
     scaled 1 -> SMALL over SHRINK and back to 1 over GROW (scale keys on its NiTransformData; Bip01 and the camera,
     which hang above it, are not touched)
   * the cloud: the skeleton's PCGhostDodgeCloud (build_skel_ghost.py, on Scene Root, world-space particles, off at rest)
-    switched on CLOUD_ON..CLOUD_OFF at BIRTH / s (controlled blocks NiPSysEmitterCtlr EmitterActive / BirthRate, as the
+    switched on CLOUD_ON..CLOUD_OFF at BIRTH / s - from the first frame, the body shrinking only once the fog has
+    gathered round it (SHRINK starts 0.15 s in: "lost in the fog") (controlled blocks NiPSysEmitterCtlr EmitterActive / BirthRate, as the
     mask spray); its puffs stay where they were let out, so the cloud hangs along the path and thins after the Ghost is back
   * the pose: the Ghost's standing frame of Dead Money's hop (its first frame), every bone at the hop's priority 58
   * text keys: start, the gas hiss at the vanish, end
@@ -20,13 +21,11 @@ from nifedit import NifFile
 from ghost_spray import add_emitter
 
 LENGTH = 1.40
-DIST = 90.0                              # units straight back (~4 ft)
-SLIP_ON, SLIP_OFF = 0.12, 0.92           # root motion
-SHRINK = (0.04, 0.20)                    # body 1 -> SMALL
-GROW = (0.92, 1.10)                      # body SMALL -> 1
+SHRINK = (0.15, 0.38)                    # body 1 -> SMALL, once the fog has gathered
+GROW = (0.95, 1.12)                      # body SMALL -> 1
 SMALL = 0.001
-CLOUD_ON, CLOUD_OFF = 0.02, 1.02         # emitter on
-BIRTH = 220.0                            # puffs / s while on
+CLOUD_ON, CLOUD_OFF = 0.0, 1.02          # emitter on from the first frame
+BIRTH = 360.0                            # puffs / s while on
 PRIO = 58                                # Dead Money's hop
 SEQ = 'SpecialIdle_PCDodgeBack'
 NODE = 'PCGhostDodgeCloud'
@@ -78,17 +77,16 @@ def build(hop, out):
     n = int(round(LENGTH * 30)) + 1; frames = []
     for i in range(n):
         t = LENGTH * i / (n - 1); loc = dict(base)
-        y = -DIST * smooth((t - SLIP_ON) / (SLIP_OFF - SLIP_ON))
-        loc['Bip01'] = (np.array([0.0, y, 0.0]), np.eye(3))
+        loc['Bip01'] = (np.zeros(3), np.eye(3))
         frames.append((t, loc))
     bones = [(b[0], PRIO) for b in h.blocks if b[0] in sk.local]
     if not any(nm == 'Bip01 NonAccum' for nm, _ in bones): bones.insert(1, ('Bip01 NonAccum', PRIO))
-    keys = [(0.0, 'start'), (CLOUD_ON, f'Sound: {SOUND}'), (LENGTH, 'end')]
+    keys = [(0.0, 'start'), (0.0, f'Sound: {SOUND}'), (LENGTH, 'end')]
     write_kf(cr, out, SEQ, LENGTH, keys, frames, bones=bones, cycle=2)
     ts = sorted({0.0, LENGTH} | {round(x, 4) for x in np.arange(SHRINK[0], SHRINK[1] + 1e-6, 1 / 30)} |
                 {round(x, 4) for x in np.arange(GROW[0], GROW[1] + 1e-6, 1 / 30)} | {SHRINK[1], GROW[0], GROW[1]})
     set_scale_keys(out, 'Bip01 NonAccum', [(t, scale_at(t)) for t in ts])
-    add_emitter(out, NODE, [(0.0, 0), (CLOUD_ON, 1), (CLOUD_OFF, 0), (LENGTH, 0)], BIRTH, PRIO, headtrack=False)
+    add_emitter(out, NODE, [(CLOUD_ON, 1), (CLOUD_OFF, 0), (LENGTH, 0)], BIRTH, PRIO, headtrack=False)
     return len(frames), len(bones)
 
 
