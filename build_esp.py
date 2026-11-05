@@ -897,7 +897,8 @@ print('  eyebot laser %06X, damage %d' % (EYEBOT_ZAP & 0xFFFFFF, EYEBOT_LASER_DA
 # no burn critical spell, gas-puff impacts instead of scorch marks (PCGhostGasImpactSet, below), the Flamer's own fire
 # loop as its spray sound, no pilot-light idle loop; recharging like the robots' weapons
 # (AmmoMicroBreeder, nothing to carry; clip 60, 0.5 s per round = 30 s), Can't Drop, weightless, worth nothing, no
-# weapon mods. Given at race-menu close (ini GiveItems), not equipped.
+# weapon mods; the Flamer's Hide Backpack flag cleared (the race's own backpack / gear stays drawn while it is out).
+# Given at race-menu close (ini GiveItems), not equipped.
 GHOST_GAS_MODEL = 'PlayableCreatures\\Ghost\\GhostGasProjectile.nif'
 gas_snd = _new()        # (id kept, no record: the toxic-cloud loop played nothing as a weapon loop; the Flamer's own
                         # fire loop WPNFlamerFire3DLPM is used)
@@ -925,7 +926,7 @@ def _gw(k, v):
     if k == 'INAM': return u32(_NO_IMPACT)                                     # no flame scorch decals; -> PCGhostGasImpactSet below
     if k == 'DATA': d = bytearray(v); struct.pack_into('<iif', d, 0, 0, 200, 0.0); return bytes(d)    # value 0, health, weight 0
     if k == 'DNAM':
-        d = bytearray(v); d[12] |= 0x08                                         # Can't Drop
+        d = bytearray(v); d[12] = (d[12] | 0x08) & ~0x10 & 0xFF                # Can't Drop; not Hide Backpack (the Flamer's)
         struct.pack_into('<I', d, 36, gas_proj); struct.pack_into('<f', d, 176, 0.5); return bytes(d)
     if k == 'CRDT': d = bytearray(v); struct.pack_into('<I', d, 12, 0); return bytes(d)   # no FlamerCritEffect02
     return v
