@@ -86,7 +86,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 92;
+static const UInt32 kPluginVersion = 89;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -133,8 +133,6 @@ struct Profile {
 	FormRef give[4]; int numGive;   // GiveItems= - items handed over (one each, not equipped) when the race menu closes
 	bool ghostMoves;                // Ghostification's hop / search on the jump key
 	FormRef ghostForms[5];          // GhostMoveForms= hop spell, search spell, search idle, hop-left idle, hop-right idle
-	FormRef dive[4];                // DiveForms= the Shootdodge pack's spell, left / right / back dive idles: when its plugin
-	                                //   is loaded, strafe / back jumps play the dive instead of the race's own move
 	FormRef locked[8]; int numLocked;  // LockedItems= - refused (and unequipped) until UnlockGlobal is 1 or more
 	FormRef unlockGlobal;           // UnlockGlobal= - the GLOB that unlocks them
 	char lockedMsg[128];            // LockedMessage= - shown when one is refused
@@ -211,7 +209,6 @@ static int LoadConfigFile(const char* ini) {
 		GetPrivateProfileStringA(sec, "GiveItems", "", tmp, sizeof(tmp), ini); p.numGive = ParseForms(tmp, p.give, 4);
 		GetPrivateProfileStringA(sec, "BodyPartData", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.bodyParts, 1);
 		GetPrivateProfileStringA(sec, "GhostMoveForms", "", tmp, sizeof(tmp), ini); ParseForms(tmp, p.ghostForms, 5);
-		GetPrivateProfileStringA(sec, "DiveForms", "", tmp, sizeof(tmp), ini); ParseForms(tmp, p.dive, 4);
 		GetPrivateProfileStringA(sec, "LockedItems", "", tmp, sizeof(tmp), ini); p.numLocked = ParseForms(tmp, p.locked, 8);
 		GetPrivateProfileStringA(sec, "UnlockGlobal", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.unlockGlobal, 1);
 		GetPrivateProfileStringA(sec, "LockedMessage", "You can't use that yet.", p.lockedMsg, sizeof(p.lockedMsg), ini);
@@ -366,10 +363,6 @@ static void ResolveProfiles() {
 			else Log("resolve: [%s] faction %08X%s", p.section, fr.fid, p.joinFaction ? " (joined while in the race)" : " (JoinFaction=0: not joined)");
 		}
 		for (FormRef& r : p.ghostForms) r.fid = r.localID ? ResolveFID(r.plugin, r.localID) : 0;
-		for (FormRef& r : p.dive) r.fid = r.localID ? ResolveFID(r.plugin, r.localID) : 0;
-		if (p.ghostMoves && p.dive[0].localID) Log("resolve: [%s] dives %s (spell %08X, idles %08X %08X %08X)", p.section,
-			p.dive[0].fid ? "on - Shootdodge plugin loaded" : "off - Shootdodge plugin not loaded: hops", p.dive[0].fid,
-			p.dive[1].fid, p.dive[2].fid, p.dive[3].fid);
 		for (int k = 0; k < p.numLocked; k++) p.locked[k].fid = ResolveFID(p.locked[k].plugin, p.locked[k].localID);
 		p.unlockGlobal.fid = p.unlockGlobal.localID ? ResolveFID(p.unlockGlobal.plugin, p.unlockGlobal.localID) : 0;
 		for (int k = 0; k < p.numFaces; k++) p.faceEyes[k].fid = ResolveFID(p.faceEyes[k].plugin, p.faceEyes[k].localID);
@@ -1324,9 +1317,6 @@ static void CleanupFactions(const char* why) {
 // (0x108AA3C + 0x254) means the jump is never started - no jump height, no airborne state - when a move is chosen:
 //   strafing (left/right)              -> hop: Dead Money's HopLeft / HopRight idle + PCGhostMoveSpell
 //                                         (Turbo + crit 1 s, SetGhost 1 s)
-//   with the Shootdodge pack (DiveForms= resolve: its plugin is loaded): strafing, or walking backward with a weapon
-//   drawn -> dive: the pack's DiveLeft / Right / Back idle (a Max Payne style dive with root motion, whole body,
-//            attacks allowed over it; movement held off while it plays) + its spell (slow motion 2 s, crit, SetGhost 1 s)
 //   walking backward, holstered -> search: trash-pick idle (PCGhostTrashPick, whole body) + PCGhostSearchSpell (loot after 5 s)
 // anything else jumps normally.
 static const UInt32 kSlot_PlayerJump = 0x0108AA3C + 0x254, kAddr_ActorJump = 0x00884AA0;
@@ -1391,9 +1381,7 @@ static bool HoldIdlePlaying(void* actor, void* ad) {
 	if (!ad || !p) return false;
 	for (UInt32 off = 0x124; off <= 0x128; off += 4) {
 		void* obj = At<void*>(ad, off);
-		void* idle = obj ? At<void*>(obj, 0x2C) : nullptr;
-		if (IsHoldIdle(idle, p->ghostForms[2].fid)) return true;
-		for (int k = 1; k < 4; k++) if (p->dive[k].fid && IsHoldIdle(idle, p->dive[k].fid)) return true;
+		if (obj && IsHoldIdle(At<void*>(obj, 0x2C), p->ghostForms[2].fid)) return true;
 	}
 	return false;
 }
@@ -1420,18 +1408,6 @@ static void* __fastcall Hook_PlayerJump(void* actor, void* edx) {
 	}
 	UInt32 mv = ((U32_t)kAddr_GetMovementFlags)(actor, nullptr) & 0xF;
 	bool out = ((B_t)kAddr_IsWeaponOut)(actor, nullptr), sneak = ((B_t)kAddr_IsSneaking)(actor, nullptr);
-	if (p->dive[0].fid && (mv & 0xC || (mv == 2 && out))) {
-		// the dive (Shootdodge pack: its plugin loaded): the pack's whole dive - jump in, flight (root motion), landing,
-		// getting up - as a whole-body special idle without the no-attacking flag (attacks play over it), the movement
-		// keys held off while it plays (as for the search), and the pack's spell (slow motion, crit, SetGhost 1 s)
-		int k = (mv & 4) ? 1 : (mv & 8) ? 2 : 3;
-		if (PlayIdleForm(actor, p->dive[k].fid)) {
-			g_holdPending = 2; CastOnSelf(actor, p->dive[0].fid);
-			Log("ghost move: dive %s", k == 1 ? "left" : k == 2 ? "right" : "backward"); return nullptr;
-		}
-		Log("ghost move: dive idle missing - normal jump");
-		return g_origJump(actor, edx);
-	}
 	if (mv & 0xC) {
 		// the hop is Dead Money's own HopLeft / HopRight idle (the ghosts' combat hop), played like the scan /
 		// search idles (the engine dodge's DodgeLeft/Right groups never reach the player's anim map).

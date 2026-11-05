@@ -37,8 +37,7 @@ add-ons need their base pack too.
 - Always essential: lethal damage knocks you down and you get back up. A crippled limb kills, with that limb
   blown off.
 - Ghost moves on the jump key: a sideways hop when strafing, and a search when moving backward with your weapon
-  holstered (sneaking or not). With the optional **Shootdodge** pack: Max Payne style dives instead of the hop (sideways
-  when strafing, backward when moving back with a weapon drawn; slow motion, and you can shoot or swing during them).
+  holstered (sneaking or not).
 - Starts with a bottomless **Throwing Knife Spear** (Dead Money's best, can't be dropped, weightless); its critical
   hits knock the target down.
 - Starts with a built-in recharging **Ghost Gas**: sprays the Sierra Madre gas (a heavy weapon, flamer range);
