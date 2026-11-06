@@ -8,7 +8,8 @@ Sets (picked with the user 2026-11-05; each folder one SOUN, a random file per p
   nightkin      (Nightkin; creaturesupermutant)          PCNightkinTauntVox / PCNightkinTauntKillVox
   supermutantdc (TTW Capital mutants; creaturesupermutantdc, Fallout 3) PCSuperMutantDCTauntVox / ...TauntKillVox
 Lines already used as the races' attack / power attack / hit / death voices are not reused; searching lines (hiding /
-seeking: "Come out and fight!", "Here human, human, human...") were dropped (user, 11-05). Wav: 44.1 kHz mono 16-bit,
+seeking: "Come out and fight!", "Here human, human, human...") and "Don't you want to be like us?"
+were dropped (user, 11-05). Wav: 44.1 kHz mono 16-bit,
 as the attack barks -> sound\\fx\\npc\\playablecreatures\\<set>\\<taunt|tauntkill>\\pc_<set>_<kind>_NN.wav
 usage: python3 -P sm_taunt.py <dir holding sound\\voice\\falloutnv.esm\\...> <dir holding sound\\voice\\fallout3.esm\\...> <out root>"""
 import os, sys, subprocess
@@ -42,7 +43,6 @@ LINES = [   # (game, voice type, file, set, kind)
     ('dc', 'creaturesupermutantdc', 'ms01_ms01mutanttaunt_0002de01_1.ogg', 'supermutantdc', 'taunt'),   # Don't be shy!
     ('dc', 'creaturesupermutantdc', 'ms01_ms01mutanttaunt_0002de02_1.ogg', 'supermutantdc', 'taunt'),   # Who's it going to be this time?
     ('dc', 'creaturesupermutantdc', 'ms01_ms01mutanttaunt_0002de03_1.ogg', 'supermutantdc', 'taunt'),   # The time has come!
-    ('dc', 'creaturesupermutantdc', 'ms01_ms01mutanttaunt_0002de04_1.ogg', 'supermutantdc', 'taunt'),   # Don't you want to be like us?
     ('dc', 'creaturesupermutantdc', 'ms01_ms01mutanttaunt_0002dd9b_1.ogg', 'supermutantdc', 'taunt'),   # Ahahahaha!
     ('dc', 'creaturesupermutantdc', 'ms01_ms01mutanttaunt_0002de05_1.ogg', 'supermutantdc', 'taunt'),   # Graahahaha!
     ('dc', 'creaturesupermutantdc', 'ms01_ms01mutanttaunt_0002de0c_1.ogg', 'supermutantdc', 'taunt'),   # GRRAAAHHHH!

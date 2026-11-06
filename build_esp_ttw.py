@@ -360,10 +360,11 @@ souns = [record('SOUN', SMDC_TAUNT_SOUN, [('EDID', z('PCSuperMutantDCTauntVox'))
 SMDC_TAUNT_ROOT = nid()
 idles.append(record('IDLE', SMDC_TAUNT_ROOT, [('EDID', z('PCSuperMutantDCTauntIdles')), ('MODL', z('Creatures\\SMSpineBreakerDC\\IdleAnims')),
     ('CTDA', ctda(F_RANDOM, 0, 4)), ('ANAM', struct.pack('<II', 0, 0)), ('DATA', bytes.fromhex('0700000000000000'))]))
-# SpecialIdle_2HAIntimidate2 keys no arm: with a weapon drawn the arms stay in the aim pose, so it looked like aiming
-# (user, 11-05) - left out; its id (the 2nd) stays unused.
+# SpecialIdle_2HAIntimidate4 holds the right arm straight out at shoulder height the whole time - it looked like aiming
+# a gun (user, 11-05) - left out; its id (the 3rd) stays unused. (Intimidate2, the semi-crouch, was dropped by mistake
+# first and is back.)
 _prev = 0
-for _i, (_fid, _fn) in enumerate(zip(SMDC_TAUNTS, ('SpecialIdle_2HAIntimidate.kf', None, 'SpecialIdle_2HAIntimidate4.kf')), 1):
+for _i, (_fid, _fn) in enumerate(zip(SMDC_TAUNTS, ('SpecialIdle_2HAIntimidate.kf', 'SpecialIdle_2HAIntimidate2.kf', None)), 1):
     if _fn is None: continue
     idles.append(record('IDLE', _fid, [('EDID', z('PCSuperMutantDCTaunt%d' % _i)), ('MODL', z('Creatures\\SMSpineBreakerDC\\IdleAnims\\' + _fn)),
         ('ANAM', struct.pack('<II', SMDC_TAUNT_ROOT, _prev)), ('DATA', bytes.fromhex('0700000000000100'))]))
