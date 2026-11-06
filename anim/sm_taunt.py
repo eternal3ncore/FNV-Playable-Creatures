@@ -7,7 +7,8 @@ Sets (picked with the user 2026-11-05; each folder one SOUN, a random file per p
   supermutant   (Super Mutant; creaturelowintsm)        PCSuperMutantTauntVox / PCSuperMutantTauntKillVox
   nightkin      (Nightkin; creaturesupermutant)          PCNightkinTauntVox / PCNightkinTauntKillVox
   supermutantdc (TTW Capital mutants; creaturesupermutantdc, Fallout 3) PCSuperMutantDCTauntVox / ...TauntKillVox
-Lines already used as the races' attack / power attack / hit / death voices are not reused. Wav: 44.1 kHz mono 16-bit,
+Lines already used as the races' attack / power attack / hit / death voices are not reused; searching lines (hiding /
+seeking: "Come out and fight!", "Here human, human, human...") were dropped (user, 11-05). Wav: 44.1 kHz mono 16-bit,
 as the attack barks -> sound\\fx\\npc\\playablecreatures\\<set>\\<taunt|tauntkill>\\pc_<set>_<kind>_NN.wav
 usage: python3 -P sm_taunt.py <dir holding sound\\voice\\falloutnv.esm\\...> <dir holding sound\\voice\\fallout3.esm\\...> <out root>"""
 import os, sys, subprocess
@@ -15,21 +16,15 @@ import os, sys, subprocess
 LINES = [   # (game, voice type, file, set, kind)
     ('nv', 'creaturelowintsm', 'vdialogues_alerttocombat_0015cceb_1.ogg', 'supermutant', 'taunt'),   # Now you die!
     ('nv', 'creaturelowintsm', 'vdialogues_normaltocombat_0015cd14_1.ogg', 'supermutant', 'taunt'),   # Gonna kill you!
-    ('nv', 'creaturelowintsm', 'vdialogues_losttocombat_0015cd07_1.ogg', 'supermutant', 'taunt'),   # Made me look! Made me {stressed}mad!
-    ('nv', 'creaturelowintsm', 'vdialogues_losttocombat_0015cd06_1.ogg', 'supermutant', 'taunt'),   # Hide from this!
     ('nv', 'creaturelowintsm', 'vdialogues_attack_0015cd3f_1.ogg', 'supermutant', 'taunt'),   # Want more?
     ('nv', 'creaturelowintsm', 'vdialogues_attack_0015cd3e_1.ogg', 'supermutant', 'taunt'),   # Yeah ha ha ha!
     ('nv', 'creaturelowintsm', 'vdialogues_attack_0015cd41_1.ogg', 'supermutant', 'taunt'),   # Destroy!
     ('nv', 'creaturelowintsm', 'vdialogues_attack_0015cd40_1.ogg', 'supermutant', 'taunt'),   # Kill!
-    ('nv', 'creaturelowintsm', 'vdialogues_lostidle_0015cce0_1.ogg', 'supermutant', 'taunt'),   # Come out and fight!
-    ('nv', 'creaturelowintsm', 'vdialogues_lostidle_0015cce1_1.ogg', 'supermutant', 'taunt'),   # Hiding boring! Fighting much more fun!
-    ('nv', 'creaturelowintsm', 'vdialogues_lostidle_0015cce2_1.ogg', 'supermutant', 'taunt'),   # {Increasingly angry}Before, just going to kill you. But now, going to kill you real bad!
     ('nv', 'creaturelowintsm', 'vdialogues_guardtrespass_0015ccda_1.ogg', 'supermutant', 'taunt'),   # This is our place. Go or be smashed.
     ('nv', 'creaturelowintsm', 'vdialogues_murder_0015cd03_1.ogg', 'supermutant', 'taunt'),   # You'll die for that!
     ('nv', 'creaturelowintsm', 'vdialogues_murdernocrime_0015ccd3_1.ogg', 'supermutant', 'tauntkill'),   # Weakling!
     ('nv', 'creaturelowintsm', 'vdialogues_murdernocrime_0015ccd2_1.ogg', 'supermutant', 'tauntkill'),   # Ah ha ha ha ha!
     ('nv', 'creaturelowintsm', 'vdialogues_combattonormal_0015cd75_1.ogg', 'supermutant', 'tauntkill'),   # Ha ha. Too weak.
-    ('nv', 'creaturesupermutant', 'vdialoguen_alerttocombat_00152be7_1.ogg', 'nightkin', 'taunt'),   # I see you, human!
     ('nv', 'creaturesupermutant', 'vdialoguen_alerttocombat_00152be9_1.ogg', 'nightkin', 'taunt'),   # You're mine!
     ('nv', 'creaturesupermutant', 'vdialoguen_normaltocombat_00152b76_1.ogg', 'nightkin', 'taunt'),   # You die now!
     ('nv', 'creaturesupermutant', 'vdialoguen_normaltocombat_00152b77_1.ogg', 'nightkin', 'taunt'),   # I'll kill you!
@@ -64,10 +59,8 @@ LINES = [   # (game, voice type, file, set, kind)
     ('dc', 'creaturesupermutantdc', 'genericsupermutant_attack_000217ff_1.ogg', 'supermutantdc', 'taunt'),   # I'll eat your brain and drink your blood!
     ('dc', 'creaturesupermutantdc', 'genericsupermutant_attack_000217fa_1.ogg', 'supermutantdc', 'taunt'),   # Bleed! Bleed and die!
     ('dc', 'creaturesupermutantdc', 'genericsupermutant_attack_000217fb_1.ogg', 'supermutantdc', 'taunt'),   # You had your time, human!
-    ('dc', 'creaturesupermutantdc', 'genericsup_alerttocombat_00062962_1.ogg', 'supermutantdc', 'taunt'),   # No more games... time to die!
     ('dc', 'creaturesupermutantdc', 'genericsup_alerttocombat_00062963_1.ogg', 'supermutantdc', 'taunt'),   # I smelled your fear, human!
     ('dc', 'creaturesupermutantdc', 'genericsup_alerttocombat_00062961_1.ogg', 'supermutantdc', 'taunt'),   # Game's over!
-    ('dc', 'creaturesupermutantdc', 'genericsup_lostidle_0006298a_1.ogg', 'supermutantdc', 'taunt'),   # Here human, human, human. I got a treat for you!
     ('dc', 'creaturesupermutantdc', 'genericsup_combattonormal_000629a8_1.ogg', 'supermutantdc', 'tauntkill'),   # I win again!
     ('dc', 'creaturesupermutantdc', 'genericsup_combattonormal_000629aa_1.ogg', 'supermutantdc', 'tauntkill'),   # You lose!
     ('dc', 'creaturesupermutantdc', 'genericsup_combattonormal_000629ab_1.ogg', 'supermutantdc', 'tauntkill'),   # Okay, who's next?!

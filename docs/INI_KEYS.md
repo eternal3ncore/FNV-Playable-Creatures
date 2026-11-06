@@ -75,7 +75,8 @@ Sections whose plugin isn't loaded are skipped (logged "NOT FOUND (plugin inacti
                       conditions never pass (e.g. GetRandomPercent < 0): loose top-level idles get picked by the
                       engine itself (the player gestures whenever an NPC nearby speaks)
   TauntSound        : Plugin|FormID - a SOUN played (3D, at the player) as each taunt starts. Super mutants: their
-                      combat barks (a 'Sound:' text key in the idle plays nothing for the player)
+                      combat barks (a 'Sound:' text key in the idle plays nothing for the player). A taunt while
+                      the last taunt line still plays gets no new line (lines never overlap)
   TauntKillSound    : Plugin|FormID - played instead of TauntSound for the first taunt within 10 s of a kill by the
                       player (an actor the player hit dies within 5 s). Super mutants: their gloats / laughs
   NoFallDamage      : 1 = no fall damage, the engine's rule for flying creatures (vanilla eyebots carry the

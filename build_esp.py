@@ -1223,7 +1223,7 @@ spels.append(record('SPEL', GHOST_DODGE_SPEL, [('EDID', z('PCGhostDodgeSpell')),
 print('  ghost back dodge idle %06X, spell %06X' % (GHOST_DODGE & 0xFFFFFF, GHOST_DODGE_SPEL & 0xFFFFFF))
 
 # Super Mutant / Nightkin taunts (Core TauntIdles=: back + jump plays them in turn, held still): the super mutants' own
-# combat intimidation idles (vanilla SB2HAIntimidate / 2 and the unrecorded 4th, creatures\\smspinebreaker\\idleanims - the
+# combat intimidation idles (vanilla SB2HAIntimidate and the unrecorded 4th, creatures\\smspinebreaker\\idleanims - the
 # ones that don't key the Weapon node, so they suit any weapon or none), section Special Idle as the vanilla records + no
 # attacking (as the hops). Whole Body (0x14) cleared the weapon-ready state: after the taunt the mutant stood as if
 # unarmed and couldn't attack until the weapon was readied again.
@@ -1238,8 +1238,11 @@ souns.append(soun(SM_TAUNT_SOUN, 'PCSuperMutantTauntVox', PC + 'supermutant\\tau
 SM_TAUNT_ROOT = _new()
 idles.append(record('IDLE', SM_TAUNT_ROOT, [('EDID', z('PCSuperMutantTauntIdles')), ('MODL', z('Creatures\\SMSpineBreaker\\IdleAnims')),
     ('CTDA', ctda(F_RANDOM, 0, 4)), ('ANAM', struct.pack('<II', 0, 0)), ('DATA', bytes.fromhex('0700000000000000'))]))
+# SpecialIdle_2HAIntimidate2 keys no arm: with a weapon drawn the arms stay in the aim pose, so it looked like aiming
+# (user, 11-05) - left out; its id (the 2nd) stays unused.
 _prev = 0
-for _i, (_fid, _fn) in enumerate(zip(SM_TAUNTS, ('SpecialIdle_2HAIntimidate.kf', 'SpecialIdle_2HAIntimidate2.kf', 'SpecialIdle_2HAIntimidate4.kf')), 1):
+for _i, (_fid, _fn) in enumerate(zip(SM_TAUNTS, ('SpecialIdle_2HAIntimidate.kf', None, 'SpecialIdle_2HAIntimidate4.kf')), 1):
+    if _fn is None: continue
     idles.append(record('IDLE', _fid, [('EDID', z('PCSuperMutantTaunt%d' % _i)), ('MODL', z('Creatures\\SMSpineBreaker\\IdleAnims\\' + _fn)),
         ('ANAM', struct.pack('<II', SM_TAUNT_ROOT, _prev)), ('DATA', bytes.fromhex('0700000000000100'))]))
     _prev = _fid

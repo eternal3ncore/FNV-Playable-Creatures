@@ -86,7 +86,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 101;
+static const UInt32 kPluginVersion = 102;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -1106,6 +1106,10 @@ static void InstallFirstPersonBody() {
 struct SoundHandle { UInt32 key; UInt8 ok; UInt8 pad[3]; UInt32 unk8; };
 static const UInt32 kObj_AudioManager = 0x011F6EF0, kAddr_InitSoundForm = 0x00AE5870;
 static const UInt32 kAddr_SoundSetPos = 0x00AD8B60, kAddr_SoundSetNode = 0x00AD8F20, kAddr_SoundPlay = 0x00AD8830, kAddr_SoundStop = 0x00AD88F0;
+// BSSoundHandle::IsPlaying 0xAD8930 (thiscall, bool): id -1 -> false; +4 set -> the requested state (+8 == 1, Play);
+// else asks the audio manager (0xADC910: the live sound for the id, its playing byte +0x14) - InitSoundForm clears +4
+static const UInt32 kAddr_SoundIsPlaying = 0x00AD8930;
+typedef bool (__fastcall* SoundIsPlaying_t)(void* s, void* edx);
 static const UInt32 kSoundFlags_3D = 0x102, kSoundFlag_Loop = 0x10;
 typedef void (__fastcall* InitSoundForm_t)(void* mgr, void* edx, SoundHandle* s, UInt32 formID, UInt32 flags);
 typedef void (__fastcall* SoundSetPos_t)(SoundHandle* s, void* edx, float x, float y, float z);
@@ -1136,6 +1140,7 @@ static void NotePlayerKill(void* victim, const char* how) {
 	g_lastKillTick = GetTickCount(); if (!g_lastKillTick) g_lastKillTick = 1;
 	Log("kill: %08X by the player (%s)", victim ? *(UInt32*)((UInt8*)victim + 0x0C) : 0, how);
 }
+static SoundHandle g_tauntVoice = { 0xFFFFFFFF, 0, {0, 0, 0}, 0 };   // the last taunt line, so lines never overlap
 static UInt32 g_rng = 0;
 static UInt32 Roll100() {                                                  // xorshift32, 0..99
 	if (!g_rng) g_rng = GetTickCount() | 1;
@@ -1493,10 +1498,14 @@ static void* __fastcall Hook_PlayerJump(void* actor, void* edx) {
 					next = (next + tries + 1) % p->numTaunts; g_holdPending = 2;
 					// the voice: a 'Sound:' text key in the idle played nothing for the player. The first taunt soon
 					// after a kill gloats (TauntKillSound=), any other one is a combat bark (TauntSound=)
+					// A line still playing from the last taunt is left to finish: no new line (the kill stays pending).
+					if (g_tauntVoice.key != 0xFFFFFFFF && ((SoundIsPlaying_t)kAddr_SoundIsPlaying)(&g_tauntVoice, nullptr)) {
+						Log("taunt: %08X (last line still playing - no voice)", fid); return nullptr;
+					}
 					bool kill = p->tauntKillSnd.fid && g_lastKillTick && GetTickCount() - g_lastKillTick < kKillTauntWindow;
-					if (kill) g_lastKillTick = 0;
 					UInt32 snd = kill ? p->tauntKillSnd.fid : p->tauntSnd.fid;
-					bool spoke = snd && StartSound(snd, PlayerRoot(actor), kSoundFlags_3D, nullptr);
+					bool spoke = snd && StartSound(snd, PlayerRoot(actor), kSoundFlags_3D, &g_tauntVoice);
+					if (spoke && kill) g_lastKillTick = 0;
 					Log("taunt: %08X%s", fid, spoke ? (kill ? " + kill voice" : " + voice") : ""); return nullptr;
 				}
 			}
