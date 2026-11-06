@@ -5,7 +5,7 @@ so the same local rotations point the limbs elsewhere. Here each frame goes thro
 Ghost's own run was built with from the ghoul's): world-space delta from the ghoul's bind pose applied to the Ghost's
 bind pose (W_ghost = W_ghoul_anim * W_ghoul_bind^T * W_ghost_bind), translations the Ghost's own bone lengths, the root
 scaled by the leg-length ratio, feet placed by two-bone leg IK where the scaled ghoul feet are.
-Files (standing; sneak versions by sneak_fix afterwards):
+Files (standing; sneak versions by sneak_fix afterwards; then ghost_head_level.py keeps the head level in all 42):
   h2hattackleft / right [up / down]  _a <- the ghoul's plain file, _b <- _b, _c <- _c
   h2hattackleftpower / rightpower    <- the ghoul's side power attacks
   h2hrecoil                          <- the ghoul's Recoil
