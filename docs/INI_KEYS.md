@@ -66,8 +66,8 @@ Sections whose plugin isn't loaded are skipped (logged "NOT FOUND (plugin inacti
   GiveItems         : Plugin|FormID[,...] (up to 4): items given to the player, one each and not equipped, when
                       the race menu closes (an existing copy is replaced, never stacked). Robots: their own weapon
   GivePerks         : Plugin|FormID[,...] (up to 4): perks the player gets when the race menu closes, if not already
-                      had (never a second rank; not removed on a later race change). Every non-robot race:
-                      Terrifying Presence (FalloutNV.esm|10C6CD); robots list the key empty
+                      had (never a second rank; not removed on a later race change). Every race but the robots and
+                      the Zetans: Terrifying Presence (FalloutNV.esm|10C6CD); those list the key empty
   TauntIdles        : Plugin|FormID[,...] (up to 4): back + jump with a weapon drawn plays the next of these idles (in
                       turn; holstered, back + jump is a normal jump), the player
                       held still while it plays; races without GhostMoves only. Super Mutants / Nightkin / the

@@ -18,7 +18,7 @@ add-ons need their base pack too.
 - Its own animations for drinking from water, Cannibal, Mister Sandman kills and stimpaks (robots: a placeholder
   for Cannibal; robots without a seated pose float onto chairs and stools).
 - The creature's own body parts for gore, dismemberment and VATS.
-- Every race but the robots starts with the **Terrifying Presence** perk (given when the race menu closes).
+- Every race but the robots and the Zetans starts with the **Terrifying Presence** perk (given when the race menu closes).
 - Armor can be worn for its stats but isn't drawn (except where noted).
 - Human animation overrides from kNVSE animation mods don't apply to creature races.
 - First person shows the creature's own body (its head hidden, the view just behind it); Ghost People keep the
