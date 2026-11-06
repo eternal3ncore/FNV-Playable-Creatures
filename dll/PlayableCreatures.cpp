@@ -86,7 +86,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 99;
+static const UInt32 kPluginVersion = 100;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -132,7 +132,7 @@ struct Profile {
 	FormRef bodyParts;              // BodyPartData= - the creature's own body part data (gore / dismemberment / VATS parts)
 	FormRef give[4]; int numGive;   // GiveItems= - items handed over (one each, not equipped) when the race menu closes
 	FormRef perks[4]; int numPerks; // GivePerks= - perks added (if not already had) when the race menu closes
-	FormRef taunts[4]; int numTaunts; // TauntIdles= - back + jump plays the next of these idles, held still (races
+	FormRef taunts[4]; int numTaunts; // TauntIdles= - back + jump, weapon drawn, plays the next of these idles, held still (races
 	                                //   without GhostMoves)
 	FormRef tauntSnd;               // TauntSound= - the voice played (3D, at the player) as a taunt starts
 	bool ghostMoves;                // Ghostification's hop / search on the jump key
@@ -1464,10 +1464,11 @@ static void* __fastcall Hook_PlayerJump(void* actor, void* edx) {
 	UInt32 mv = ((U32_t)kAddr_GetMovementFlags)(actor, nullptr) & 0xF;
 	bool out = ((B_t)kAddr_IsWeaponOut)(actor, nullptr), sneak = ((B_t)kAddr_IsSneaking)(actor, nullptr);
 	if (!p->ghostMoves) {
-		// TauntIdles=: back + jump plays the race's taunts in turn, held still like the search (a stand-still idle: the
-		// held back key would start the walk, which replaces it); anything else jumps normally
+		// TauntIdles=: back + jump with a weapon drawn plays the race's taunts in turn (combat taunts, as the vanilla
+		// intimidations are only played weapon out), held still like the search (a stand-still idle: the held back key
+		// would start the walk, which replaces it); anything else - weapon holstered too - jumps normally
 		static int next = 0;
-		if (mv == 2) {
+		if (mv == 2 && out) {
 			for (int tries = 0; tries < p->numTaunts; tries++) {
 				UInt32 fid = p->taunts[(next + tries) % p->numTaunts].fid; if (!fid) continue;
 				if (PlayIdleForm(actor, fid)) {
