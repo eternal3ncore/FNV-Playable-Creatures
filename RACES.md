@@ -52,6 +52,9 @@ add-ons need their base pack too.
 - Constant breathing wheeze.
 - Needs **PlayerEssentialFix** (separate download): without it an essential player stays ragdolled after getting
   back up.
+- **Optional add-on** (separate download, `PlayableCreatures_GhostPeople_FeralGhoulPunches`): the feral ghoul's
+  unarmed attacks, adapted to the Ghost's body, in place of Dead Money's punches. Install it after the Ghost People
+  pack so its files win.
 
 ## Feral Ghouls
 `PlayableCreatures_FeralGhouls.esp`

@@ -10,7 +10,7 @@ Ghost People
 - Gas spray (back power attack): sprays gas from the mask. It knocks the one target it hits to the ground for a few seconds. It works unarmed and with melee weapons, including the unarmed perk moves.
 - Forward power attack is the Dead Money charging lunge again.
 - New back dodge: with a weapon drawn, back + jump. The Ghost vanishes into a cloud of its gas, slips back and re-forms.
-- New unarmed attacks: the feral ghoul's punches, adapted to the Ghost's body (the head stays level, looking ahead).
+- New optional add-on, a separate download (GhostPeople_FeralGhoulPunches): the feral ghoul's unarmed attacks, adapted to the Ghost's body, in place of Dead Money's punches. Install it after the Ghost People pack.
 - Ghost Gas heavy weapon:
   - a thicker, see-through gas stream with a softer impact puff;
   - no longer flagged as a backpack weapon;
