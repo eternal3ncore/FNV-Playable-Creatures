@@ -1,0 +1,30 @@
+Playable Creatures 2.4
+
+All races
+- Every race except the robots and the Zetans now starts with the Terrifying Presence perk (given when the race menu closes).
+- Forward power attacks with melee weapons now play for every race. Melee weapons use their own special power attacks, which none of the races had.
+- Unarmed special-move perks (Legion Assault, Ranger Takedown, Khan Trick, Scribe Counter) now play each race's matching power attack.
+- Fixed attacks freezing after a melee hit bounced off a block or another power attack. Every race now has the missing Recoil animations.
+
+Ghost People
+- Gas spray (back power attack): sprays gas from the mask. It knocks the one target it hits to the ground for a few seconds. It works unarmed and with melee weapons, including the unarmed perk moves.
+- Forward power attack is the Dead Money charging lunge again.
+- New back dodge: with a weapon drawn, back + jump. The Ghost vanishes into a cloud of its gas, slips back and re-forms.
+- New unarmed attacks: the feral ghoul's punches, adapted to the Ghost's body.
+- Ghost Gas heavy weapon:
+  - a thicker, see-through gas stream with a softer impact puff;
+  - no longer flagged as a backpack weapon;
+  - aimed casts no longer put the palm against the mask.
+- Grenades and throwing spears are sheathed on the back, as the Dead Money ghosts carry them, not on the hip.
+- The two-handed gas spray holds the spear in one hand, as the ghosts do.
+
+Super Mutants, Nightkin and Capital Super Mutants (TTW)
+- One-handed melee weapons now use their own unarmed attacks, with the weapon unseen. Reach, damage and effects still apply.
+- New taunt: with a weapon drawn, back + jump plays an intimidation display with a combat bark.
+  - Taunt within 10 seconds of a kill and they gloat instead.
+  - Nightkin speak with their own voice.
+
+Core (PlayableCreatures.dll)
+- New settings: GivePerks, TauntIdles, TauntSound, TauntKillSound.
+- Every race also has UnarmedEffectWeapons, UnarmedEffectReachMult and UnarmedEffectCone, off except for the Ghost People.
+- Ghost melee effects (gas spray reach and cone) are part of Core. There is no separate DLL.
