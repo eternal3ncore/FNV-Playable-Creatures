@@ -1,30 +1,89 @@
-"""Super mutant taunt voices: the lines Core plays (TauntSound=) as a super mutant taunt starts (TauntIdles=, the super
-mutants' own intimidation idles, played as they are). A 'Sound: <SOUN>' text key in copies of those idles played nothing
-for the player (tested in game), so the idles are the vanilla files and the voice is Core's.
-  NV  (Super Mutant / Nightkin): SOUN PCSuperMutantTauntVox; voice = the low-int super mutant's combat shouts
-      (creaturelowintsm AlertToCombat / LostToCombat / NormalToCombat, 10 lines)
-      -> sound\\fx\\npc\\playablecreatures\\supermutant\\taunt\\pc_supermutant_taunt_NN.wav
-  DC  (Capital Super Mutant / Brute / Master, TTW): SOUN PCSuperMutantDCTauntVox; voice = Fallout 3's super mutant
-      taunts (creaturesupermutantdc MS01MutantTaunt + GenericSup NormalToCombat, 22 lines)
-      -> sound\\fx\\npc\\playablecreatures\\supermutantdc\\taunt\\pc_supermutantdc_taunt_NN.wav
-Every line, no silence padding (a taunt always speaks). Wav: 44.1 kHz mono 16-bit, as the attack barks.
-usage: python3 -P sm_taunt.py <nv voice dir> <dc voice dir> <out root>"""
-import os, sys, glob, subprocess
+"""Super mutant taunt voices: the lines Core plays as a super mutant taunt starts (TauntIdles=, the super mutants' own
+intimidation idles, played as they are, weapon drawn). A 'Sound: <SOUN>' text key in copies of those idles played nothing
+for the player (tested in game), so the idles are the vanilla files and the voice is Core's (StartSound, 3D at the player).
+  taunt      TauntSound=      combat barks
+  tauntkill  TauntKillSound=  the gloat, for the first taunt within 10 s of the player's kill
+Sets (picked with the user 2026-11-05; each folder one SOUN, a random file per play):
+  supermutant   (Super Mutant; creaturelowintsm)        PCSuperMutantTauntVox / PCSuperMutantTauntKillVox
+  nightkin      (Nightkin; creaturesupermutant)          PCNightkinTauntVox / PCNightkinTauntKillVox
+  supermutantdc (TTW Capital mutants; creaturesupermutantdc, Fallout 3) PCSuperMutantDCTauntVox / ...TauntKillVox
+Lines already used as the races' attack / power attack / hit / death voices are not reused. Wav: 44.1 kHz mono 16-bit,
+as the attack barks -> sound\\fx\\npc\\playablecreatures\\<set>\\<taunt|tauntkill>\\pc_<set>_<kind>_NN.wav
+usage: python3 -P sm_taunt.py <dir holding sound\\voice\\falloutnv.esm\\...> <dir holding sound\\voice\\fallout3.esm\\...> <out root>"""
+import os, sys, subprocess
 
-SETS = {'nv': ('supermutant', ('vdialogues_alerttocombat', 'vdialogues_losttocombat', 'vdialogues_normaltocombat')),
-        'dc': ('supermutantdc', ('ms01_ms01mutanttaunt', 'genericsup_normaltocombat'))}
+LINES = [   # (game, voice type, file, set, kind)
+    ('nv', 'creaturelowintsm', 'vdialogues_alerttocombat_0015cceb_1.ogg', 'supermutant', 'taunt'),   # Now you die!
+    ('nv', 'creaturelowintsm', 'vdialogues_normaltocombat_0015cd14_1.ogg', 'supermutant', 'taunt'),   # Gonna kill you!
+    ('nv', 'creaturelowintsm', 'vdialogues_losttocombat_0015cd07_1.ogg', 'supermutant', 'taunt'),   # Made me look! Made me {stressed}mad!
+    ('nv', 'creaturelowintsm', 'vdialogues_losttocombat_0015cd06_1.ogg', 'supermutant', 'taunt'),   # Hide from this!
+    ('nv', 'creaturelowintsm', 'vdialogues_attack_0015cd3f_1.ogg', 'supermutant', 'taunt'),   # Want more?
+    ('nv', 'creaturelowintsm', 'vdialogues_attack_0015cd3e_1.ogg', 'supermutant', 'taunt'),   # Yeah ha ha ha!
+    ('nv', 'creaturelowintsm', 'vdialogues_attack_0015cd41_1.ogg', 'supermutant', 'taunt'),   # Destroy!
+    ('nv', 'creaturelowintsm', 'vdialogues_attack_0015cd40_1.ogg', 'supermutant', 'taunt'),   # Kill!
+    ('nv', 'creaturelowintsm', 'vdialogues_lostidle_0015cce0_1.ogg', 'supermutant', 'taunt'),   # Come out and fight!
+    ('nv', 'creaturelowintsm', 'vdialogues_lostidle_0015cce1_1.ogg', 'supermutant', 'taunt'),   # Hiding boring! Fighting much more fun!
+    ('nv', 'creaturelowintsm', 'vdialogues_lostidle_0015cce2_1.ogg', 'supermutant', 'taunt'),   # {Increasingly angry}Before, just going to kill you. But now, going to kill you real bad!
+    ('nv', 'creaturelowintsm', 'vdialogues_guardtrespass_0015ccda_1.ogg', 'supermutant', 'taunt'),   # This is our place. Go or be smashed.
+    ('nv', 'creaturelowintsm', 'vdialogues_murder_0015cd03_1.ogg', 'supermutant', 'taunt'),   # You'll die for that!
+    ('nv', 'creaturelowintsm', 'vdialogues_murdernocrime_0015ccd3_1.ogg', 'supermutant', 'tauntkill'),   # Weakling!
+    ('nv', 'creaturelowintsm', 'vdialogues_murdernocrime_0015ccd2_1.ogg', 'supermutant', 'tauntkill'),   # Ah ha ha ha ha!
+    ('nv', 'creaturelowintsm', 'vdialogues_combattonormal_0015cd75_1.ogg', 'supermutant', 'tauntkill'),   # Ha ha. Too weak.
+    ('nv', 'creaturesupermutant', 'vdialoguen_alerttocombat_00152be7_1.ogg', 'nightkin', 'taunt'),   # I see you, human!
+    ('nv', 'creaturesupermutant', 'vdialoguen_alerttocombat_00152be9_1.ogg', 'nightkin', 'taunt'),   # You're mine!
+    ('nv', 'creaturesupermutant', 'vdialoguen_normaltocombat_00152b76_1.ogg', 'nightkin', 'taunt'),   # You die now!
+    ('nv', 'creaturesupermutant', 'vdialoguen_normaltocombat_00152b77_1.ogg', 'nightkin', 'taunt'),   # I'll kill you!
+    ('nv', 'creaturesupermutant', 'vdialoguenightkin_assault_00152b61_1.ogg', 'nightkin', 'taunt'),   # That was *dumb*, human!
+    ('nv', 'creaturesupermutant', 'vdialoguenightkin_murder_00152b71_1.ogg', 'nightkin', 'taunt'),   # I'll have your blood, human!
+    ('nv', 'creaturesupermutant', 'vdialoguenightkin_murder_00152b72_1.ogg', 'nightkin', 'taunt'),   # Now you pay!
+    ('nv', 'creaturesupermutant', 'vdialoguenightkin_greeting_00152b8d_1.ogg', 'nightkin', 'taunt'),   # {Angry}Head voices don't *like* you, squishy man!
+    ('nv', 'creaturesupermutant', 'vdialoguen_playerfireweapo_00152b53_1.ogg', 'nightkin', 'taunt'),   # {Slightly annoyed}Keep that up, human…
+    ('nv', 'creaturesupermutant', 'vdialoguen_playerinironsit_00152b5d_1.ogg', 'nightkin', 'taunt'),   # {Snarls}I don't think so.
+    ('nv', 'creaturesupermutant', 'vdialoguen_murdernocrime_00152b9a_1.ogg', 'nightkin', 'tauntkill'),   # {Slightly amused chuckle}
+    ('nv', 'creaturesupermutant', 'vdialoguen_murdernocrime_00152b9b_1.ogg', 'nightkin', 'tauntkill'),   # {Medium sized laugh}
+    ('nv', 'creaturesupermutant', 'vdialoguen_murdernocrime_00152b9c_1.ogg', 'nightkin', 'tauntkill'),   # {Big laugh}
+    ('dc', 'creaturesupermutantdc', 'ms01_ms01mutanttaunt_0002dd98_1.ogg', 'supermutantdc', 'taunt'),   # Hey small people!
+    ('dc', 'creaturesupermutantdc', 'ms01_ms01mutanttaunt_0002dd9a_1.ogg', 'supermutantdc', 'taunt'),   # Don't be scared!
+    ('dc', 'creaturesupermutantdc', 'ms01_ms01mutanttaunt_0002de01_1.ogg', 'supermutantdc', 'taunt'),   # Don't be shy!
+    ('dc', 'creaturesupermutantdc', 'ms01_ms01mutanttaunt_0002de02_1.ogg', 'supermutantdc', 'taunt'),   # Who's it going to be this time?
+    ('dc', 'creaturesupermutantdc', 'ms01_ms01mutanttaunt_0002de03_1.ogg', 'supermutantdc', 'taunt'),   # The time has come!
+    ('dc', 'creaturesupermutantdc', 'ms01_ms01mutanttaunt_0002de04_1.ogg', 'supermutantdc', 'taunt'),   # Don't you want to be like us?
+    ('dc', 'creaturesupermutantdc', 'ms01_ms01mutanttaunt_0002dd9b_1.ogg', 'supermutantdc', 'taunt'),   # Ahahahaha!
+    ('dc', 'creaturesupermutantdc', 'ms01_ms01mutanttaunt_0002de05_1.ogg', 'supermutantdc', 'taunt'),   # Graahahaha!
+    ('dc', 'creaturesupermutantdc', 'ms01_ms01mutanttaunt_0002de0c_1.ogg', 'supermutantdc', 'taunt'),   # GRRAAAHHHH!
+    ('dc', 'creaturesupermutantdc', 'genericsup_normaltocombat_000483db_1.ogg', 'supermutantdc', 'taunt'),   # Ha ha ha ha! Let's play, little human!
+    ('dc', 'creaturesupermutantdc', 'genericsup_normaltocombat_000483dc_1.ogg', 'supermutantdc', 'taunt'),   # Time to die!
+    ('dc', 'creaturesupermutantdc', 'genericsup_normaltocombat_0006296f_1.ogg', 'supermutantdc', 'taunt'),   # I'll wear your bones around my neck!
+    ('dc', 'creaturesupermutantdc', 'genericsup_normaltocombat_00062970_1.ogg', 'supermutantdc', 'taunt'),   # Gonna splatter your brains!
+    ('dc', 'creaturesupermutantdc', 'genericsup_normaltocombat_00062971_1.ogg', 'supermutantdc', 'taunt'),   # I love a good fight!
+    ('dc', 'creaturesupermutantdc', 'genericsup_normaltocombat_00062972_1.ogg', 'supermutantdc', 'taunt'),   # Death to all humans!
+    ('dc', 'creaturesupermutantdc', 'genericsupermutant_attack_0002959e_1.ogg', 'supermutantdc', 'taunt'),   # Oh ho ho! Little baby scared?
+    ('dc', 'creaturesupermutantdc', 'genericsupermutant_attack_0002959f_1.ogg', 'supermutantdc', 'taunt'),   # Scream! Scream for your worthless life!
+    ('dc', 'creaturesupermutantdc', 'genericsupermutant_attack_0002959d_1.ogg', 'supermutantdc', 'taunt'),   # You are weak! I am stroooonng!
+    ('dc', 'creaturesupermutantdc', 'genericsupermutant_attack_000295a1_1.ogg', 'supermutantdc', 'taunt'),   # Hurry up and die! I'm hungry! Ha ha ha ha ha!
+    ('dc', 'creaturesupermutantdc', 'genericsupermutant_attack_000217ff_1.ogg', 'supermutantdc', 'taunt'),   # I'll eat your brain and drink your blood!
+    ('dc', 'creaturesupermutantdc', 'genericsupermutant_attack_000217fa_1.ogg', 'supermutantdc', 'taunt'),   # Bleed! Bleed and die!
+    ('dc', 'creaturesupermutantdc', 'genericsupermutant_attack_000217fb_1.ogg', 'supermutantdc', 'taunt'),   # You had your time, human!
+    ('dc', 'creaturesupermutantdc', 'genericsup_alerttocombat_00062962_1.ogg', 'supermutantdc', 'taunt'),   # No more games... time to die!
+    ('dc', 'creaturesupermutantdc', 'genericsup_alerttocombat_00062963_1.ogg', 'supermutantdc', 'taunt'),   # I smelled your fear, human!
+    ('dc', 'creaturesupermutantdc', 'genericsup_alerttocombat_00062961_1.ogg', 'supermutantdc', 'taunt'),   # Game's over!
+    ('dc', 'creaturesupermutantdc', 'genericsup_lostidle_0006298a_1.ogg', 'supermutantdc', 'taunt'),   # Here human, human, human. I got a treat for you!
+    ('dc', 'creaturesupermutantdc', 'genericsup_combattonormal_000629a8_1.ogg', 'supermutantdc', 'tauntkill'),   # I win again!
+    ('dc', 'creaturesupermutantdc', 'genericsup_combattonormal_000629aa_1.ogg', 'supermutantdc', 'tauntkill'),   # You lose!
+    ('dc', 'creaturesupermutantdc', 'genericsup_combattonormal_000629ab_1.ogg', 'supermutantdc', 'tauntkill'),   # Okay, who's next?!
+]
 
 
-def build(voice_dirs, out):
-    made = []
-    for tag in ('nv', 'dc'):
-        snd, topics = SETS[tag]
-        lines = sorted(p for p in glob.glob(os.path.join(voice_dirs[tag], '*.ogg')) if os.path.basename(p).lower().startswith(topics))
-        vd = os.path.join(out, 'sound', 'fx', 'npc', 'playablecreatures', snd, 'taunt'); os.makedirs(vd, exist_ok=True)
-        for n, p in enumerate(lines, 1):
-            w = os.path.join(vd, f'pc_{snd}_taunt_{n:02d}.wav')
-            subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', p, '-ar', '44100', '-ac', '1', '-sample_fmt', 's16', w], check=True)
-            made.append(w)
+def build(roots, out):
+    made, count = [], {}
+    for game, vt, fn, folder, kind in LINES:
+        n = count[(folder, kind)] = count.get((folder, kind), 0) + 1
+        esm = 'falloutnv.esm' if game == 'nv' else 'fallout3.esm'
+        src = os.path.join(roots[game], 'sound', 'voice', esm, vt, fn)
+        d = os.path.join(out, 'sound', 'fx', 'npc', 'playablecreatures', folder, kind); os.makedirs(d, exist_ok=True)
+        w = os.path.join(d, f'pc_{folder}_{kind}_{n:02d}.wav')
+        subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-y', '-i', src, '-ar', '44100', '-ac', '1', '-sample_fmt', 's16', w], check=True)
+        made.append(w)
     return made
 
 

@@ -1229,8 +1229,8 @@ print('  ghost back dodge idle %06X, spell %06X' % (GHOST_DODGE & 0xFFFFFF, GHOS
 # unarmed and couldn't attack until the weapon was readied again.
 # Under PCSuperMutantTauntIdles, a root that never passes (GetRandomPercent < 0, as PCGhostMoveIdles): as loose idles
 # (no parent, no conditions) the engine picked them on its own - the mutant gestured whenever a nearby NPC spoke.
-# Their voice is played by Core with the taunt (TauntSound=): the low-int super mutant's combat shouts, every line (no
-# silence padding: a taunt always speaks) - a 'Sound:' key in the idle played nothing for the player.
+# Their voice is played by Core with the taunt (TauntSound= / TauntKillSound=, below) - a 'Sound:' key in the idle
+# played nothing for the player.
 # New ids after everything else (the root after the ids the taunts / voice already had).
 SM_TAUNTS = [_new() for _ in range(3)]
 SM_TAUNT_SOUN = _new()
@@ -1243,7 +1243,17 @@ for _i, (_fid, _fn) in enumerate(zip(SM_TAUNTS, ('SpecialIdle_2HAIntimidate.kf',
     idles.append(record('IDLE', _fid, [('EDID', z('PCSuperMutantTaunt%d' % _i)), ('MODL', z('Creatures\\SMSpineBreaker\\IdleAnims\\' + _fn)),
         ('ANAM', struct.pack('<II', SM_TAUNT_ROOT, _prev)), ('DATA', bytes.fromhex('0700000000000100'))]))
     _prev = _fid
-print('  super mutant taunts', ' '.join('%06X' % (f & 0xFFFFFF) for f in SM_TAUNTS), 'voice %06X root %06X' % (SM_TAUNT_SOUN & 0xFFFFFF, SM_TAUNT_ROOT & 0xFFFFFF))
+# The voices Core plays with a taunt (anim/sm_taunt.py makes the wavs): TauntSound= = combat barks, TauntKillSound= =
+# the gloat for the first taunt soon after the player's kill. Nightkin speak with their own voice (creaturesupermutant).
+# New ids after everything else.
+SM_TAUNTKILL_SOUN = _new()
+souns.append(soun(SM_TAUNTKILL_SOUN, 'PCSuperMutantTauntKillVox', PC + 'supermutant\\tauntkill\\', 5.0, None, None))
+NK_TAUNT_SOUN = _new()
+souns.append(soun(NK_TAUNT_SOUN, 'PCNightkinTauntVox', PC + 'nightkin\\taunt\\', 5.0, None, None))
+NK_TAUNTKILL_SOUN = _new()
+souns.append(soun(NK_TAUNTKILL_SOUN, 'PCNightkinTauntKillVox', PC + 'nightkin\\tauntkill\\', 5.0, None, None))
+print('  super mutant taunts', ' '.join('%06X' % (f & 0xFFFFFF) for f in SM_TAUNTS), 'voice %06X root %06X' % (SM_TAUNT_SOUN & 0xFFFFFF, SM_TAUNT_ROOT & 0xFFFFFF),
+      'kill voice %06X nightkin voice %06X / %06X' % (SM_TAUNTKILL_SOUN & 0xFFFFFF, NK_TAUNT_SOUN & 0xFFFFFF, NK_TAUNTKILL_SOUN & 0xFFFFFF))
 
 groups = [group('HAIR', [hair]), group('EYES', [eyes] + eyes_extra), group('RACE', races), group('SOUN', souns), group('MGEF', mgefs), group('SCPT', scpts), group('ENCH', enchs), group('SPEL', spels), group('ARMO', armors), group('WEAP', weaps), group('NPC_', npcs), group('IDLE', idles)] + ([group('PROJ', projs)] if projs else []) + [group('ANIO', anios), group('EFSH', efshs), group('BPTD', bptds), group('VTYP', vtyp), group('IPCT', ipcts), group('IPDS', ipdss)]   # vanilla group order
 nrec = 2 + len(efshs) + len(ipcts) + len(ipdss) + len(enchs) + len(projs) + len(eyes_extra) + len(armors) + len(bptds) + len(races) + len(weaps) + len(npcs) + len(souns) + len(mgefs) + len(scpts) + len(spels) + len(vtyp) + len(idles) + len(anios) + len(groups)

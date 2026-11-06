@@ -67,7 +67,7 @@ add-ons need their base pack too.
 - One-handed melee weapons swing with its unarmed attacks; the weapon isn't drawn.
 - Immune to radiation.
 - Wear their own super mutant armor, which is drawn on the body.
-- **Taunt:** with a weapon drawn, back + jump plays one of their intimidation displays (in turn) with a shout.
+- **Taunt:** with a weapon drawn, back + jump plays one of their intimidation displays (in turn) with a combat bark; taunt within 10 s of a kill and they gloat instead. Nightkin speak with their own voice.
 - **Nightkin:** Stealth Boy cloak while sneaking.
 
 ### TTW add-on: `PlayableCreatures_SuperMutantsTTW.esp`

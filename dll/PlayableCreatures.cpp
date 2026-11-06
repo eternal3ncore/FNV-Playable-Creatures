@@ -86,7 +86,7 @@ struct NVSEEventManagerInterface {             // xNVSE PluginAPI.h order
 enum { kMessage_PostLoad = 0, kMessage_ExitToMainMenu = 2, kMessage_PreLoadGame = 6, kMessage_PostLoadGame = 8, kMessage_PostPostLoad = 9,
        kMessage_NewGame = 14, kMessage_DeferredInit = 18, kMessage_OnRefSet3D = 26 };
 static const UInt32 kRuntime_1_4_0_525 = 0x040020D0;
-static const UInt32 kPluginVersion = 100;
+static const UInt32 kPluginVersion = 101;
 
 // ---------------- engine (1.4.0.525) ----------------
 static const UInt32 kVtbl_TESNPC_TESModel = 0x0104A1A4, kAddr_TESNPC_GetModelPath = 0x00601C30;
@@ -135,6 +135,7 @@ struct Profile {
 	FormRef taunts[4]; int numTaunts; // TauntIdles= - back + jump, weapon drawn, plays the next of these idles, held still (races
 	                                //   without GhostMoves)
 	FormRef tauntSnd;               // TauntSound= - the voice played (3D, at the player) as a taunt starts
+	FormRef tauntKillSnd;           // TauntKillSound= - played instead for the first taunt soon after the player's kill
 	bool ghostMoves;                // Ghostification's hop / search on the jump key
 	FormRef ghostForms[7];          // GhostMoveForms= hop spell, search spell, search idle, hop-left idle, hop-right idle,
 	                                //   back-dodge idle, back-dodge spell (else the hop spell)
@@ -215,6 +216,7 @@ static int LoadConfigFile(const char* ini) {
 		GetPrivateProfileStringA(sec, "GivePerks", "", tmp, sizeof(tmp), ini); p.numPerks = ParseForms(tmp, p.perks, 4);
 		GetPrivateProfileStringA(sec, "TauntIdles", "", tmp, sizeof(tmp), ini); p.numTaunts = ParseForms(tmp, p.taunts, 4);
 		GetPrivateProfileStringA(sec, "TauntSound", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.tauntSnd, 1);
+		GetPrivateProfileStringA(sec, "TauntKillSound", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.tauntKillSnd, 1);
 		GetPrivateProfileStringA(sec, "BodyPartData", "", tmp, sizeof(tmp), ini); ParseForms(tmp, &p.bodyParts, 1);
 		GetPrivateProfileStringA(sec, "GhostMoveForms", "", tmp, sizeof(tmp), ini); ParseForms(tmp, p.ghostForms, 7);
 		GetPrivateProfileStringA(sec, "LockedItems", "", tmp, sizeof(tmp), ini); p.numLocked = ParseForms(tmp, p.locked, 8);
@@ -377,6 +379,11 @@ static void ResolveProfiles() {
 			FormRef& g = p.tauntSnd; g.fid = ResolveFID(g.plugin, g.localID);
 			if (!g.fid || !LookupForm(g.fid)) { Log("resolve: [%s] taunt sound %s|%06X not loaded - skipped", p.section, g.plugin, g.localID); g.fid = 0; }
 			else Log("resolve: [%s] taunt sound %08X", p.section, g.fid);
+		}
+		if (p.tauntKillSnd.plugin[0]) {
+			FormRef& g = p.tauntKillSnd; g.fid = ResolveFID(g.plugin, g.localID);
+			if (!g.fid || !LookupForm(g.fid)) { Log("resolve: [%s] taunt kill sound %s|%06X not loaded - skipped", p.section, g.plugin, g.localID); g.fid = 0; }
+			else Log("resolve: [%s] taunt kill sound %08X", p.section, g.fid);
 		}
 		for (int fi = 0; fi < p.numFactions; fi++) {
 			FormRef& fr = p.factions[fi];
@@ -1118,6 +1125,17 @@ static bool StartSound(UInt32 fid, void* node, UInt32 flags, SoundHandle* out) {
 	if (out) *out = h;
 	return true;
 }
+// The player's kills, for TauntKillSound=: a death counts when the player hit that actor shortly before (xNVSE OnHit
+// then OnDeath), or when the player's hit arrives right after the death (the killing blow may be reported death first).
+// Timestamps only - set by the two events, read when a taunt starts.
+static const DWORD kKillHitWindow = 5000, kKillDeathLag = 250, kKillTauntWindow = 10000;
+static void* g_lastHitByPlayer = nullptr; static DWORD g_lastHitTick = 0;
+static void* g_lastDeath = nullptr; static DWORD g_lastDeathTick = 0;
+static DWORD g_lastKillTick = 0;
+static void NotePlayerKill(void* victim, const char* how) {
+	g_lastKillTick = GetTickCount(); if (!g_lastKillTick) g_lastKillTick = 1;
+	Log("kill: %08X by the player (%s)", victim ? *(UInt32*)((UInt8*)victim + 0x0C) : 0, how);
+}
 static UInt32 g_rng = 0;
 static UInt32 Roll100() {                                                  // xorshift32, 0..99
 	if (!g_rng) g_rng = GetTickCount() | 1;
@@ -1473,9 +1491,13 @@ static void* __fastcall Hook_PlayerJump(void* actor, void* edx) {
 				UInt32 fid = p->taunts[(next + tries) % p->numTaunts].fid; if (!fid) continue;
 				if (PlayIdleForm(actor, fid)) {
 					next = (next + tries + 1) % p->numTaunts; g_holdPending = 2;
-					// the voice: a 'Sound:' text key in the idle played nothing for the player
-					bool spoke = p->tauntSnd.fid && StartSound(p->tauntSnd.fid, PlayerRoot(actor), kSoundFlags_3D, nullptr);
-					Log("taunt: %08X%s", fid, spoke ? " + voice" : ""); return nullptr;
+					// the voice: a 'Sound:' text key in the idle played nothing for the player. The first taunt soon
+					// after a kill gloats (TauntKillSound=), any other one is a combat bark (TauntSound=)
+					bool kill = p->tauntKillSnd.fid && g_lastKillTick && GetTickCount() - g_lastKillTick < kKillTauntWindow;
+					if (kill) g_lastKillTick = 0;
+					UInt32 snd = kill ? p->tauntKillSnd.fid : p->tauntSnd.fid;
+					bool spoke = snd && StartSound(snd, PlayerRoot(actor), kSoundFlags_3D, nullptr);
+					Log("taunt: %08X%s", fid, spoke ? (kill ? " + kill voice" : " + voice") : ""); return nullptr;
 				}
 			}
 		}
@@ -1916,6 +1938,11 @@ static void OnHitHandler(void* thisObj, void* parameters) {
 	void* victim = a[0]; void* attacker = a[1];
 	void* player = Player();
 	if (!player || (victim != player && attacker != player)) return;
+	if (attacker == player && victim && victim != player) {
+		DWORD now = GetTickCount();
+		if (victim == g_lastDeath && now - g_lastDeathTick < kKillDeathLag) { g_lastDeath = nullptr; NotePlayerKill(victim, "hit reported after the death"); }
+		else { g_lastHitByPlayer = victim; g_lastHitTick = now; }
+	}
 	GhostOnHit(victim, attacker);
 	Profile* p = PlayerProfile();
 	if (!p || !p->voiceType.fid) return;
@@ -1938,6 +1965,12 @@ static void OnHitHandler(void* thisObj, void* parameters) {
 static void OnDeathHandler(void* thisObj, void* parameters) {
 	void** a = (void**)parameters;
 	void* player = Player();
+	if (player && a[0] && a[0] != player) {
+		DWORD now = GetTickCount();
+		if (a[0] == g_lastHitByPlayer && now - g_lastHitTick < kKillHitWindow) { g_lastHitByPlayer = nullptr; NotePlayerKill(a[0], "hit, then died"); }
+		else { g_lastDeath = a[0]; g_lastDeathTick = now; }
+		return;
+	}
 	if (!player || a[0] != player) return;
 	StopLoop("player died");
 	g_ghostDown = false; g_ghostRealDeath = true;

@@ -350,7 +350,7 @@ for _tag, _f in (('Swampfolk', 'Swampfolk'), ('Hillfolk', 'Hillfolk'), ('SuperMu
 # Capital super mutant taunts (Core TauntIdles= / TauntSound=, as build_esp.py's PCSuperMutantTaunt*): Fallout 3's super
 # mutant intimidation idles (creatures\\smspinebreakerdc\\idleanims in TTW), the ones without Weapon keys; section Special Idle
 # (as the vanilla records; Whole Body cleared the weapon-ready state) + no attacking; under a root that never passes
-# (PCSuperMutantDCTauntIdles). Their voice, played by Core: Fallout 3's super mutant taunts (MS01MutantTaunt + GenericSup NormalToCombat), every line. SNDD as build_esp.py's voice sounds.
+# (PCSuperMutantDCTauntIdles). Their voices, played by Core (anim/sm_taunt.py): combat barks and the gloat after a kill. SNDD as build_esp.py's voice sounds.
 # New ids after everything else (the root after the ids the taunts / voice already had).
 SMDC_TAUNTS = [nid() for _ in range(3)]
 SMDC_TAUNT_SOUN = nid()
@@ -365,6 +365,10 @@ for _i, (_fid, _fn) in enumerate(zip(SMDC_TAUNTS, ('SpecialIdle_2HAIntimidate.kf
     idles.append(record('IDLE', _fid, [('EDID', z('PCSuperMutantDCTaunt%d' % _i)), ('MODL', z('Creatures\\SMSpineBreakerDC\\IdleAnims\\' + _fn)),
         ('ANAM', struct.pack('<II', SMDC_TAUNT_ROOT, _prev)), ('DATA', bytes.fromhex('0700000000000100'))]))
     _prev = _fid
+SMDC_TAUNTKILL_SOUN = nid()                     # TauntKillSound=: the gloat for the first taunt soon after a kill
+souns.append(record('SOUN', SMDC_TAUNTKILL_SOUN, [('EDID', z('PCSuperMutantDCTauntKillVox')), ('OBND', bytes(12)),
+    ('FNAM', z('fx\\npc\\playablecreatures\\supermutantdc\\tauntkill\\')), ('RNAM', b'\0'), ('SNDD', bytes(_sndd))]))
+print('  capital super mutant kill voice %06X' % (SMDC_TAUNTKILL_SOUN & 0xFFFFFF))
 print('  capital super mutant taunts', ' '.join('%06X' % (f & 0xFFFFFF) for f in SMDC_TAUNTS), 'voice %06X root %06X' % (SMDC_TAUNT_SOUN & 0xFFFFFF, SMDC_TAUNT_ROOT & 0xFFFFFF))
 
 groups = [group('HAIR', [hair]), group('EYES', [eyes]), group('RACE', races), group('SOUN', souns), group('SPEL', spels), group('ARMO', armors), group('NPC_', npcs), group('IDLE', idles), group('BPTD', bptds)]
