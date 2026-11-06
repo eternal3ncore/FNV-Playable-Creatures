@@ -31,6 +31,8 @@ LINES = [   # (game, voice type, file, set, kind)
     ('nv', 'creaturesupermutant', 'vdialoguen_normaltocombat_00152b77_1.ogg', 'nightkin', 'taunt'),   # I'll kill you!
     ('nv', 'creaturesupermutant', 'vdialoguenightkin_murder_00152b72_1.ogg', 'nightkin', 'taunt'),   # Now you pay!
     ('nv', 'creaturesupermutant', 'vdialoguen_playerinironsit_00152b5d_1.ogg', 'nightkin', 'taunt'),   # {Snarls}I don't think so.
+    ('nv', 'creaturesupermutant', 'vdialoguen_alerttocombat_00152be8_1.ogg', 'nightkin', 'taunt'),   # Got you now!
+    ('nv', 'creaturesupermutant', 'vdialoguen_losttocombat_00152b99_1.ogg', 'nightkin', 'taunt'),   # Now you die!
     ('nv', 'creaturesupermutant', 'vdialoguen_murdernocrime_00152b9a_1.ogg', 'nightkin', 'tauntkill'),   # {Slightly amused chuckle}
     ('nv', 'creaturesupermutant', 'vdialoguen_murdernocrime_00152b9b_1.ogg', 'nightkin', 'tauntkill'),   # {Medium sized laugh}
     ('nv', 'creaturesupermutant', 'vdialoguen_murdernocrime_00152b9c_1.ogg', 'nightkin', 'tauntkill'),   # {Big laugh}
